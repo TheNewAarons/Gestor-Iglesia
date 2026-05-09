@@ -1,0 +1,144 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Login">
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-header">
+        <img src="/logos/IDN Juan noe_gris.png" alt="Iglesia IDN" class="logo" />
+        <h1>Gestor Iglesia</h1>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="username" class="label">Usuario</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="input"
+            placeholder="Ingresa tu usuario"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="label">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="input"
+            placeholder="Ingresa tu contraseña"
+            required
+          />
+        </div>
+
+        <div id="error-message" class="error-message" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">
+          Iniciar sesión
+        </button>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-secondary);
+    padding: 1rem;
+  }
+
+  .login-container {
+    width: 100%;
+    max-width: 400px;
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo {
+    height: 60px;
+    width: auto;
+    margin-bottom: 1rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.5rem;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+  }
+
+  .login-header p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  .error-message {
+    padding: 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+</style>
+
+<script>
+  import { authStore } from '../stores/auth';
+
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const errorDiv = document.getElementById('error-message');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = (document.getElementById('username') as HTMLInputElement).value;
+    const password = (document.getElementById('password') as HTMLInputElement).value;
+
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+    }
+
+    try {
+      await authStore.login(username, password);
+      const state = authStore.getState();
+      if (state.isAuthenticated) {
+        window.location.href = '/ministerios';
+      } else if (state.error) {
+        if (errorDiv) {
+          errorDiv.textContent = state.error;
+          errorDiv.style.display = 'block';
+        }
+      }
+    } catch (error) {
+      if (errorDiv) {
+        errorDiv.textContent = error instanceof Error ? error.message : 'Error al iniciar sesión';
+        errorDiv.style.display = 'block';
+      }
+    }
+  });
+</script>

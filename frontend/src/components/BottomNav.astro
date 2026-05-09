@@ -1,0 +1,98 @@
+---
+const navItems = [
+  { href: '/', icon: 'home', label: 'Inicio' },
+  { href: '/ministerios', icon: 'church', label: 'Ministerios' },
+  { href: '/calendario', icon: 'calendar', label: 'Calendario' },
+  { href: '/usuarios', icon: 'users', label: 'Perfil' },
+];
+---
+
+<nav class="bottom-nav">
+  {navItems.map(item => (
+    <a href={item.href} class="nav-item">
+      <span class="nav-icon">
+        {item.icon === 'home' && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        )}
+        {item.icon === 'church' && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <path d="M9 22V12h6v10"></path>
+          </svg>
+        )}
+        {item.icon === 'calendar' && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        )}
+        {item.icon === 'users' && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        )}
+      </span>
+      <span class="nav-label">{item.label}</span>
+    </a>
+  ))}
+</nav>
+
+<script>
+  const path = window.location.pathname;
+  document.querySelectorAll('.bottom-nav .nav-item').forEach((link: Element) => {
+    const href = (link as HTMLAnchorElement).getAttribute('href');
+    if (href && (path === href || (href !== '/' && path.startsWith(href)))) {
+      link.classList.add('active');
+    }
+  });
+</script>
+
+<style>
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    padding: 0.5rem 0;
+    z-index: 30;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--transition);
+    text-decoration: none;
+  }
+
+  .nav-item.active {
+    color: var(--color-primary);
+  }
+
+  .nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 1024px) {
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+    }
+  }
+</style>
