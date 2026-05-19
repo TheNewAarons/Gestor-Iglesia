@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    LoginView, LogoutView, MeView,
+    LoginView, LogoutView, TokenRefreshView, MeView,
     MinisterioViewSet, MiembroViewSet, CancionViewSet,
     ProgramaAlabanzaViewSet, LeccionEXPLOViewSet,
     RecursoComunicacionViewSet, IdeaComunicacionViewSet,
@@ -23,6 +23,7 @@ router.register(r'permisos', PermisoViewSet, basename='permiso')
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
+    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', MeView.as_view(), name='me'),
 
     path('', include(router.urls)),

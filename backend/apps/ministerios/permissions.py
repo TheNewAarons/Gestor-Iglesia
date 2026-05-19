@@ -1,4 +1,7 @@
 from rest_framework import permissions
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -6,7 +9,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return request.user.is_staff or request.user.perfil.rol == 'admin'
+        return request.user.is_authenticated and request.user.rol == 'admin'
 
 
 class IsLiderOrAdmin(permissions.BasePermission):
@@ -15,16 +18,12 @@ class IsLiderOrAdmin(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        perfil = getattr(request.user, 'perfil', None)
-        if not perfil:
-            return False
-
-        if perfil.rol in ['admin', 'pastora']:
+        if request.user.rol in ['admin', 'pastora']:
             return True
 
         if view.kwargs.get('slug'):
             ministry = view.kwargs.get('slug')
-            return perfil.ministerios_lidera.filter(slug=ministry).exists()
+            return request.user.ministerios_lidera.filter(slug=ministry).exists()
 
         return False
 
@@ -34,12 +33,7 @@ class IsTesoreraOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-
-        perfil = getattr(request.user, 'perfil', None)
-        if not perfil:
-            return False
-
-        return perfil.rol in ['admin', 'tesorera', 'pastora']
+        return request.user.rol in ['admin', 'tesorera', 'pastora']
 
 
 class IsSecretariaOrAdmin(permissions.BasePermission):
@@ -47,12 +41,7 @@ class IsSecretariaOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-
-        perfil = getattr(request.user, 'perfil', None)
-        if not perfil:
-            return False
-
-        return perfil.rol in ['admin', 'secretaria', 'pastora']
+        return request.user.rol in ['admin', 'secretaria', 'pastora']
 
 
 class CanAccessMinisterio(permissions.BasePermission):
@@ -61,19 +50,15 @@ class CanAccessMinisterio(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        perfil = getattr(request.user, 'perfil', None)
-        if not perfil:
-            return False
-
-        if perfil.rol in ['admin', 'pastora']:
+        if request.user.rol in ['admin', 'pastora']:
             return True
 
-        if perfil.rol == 'lider_ministerio':
+        if request.user.rol == 'lider_ministerio':
             if hasattr(obj, 'ministry'):
-                return obj.ministry in perfil.ministerios_lidera.all()
-            return obj in perfil.ministerios_lidera.all()
+                return obj.ministry in request.user.ministerios_lidera.all()
+            return obj in request.user.ministerios_lidera.all()
 
-        if perfil.rol in ['concilio']:
+        if request.user.rol in ['concilio']:
             return True
 
         return False
@@ -84,8 +69,7 @@ class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-        perfil = getattr(request.user, 'perfil', None)
-        return perfil and perfil.rol == 'admin'
+        return request.user.rol == 'admin'
 
 
 class CanManageUsers(permissions.BasePermission):
@@ -93,8 +77,7 @@ class CanManageUsers(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-        perfil = getattr(request.user, 'perfil', None)
-        return perfil and perfil.rol == 'admin'
+        return request.user.rol == 'admin'
 
 
 class CanManageUsersOrSelf(permissions.BasePermission):
@@ -103,19 +86,14 @@ class CanManageUsersOrSelf(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        perfil = getattr(request.user, 'perfil', None)
-        if not perfil:
-            return False
-
-        if perfil.rol == 'admin':
+        if request.user.rol == 'admin':
             return True
 
         if view.kwargs.get('pk'):
             try:
-                from .models import PerfilUsuario
-                perfil_obj = PerfilUsuario.objects.get(pk=view.kwargs.get('pk'))
-                return perfil_obj.user == request.user
-            except PerfilUsuario.DoesNotExist:
+                user_obj = User.objects.get(pk=view.kwargs.get('pk'))
+                return user_obj == request.user
+            except User.DoesNotExist:
                 return False
 
         return True

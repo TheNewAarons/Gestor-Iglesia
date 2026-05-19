@@ -1,84 +1,36 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
 from .models import (
-    Rol, Permiso, PerfilUsuario, Ministerio, Miembro, CajaMinisterio,
+    Rol, Permiso, Ministerio, Miembro, CajaMinisterio,
     MovimientoCaja, Inventario, Ofrenda, Asistencia, Evento,
     Cancion, ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion,
     IdeaComunicacion, PlanificacionActividad
 )
 
+User = get_user_model()
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
-
-
-class PerfilUsuarioSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    ministerios_lidera_nombres = serializers.SerializerMethodField()
-
-    class Meta:
-        model = PerfilUsuario
-        fields = ['id', 'user', 'rol', 'ministerios_lidera', 'ministerios_lidera_nombres', 'telefono', 'foto', 'activo']
-        read_only_fields = ['id']
-
-    def get_ministerios_lidera_nombres(self, obj):
-        return [m.nombre for m in obj.ministerios_lidera.all()]
-
-
-class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True, required=True)
-
-    class Meta:
-        model = User
-        fields = ['username', 'password', 'password_confirm', 'first_name', 'last_name', 'email']
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({'password_confirm': 'Las contraseñas no coinciden'})
-        return attrs
-
-    def create(self, validated_data):
-        validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
-        return user
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol']
 
 
 class UsuarioCompletoSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-    first_name = serializers.SerializerMethodField()
-    last_name = serializers.SerializerMethodField()
-    email = serializers.SerializerMethodField()
     rol_display = serializers.CharField(source='get_rol_display', read_only=True)
     ministerios_lidera_detalles = serializers.SerializerMethodField()
-    fecha_creacion = serializers.DateTimeField(read_only=True)
-    ultimo_login = serializers.DateTimeField(read_only=True)
     creado_por_nombre = serializers.SerializerMethodField()
 
     class Meta:
-        model = PerfilUsuario
+        model = User
         fields = [
-            'id', 'user_id', 'username', 'first_name', 'last_name', 'email',
+            'id', 'username', 'first_name', 'last_name', 'email',
             'rol', 'rol_display', 'ministerios_lidera', 'ministerios_lidera_detalles',
-            'permisos_especificos', 'telefono', 'foto', 'activo',
-            'fecha_creacion', 'ultimo_login', 'creado_por', 'creado_por_nombre'
+            'permisos_especificos', 'telefono', 'foto', 'is_active',
+            'date_joined', 'last_login', 'creado_por', 'creado_por_nombre'
         ]
-        read_only_fields = ['id', 'fecha_creacion', 'ultimo_login']
-
-    def get_username(self, obj):
-        return obj.user.username
-
-    def get_first_name(self, obj):
-        return obj.user.first_name
-
-    def get_last_name(self, obj):
-        return obj.user.last_name
-
-    def get_email(self, obj):
-        return obj.user.email
+        read_only_fields = ['id', 'date_joined', 'last_login']
 
     def get_ministerios_lidera_detalles(self, obj):
         return [{'id': m.id, 'nombre': m.nombre, 'slug': m.slug} for m in obj.ministerios_lidera.all()]
@@ -96,11 +48,11 @@ class UsuarioCreateSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
-    rol = serializers.ChoiceField(choices=PerfilUsuario.ROLES)
-    ministerios_lidera = serializers.ListField(child=serializers.IntegerField(), required=False, default=[])
+    rol = serializers.ChoiceField(choices=User.ROLES)
+    ministerios_lidera = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
     permisos_especificos = serializers.JSONField(required=False, default=dict)
     telefono = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    activo = serializers.BooleanField(default=True)
+    is_active = serializers.BooleanField(default=True)
 
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
@@ -122,16 +74,16 @@ class UsuarioUpdateSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
     email = serializers.EmailField(required=False)
-    rol = serializers.ChoiceField(choices=PerfilUsuario.ROLES, required=False)
+    rol = serializers.ChoiceField(choices=User.ROLES, required=False)
     ministerios_lidera = serializers.ListField(child=serializers.IntegerField(), required=False)
     permisos_especificos = serializers.JSONField(required=False)
     telefono = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    activo = serializers.BooleanField(required=False)
+    is_active = serializers.BooleanField(required=False)
     password_nueva = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate_email(self, value):
         user = self.context.get('user')
-        if User.objects.exclude(pk=user.user.pk).filter(email=value).exists():
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
             raise serializers.ValidationError('El email ya está en uso')
         return value
 
@@ -162,7 +114,7 @@ class MinisterioSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
 
     def get_lideres_nombres(self, obj):
-        return [l.user.get_full_name() for l in obj.lideres.all()]
+        return [l.get_full_name() or l.username for l in obj.lideres.all()]
 
 
 class MiembroSerializer(serializers.ModelSerializer):

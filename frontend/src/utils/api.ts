@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
@@ -7,38 +7,28 @@ interface FetchOptions extends RequestInit {
 class ApiClient {
   private token: string | null = null;
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('token');
-    }
-  }
-
   setToken(token: string) {
     this.token = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-    }
   }
 
   clearToken() {
     this.token = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-    }
   }
 
   getToken(): string | null {
     return this.token;
   }
 
-  private getCSRFToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'csrftoken') return value;
+  private async refreshAccessToken(): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/auth/refresh/`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      return response.ok;
+    } catch {
+      return false;
     }
-    return null;
   }
 
   private async request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
@@ -53,20 +43,26 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const csrfToken = this.getCSRFToken();
-    if (csrfToken) {
-      (headers as Record<string, string>)['X-CSRFToken'] = csrfToken;
-    }
-
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    let response = await fetch(`${API_BASE}${endpoint}`, {
       ...fetchOptions,
       headers,
       credentials: 'include',
     });
 
+    if (response.status === 401 && !skipAuth) {
+      const refreshed = await this.refreshAccessToken();
+      if (refreshed) {
+        response = await fetch(`${API_BASE}${endpoint}`, {
+          ...fetchOptions,
+          headers,
+          credentials: 'include',
+        });
+      }
+    }
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-      throw new Error(error.detail || error.message || 'Error en la solicitud');
+      throw new Error(error.detail || error.message || error.error || 'Error en la solicitud');
     }
 
     if (response.status === 204) {
@@ -109,15 +105,9 @@ class ApiClient {
   }
 
   async login(username: string, password: string) {
-    const csrfToken = this.getCSRFToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken;
-    }
-
     const response = await fetch(`${API_BASE}/auth/login/`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
       credentials: 'include',
     });

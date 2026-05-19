@@ -1,6 +1,59 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.utils.text import slugify
+
+
+class User(AbstractUser):
+    """Modelo de usuario personalizado con roles y permisos"""
+    ROLES = [
+        ('admin', 'Admin'),
+        ('pastora', 'Pastora'),
+        ('secretaria', 'Secretaria'),
+        ('tesorera', 'Tesorera'),
+        ('lider_ministerio', 'Líder de Ministerio'),
+        ('concilio', 'Concilio'),
+    ]
+
+    rol = models.CharField(max_length=20, choices=ROLES, default='concilio')
+    ministerios_lidera = models.ManyToManyField('Ministerio', blank=True, related_name='lideres')
+    permisos_especificos = models.JSONField(default=dict, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    foto = models.ImageField(upload_to='usuarios/fotos/', blank=True, null=True)
+    creado_por = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios_creados'
+    )
+
+    class Meta:
+        verbose_name = 'Usuario'
+        verbose_name_plural = 'Usuarios'
+        ordering = ['first_name', 'last_name']
+
+    def __str__(self):
+        if self.get_full_name():
+            return f"{self.get_full_name()} ({self.username})"
+        return self.username
+
+    def tiene_permiso(self, modulo: str, accion: str) -> bool:
+        """Verifica si el usuario tiene un permiso específico"""
+        if self.rol == 'admin':
+            return True
+
+        rol_permisos = {
+            'pastora': {'ver': True, 'crear': True, 'editar': True, 'eliminar': True, 'aprobar': True, 'registrar': True, 'exportar': True},
+            'secretaria': {'miembros': ['ver', 'crear', 'editar'], 'asistencia': ['ver', 'registrar'], 'eventos': ['ver', 'crear', 'editar']},
+            'tesorera': {'caja': ['ver', 'crear', 'editar', 'aprobar'], 'ofrendas': ['ver', 'crear', 'editar'], 'reportes': ['ver', 'exportar']},
+            'concilio': {'ver': True},
+        }
+
+        permisos = rol_permisos.get(self.rol, {})
+        if isinstance(permisos, dict):
+            if permisos.get('ver') is True:
+                return True
+            modulo_permisos = permisos.get(modulo, [])
+            return accion in modulo_permisos
+
+        return False
 
 
 class Rol(models.Model):
@@ -52,57 +105,6 @@ class Permiso(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.modulo}"
-
-
-class PerfilUsuario(models.Model):
-    """Perfil extendido del usuario"""
-    ROLES = [
-        ('admin', 'Admin'),
-        ('pastora', 'Pastora'),
-        ('secretaria', 'Secretaria'),
-        ('tesorera', 'Tesorera'),
-        ('lider_ministerio', 'Líder de Ministerio'),
-        ('concilio', 'Concilio'),
-    ]
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-    rol = models.CharField(max_length=20, choices=ROLES, default='concilio')
-    ministerios_lidera = models.ManyToManyField('Ministerio', blank=True, related_name='lideres')
-    permisos_especificos = models.JSONField(default=dict, blank=True)
-    telefono = models.CharField(max_length=20, blank=True)
-    foto = models.ImageField(upload_to='usuarios/fotos/', blank=True, null=True)
-    activo = models.BooleanField(default=True)
-    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    ultimo_login = models.DateTimeField(null=True, blank=True)
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='usuarios_creados')
-
-    class Meta:
-        verbose_name = 'Perfil de Usuario'
-        verbose_name_plural = 'Perfiles de Usuarios'
-
-    def __str__(self):
-        return f"{self.user.get_full_name()} - {self.get_rol_display()}"
-
-    def tiene_permiso(self, modulo: str, accion: str) -> bool:
-        """Verifica si el usuario tiene un permiso específico"""
-        if self.rol == 'admin':
-            return True
-        
-        rol_permisos = {
-            'pastora': {'ver': True, 'crear': True, 'editar': True, 'eliminar': True, 'aprobar': True, 'registrar': True, 'exportar': True},
-            'secretaria': {'miembros': ['ver', 'crear', 'editar'], 'asistencia': ['ver', 'registrar'], 'eventos': ['ver', 'crear', 'editar']},
-            'tesorera': {'caja': ['ver', 'crear', 'editar', 'aprobar'], 'ofrendas': ['ver', 'crear', 'editar'], 'reportes': ['ver', 'exportar']},
-            'concilio': {'ver': True},
-        }
-        
-        permisos = rol_permisos.get(self.rol, {})
-        if isinstance(permisos, dict):
-            if permisos.get('ver') is True:
-                return True
-            modulo_permisos = permisos.get(modulo, [])
-            return accion in modulo_permisos
-        
-        return False
 
 
 class Ministerio(models.Model):
@@ -160,7 +162,10 @@ class Miembro(models.Model):
     ]
 
     ministry = models.ForeignKey(Ministerio, on_delete=models.CASCADE, related_name='miembros')
-    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='miembros_en_ministerios')
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='miembros_en_ministerios'
+    )
 
     primer_nombre = models.CharField(max_length=50)
     segundo_nombre = models.CharField(max_length=50, blank=True)
@@ -230,7 +235,9 @@ class MovimientoCaja(models.Model):
     descripcion = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     imagen = models.ImageField(upload_to='cajas/boletas/', blank=True, null=True)
-    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
     enviado_tesoreria = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -341,7 +348,9 @@ class Evento(models.Model):
     ubicacion = models.CharField(max_length=200, blank=True)
     tipo = models.CharField(max_length=10, choices=TIPOS, default='propio')
     ministerios_relacionados = models.ManyToManyField(Ministerio, blank=True, related_name='eventos_compartidos')
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -386,7 +395,9 @@ class ProgramaAlabanza(models.Model):
     ministry = models.ForeignKey(Ministerio, on_delete=models.CASCADE, related_name='programas')
     fecha = models.DateField()
     alabanzas = models.JSONField(default=list, help_text='Lista de canciones ordenadas')
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -493,7 +504,9 @@ class PlanificacionActividad(models.Model):
     ubicacion = models.CharField(max_length=200, blank=True)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='propia')
     ministerios_relacionados = models.ManyToManyField(Ministerio, blank=True, related_name='planificaciones_compartidas')
-    responsable = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    responsable = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
     presupuesto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='planificada')
     created_at = models.DateTimeField(auto_now_add=True)

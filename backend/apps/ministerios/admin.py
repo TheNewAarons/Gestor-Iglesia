@@ -1,22 +1,36 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth import get_user_model
 from .models import (
-    Rol, PerfilUsuario, Ministerio, Miembro, CajaMinisterio,
+    Rol, Ministerio, Miembro, CajaMinisterio,
     MovimientoCaja, Inventario, Ofrenda, Asistencia, Evento,
-    Cancion, ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion, IdeaComunicacion
+    Cancion, ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion,
+    IdeaComunicacion, PlanificacionActividad
 )
+
+User = get_user_model()
+
+
+@admin.register(User)
+class UsuarioAdmin(BaseUserAdmin):
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Datos adicionales', {
+            'fields': ('rol', 'ministerios_lidera', 'permisos_especificos',
+                       'telefono', 'foto', 'creado_por')
+        }),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ('Datos adicionales', {
+            'fields': ('rol', 'ministerios_lidera', 'permisos_especificos',
+                       'telefono', 'foto', 'creado_por')
+        }),
+    )
 
 
 @admin.register(Rol)
 class RolAdmin(admin.ModelAdmin):
     list_display = ['nombre', 'descripcion']
     search_fields = ['nombre']
-
-
-@admin.register(PerfilUsuario)
-class PerfilUsuarioAdmin(admin.ModelAdmin):
-    list_display = ['user', 'rol', 'telefono', 'activo']
-    list_filter = ['rol', 'activo']
-    search_fields = ['user__username', 'user__first_name', 'user__last_name']
 
 
 @admin.register(Ministerio)
@@ -112,3 +126,11 @@ class IdeaComunicacionAdmin(admin.ModelAdmin):
     list_display = ['titulo', 'ministry', 'prioridad', 'completada']
     list_filter = ['ministry', 'prioridad', 'completada']
     search_fields = ['titulo', 'descripcion']
+
+
+@admin.register(PlanificacionActividad)
+class PlanificacionActividadAdmin(admin.ModelAdmin):
+    list_display = ['titulo', 'ministry', 'fecha_planificada', 'estado']
+    list_filter = ['ministry', 'estado', 'tipo']
+    search_fields = ['titulo', 'descripcion']
+    date_hierarchy = 'fecha_planificada'

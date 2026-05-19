@@ -214,6 +214,7 @@ interface MinisteriosState {
   lecciones: LeccionEXPLO[];
   recursos: RecursoComunicacion[];
   ideas: IdeaComunicacion[];
+  planificaciones: PlanificacionActividad[];
   isLoading: boolean;
   error: string | null;
 }
@@ -582,6 +583,25 @@ class MinisteriosStore {
     }
   }
 
+  async fetchPlanificaciones(slug: string) {
+    try {
+      const planificaciones = await api.get<PlanificacionActividad[]>(`/ministerios/${slug}/planificaciones/`);
+      this.setState({ planificaciones });
+    } catch (error) {
+      console.error('Error fetching planificaciones:', error);
+    }
+  }
+
+  async addPlanificacion(slug: string, data: Partial<PlanificacionActividad>) {
+    try {
+      const nueva = await api.post<PlanificacionActividad>(`/ministerios/${slug}/planificaciones/`, data);
+      this.setState({ planificaciones: [...this.state.planificaciones, nueva] });
+      return nueva;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   clearSelected() {
     this.setState({
       selectedMinisterio: null,
@@ -600,6 +620,7 @@ class MinisteriosStore {
       lecciones: [],
       recursos: [],
       ideas: [],
+      planificaciones: [],
     });
   }
 }

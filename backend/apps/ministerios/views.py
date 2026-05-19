@@ -1,19 +1,18 @@
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import authenticate, login, logout
-from django.db.models import Count, Sum, Q
-from django.utils import timezone
+from django.contrib.auth import authenticate, get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from datetime import date, timedelta
+from django.middleware.csrf import get_token
+from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import date
 
 from .models import (
     Ministerio, Miembro, CajaMinisterio, MovimientoCaja,
-    Inventario, Ofrenda, Asistencia, Evento, Cancion,
-    ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion, IdeaComunicacion,
-    PerfilUsuario, Permiso
+    Cancion, ProgramaAlabanza, LeccionEXPLO, Permiso,
+    Evento, RecursoComunicacion, IdeaComunicacion
 )
 from .serializers import (
     MinisterioSerializer, MiembroSerializer, CajaMinisterioSerializer,
@@ -21,80 +20,156 @@ from .serializers import (
     AsistenciaSerializer, EventoSerializer, CancionSerializer,
     ProgramaAlabanzaSerializer, LeccionEXPLOSerializer,
     RecursoComunicacionSerializer, IdeaComunicacionSerializer,
-    PerfilUsuarioSerializer, LoginSerializer, UsuarioCompletoSerializer,
+    PlanificacionActividadSerializer,
+    UserSerializer, LoginSerializer, UsuarioCompletoSerializer,
     UsuarioCreateSerializer, UsuarioUpdateSerializer, PermisoSerializer
 )
-from .permissions import IsAdminOrReadOnly, IsLiderOrAdmin, CanAccessMinisterio
+from .permissions import IsAdminOrReadOnly
+
+from .selectors import (
+    ministerio as ministerio_selectors,
+    miembro as miembro_selectors,
+    finanzas as finanzas_selectors,
+    asistencia as asistencia_selectors,
+    inventario as inventario_selectors,
+    eventos as eventos_selectors,
+    alabanza as alabanza_selectors,
+    usuarios as usuarios_selectors,
+    comunicacion as comunicacion_selectors,
+)
+from .services import (
+    ministerio as ministerio_services,
+    miembro as miembro_services,
+    finanzas as finanzas_services,
+    asistencia as asistencia_services,
+    inventario as inventario_services,
+    eventos as eventos_services,
+    alabanza as alabanza_services,
+    usuarios as usuarios_services,
+    comunicacion as comunicacion_services,
+)
+
+User = get_user_model()
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
-    """Inicio de sesión"""
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = authenticate(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            )
-            if user:
-                login(request, user)
-                perfil = getattr(user, 'perfil', None)
-                return Response({
-                    'success': True,
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'first_name': user.first_name,
-                        'last_name': user.last_name,
-                        'email': user.email,
-                        'rol': perfil.rol if perfil else None
-                    }
-                })
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password']
+        )
+        if not user:
             return Response(
                 {'success': False, 'error': 'Credenciales inválidas'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        response = Response({
+            'success': True,
+            'user': UserSerializer(user).data
+        })
+
+        response.set_cookie(
+            key='access_token',
+            value=access_token,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            max_age=900,
+            path='/',
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            max_age=604800,
+            path='/',
+        )
+        return response
 
 
 class LogoutView(APIView):
-    """Cierre de sesión"""
+    def post(self, request):
+        response = Response({'success': True, 'message': 'Sesión cerrada'})
+
+        refresh_token = request.COOKIES.get('refresh_token')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+
+        response.delete_cookie('access_token', path='/')
+        response.delete_cookie('refresh_token', path='/')
+        return response
+
+
+class TokenRefreshView(APIView):
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        logout(request)
-        return Response({'success': True, 'message': 'Sesión cerrada'})
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response(
+                {'error': 'No hay token de refresco'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+
+            response = Response({'success': True})
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+                max_age=900,
+                path='/',
+            )
+            return response
+        except Exception:
+            return Response(
+                {'error': 'Token de refresco inválido o expirado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class MeView(APIView):
-    """Datos del usuario actual"""
-
     def get(self, request):
         if not request.user.is_authenticated:
-            return Response(
-                {'error': 'No autenticado'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        user = request.user
-        perfil = getattr(user, 'perfil', None)
+            return Response({'error': 'No autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response({
-            'id': user.id,
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'email': user.email,
-            'rol': perfil.rol if perfil else None,
+            'id': request.user.id,
+            'username': request.user.username,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+            'rol': request.user.rol,
             'ministerios_lidera': [
                 {'id': m.id, 'nombre': m.nombre, 'slug': m.slug}
-                for m in perfil.ministerios_lidera.all()
-            ] if perfil else []
+                for m in request.user.ministerios_lidera.all()
+            ]
         })
 
 
 class MinisterioViewSet(viewsets.ModelViewSet):
-    """CRUD de Ministerios"""
     queryset = Ministerio.objects.all()
     serializer_class = MinisterioSerializer
     lookup_field = 'slug'
@@ -105,52 +180,30 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         return [IsAdminOrReadOnly()]
 
     def get_queryset(self):
-        queryset = Ministerio.objects.annotate(
-            miembros_count=Count('miembros', filter=Q(miembros__activo=True))
-        )
-        return queryset
+        return ministerio_selectors.listar_ministerios()
+
+    def perform_create(self, serializer):
+        serializer.save()
 
     @action(detail=True, methods=['get'])
     def dashboard(self, request, slug=None):
-        """Dashboard del ministerio"""
         ministry = self.get_object()
-
-        miembros_count = ministry.miembros.filter(activo=True).count()
-
-        caja = getattr(ministry, 'caja', None)
-        saldo_caja = caja.calcular_saldo() if caja else 0
-
-        eventos_proximos = ministry.eventos.filter(
-            fecha_inicio__gte=date.today()
-        ).order_by('fecha_inicio')[:5]
-
-        ofertas_mes = ministry.ofrendas.filter(
-            fecha__month=date.today().month,
-            fecha__year=date.today().year
-        ).aggregate(total=Sum('monto'))['total'] or 0
-
+        data = ministerio_selectors.obtener_dashboard(ministry)
         return Response({
             'ministerio': MinisterioSerializer(ministry).data,
-            'miembros_count': miembros_count,
-            'saldo_caja': float(saldo_caja),
-            'ofertas_mes': float(ofertas_mes),
-            'eventos_proximos': EventoSerializer(eventos_proximos, many=True).data,
-            'miembros': MiembroSerializer(
-                ministry.miembros.filter(activo=True)[:10],
-                many=True
-            ).data
+            'miembros_count': data['miembros_count'],
+            'saldo_caja': data['saldo_caja'],
+            'ofertas_mes': data['ofertas_mes'],
+            'eventos_proximos': EventoSerializer(data['eventos_proximos'], many=True).data,
+            'miembros': MiembroSerializer(data['miembros_recientes'], many=True).data,
         })
 
     @action(detail=True, methods=['get', 'post'])
     def miembros(self, request, slug=None):
-        """Lista/crear miembros del ministerio"""
         ministry = self.get_object()
-
         if request.method == 'GET':
-            miembros = ministry.miembros.filter(activo=True)
-            filtro_clase = request.query_params.get('clase')
-            if filtro_clase:
-                miembros = miembros.filter(clase=filtro_clase)
+            clase = request.query_params.get('clase')
+            miembros = miembro_selectors.listar_miembros_por_ministerio(ministry, clase)
             return Response(MiembroSerializer(miembros, many=True).data)
 
         serializer = MiembroSerializer(data=request.data)
@@ -161,12 +214,11 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def caja(self, request, slug=None):
-        """Ver/crear movimientos de caja"""
         ministry = self.get_object()
-
-        caja, created = CajaMinisterio.objects.get_or_create(ministry=ministry)
+        caja = finanzas_services.obtener_o_crear_caja(ministry)
 
         if request.method == 'GET':
+            caja = finanzas_selectors.obtener_caja(ministry) or caja
             return Response(CajaMinisterioSerializer(caja).data)
 
         serializer = MovimientoCajaSerializer(data=request.data)
@@ -177,12 +229,10 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def inventario(self, request, slug=None):
-        """Ver/crear items de inventario"""
         ministry = self.get_object()
-
         if request.method == 'GET':
-            inventario = ministry.inventario.all()
-            return Response(InventarioSerializer(inventario, many=True).data)
+            items = inventario_selectors.listar_inventario(ministry)
+            return Response(InventarioSerializer(items, many=True).data)
 
         serializer = InventarioSerializer(data=request.data)
         if serializer.is_valid():
@@ -192,19 +242,12 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def ofrendas(self, request, slug=None):
-        """Ver/crear ofrendas"""
         ministry = self.get_object()
-
         if request.method == 'GET':
-            filtro_fecha_inicio = request.query_params.get('fecha_inicio')
-            filtro_fecha_fin = request.query_params.get('fecha_fin')
-
-            ofrendas = ministry.ofrendas.all()
-            if filtro_fecha_inicio:
-                ofrendas = ofrendas.filter(fecha__gte=filtro_fecha_inicio)
-            if filtro_fecha_fin:
-                ofrendas = ofrendas.filter(fecha__lte=filtro_fecha_fin)
-
+            ofrendas = finanzas_selectors.listar_ofrendas(ministry, {
+                'fecha_inicio': request.query_params.get('fecha_inicio'),
+                'fecha_fin': request.query_params.get('fecha_fin'),
+            })
             return Response(OfrendaSerializer(ofrendas, many=True).data)
 
         serializer = OfrendaSerializer(data=request.data)
@@ -215,24 +258,17 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def asistencia(self, request, slug=None):
-        """Ver/registrar asistencia (especialmente DNI)"""
         ministry = self.get_object()
-
         if request.method == 'GET':
-            fecha = request.query_params.get('fecha')
-            filtro_clase = request.query_params.get('clase')
-
-            if fecha:
-                asistencia = ministry.asistencias.filter(fecha=fecha)
+            filters = {}
+            if fecha := request.query_params.get('fecha'):
+                filters['fecha'] = fecha
             else:
-                asistencia = ministry.asistencias.filter(
-                    fecha__gte=date.today() - timedelta(days=7)
-                )
-
-            if filtro_clase:
-                asistencia = asistencia.filter(clase=filtro_clase)
-
-            return Response(AsistenciaSerializer(asistencia, many=True).data)
+                filters['semana_actual'] = True
+            if clase := request.query_params.get('clase'):
+                filters['clase'] = clase
+            asistencias = asistencia_selectors.listar_asistencias(ministry, filters)
+            return Response(AsistenciaSerializer(asistencias, many=True).data)
 
         serializer = AsistenciaSerializer(data=request.data)
         if serializer.is_valid():
@@ -242,147 +278,40 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='asistencia/resumen')
     def asistencia_resumen(self, request, slug=None):
-        """Resumen de asistencia por domingo"""
         ministry = self.get_object()
-        
         mes = request.query_params.get('mes')
         anio = request.query_params.get('anio')
-        
-        queryset = ministry.asistencias.all()
-        
-        if mes and anio:
-            queryset = queryset.filter(fecha__month=int(mes), fecha__year=int(anio))
-        else:
-            queryset = queryset.filter(fecha__month=date.today().month, fecha__year=date.today().year)
-        
-        from django.db.models import Count, Sum, Q
-        from django.db.models.functions import TruncDate
-        
-        fechas_unicas = queryset.values('fecha').distinct().order_by('fecha')
-        
-        resultados = []
-        for item in fechas_unicas:
-            fecha = item['fecha']
-            registros = queryset.filter(fecha=fecha)
-            
-            total_presentes = registros.filter(presente=True).count()
-            total_visitas = registros.filter(es_visita=True).count()
-            total_biblias = registros.filter(tiene_biblia=True).count()
-            
-            ofrendas_dia = ministry.ofrendas.filter(fecha=fecha).aggregate(total=Sum('monto'))['total'] or 0
-            
-            por_clase = {}
-            for clase in ['ninos', 'jovenes', 'adultos_jovenes', 'adultos', 'adultos_mayores']:
-                count = registros.filter(clase=clase).count()
-                if count > 0:
-                    por_clase[clase] = count
-            
-            resultados.append({
-                'fecha': fecha.strftime('%Y-%m-%d'),
-                'total_asistencia': total_presentes,
-                'total_visitas': total_visitas,
-                'total_biblias': total_biblias,
-                'total_ofrendas': float(ofrendas_dia),
-                'por_clase': por_clase
-            })
-        
-        return Response(resultados)
+        resultado = asistencia_selectors.resumen_asistencia(
+            ministry, int(mes) if mes else None, int(anio) if anio else None
+        )
+        return Response(resultado)
 
     @action(detail=True, methods=['get'], url_path='asistencia/acumulativa')
     def asistencia_acumulativa(self, request, slug=None):
-        """Asistencia acumulativa por persona en el mes"""
-        from django.db.models import Count
-        
         ministry = self.get_object()
-        
         mes = request.query_params.get('mes')
         anio = request.query_params.get('anio')
-        filtro_clase = request.query_params.get('clase')
-        
-        if not mes:
-            mes = date.today().month
-        if not anio:
-            anio = date.today().year
-        
-        queryset = ministry.asistencias.filter(
-            fecha__month=int(mes),
-            fecha__year=int(anio),
-            presente=True
+        clase = request.query_params.get('clase')
+        resultado = asistencia_selectors.asistencia_acumulativa(
+            ministry, int(mes) if mes else None, int(anio) if anio else None, clase
         )
-        
-        if filtro_clase:
-            queryset = queryset.filter(clase=filtro_clase)
-        
-        miembros_ids = queryset.values_list('miembro', flat=True).distinct()
-        
-        resultados = []
-        for miembro_id in miembros_ids:
-            if miembro_id is None:
-                continue
-            try:
-                miembro = Miembro.objects.get(id=miembro_id)
-                count = queryset.filter(miembro=miembro_id).count()
-                resultados.append({
-                    'miembro_id': miembro.id,
-                    'nombre_completo': miembro.nombre_completo,
-                    'clase': miembro.clase,
-                    'asistencias_count': count
-                })
-            except Miembro.DoesNotExist:
-                continue
-        
-        visitas_query = queryset.filter(es_visita=True)
-        visitas_count = visitas_query.values('nombre_visita').distinct().count()
-        
-        return Response({
-            'miembros': sorted(resultados, key=lambda x: x['asistencias_count'], reverse=True),
-            'visitas_total': visitas_count,
-            'total_asistencias': sum(r['asistencias_count'] for r in resultados)
-        })
+        return Response(resultado)
 
     @action(detail=True, methods=['get'], url_path='asistencia/estadisticas')
     def asistencia_estadisticas(self, request, slug=None):
-        """Estadísticas generales de asistencia por clase"""
-        from django.db.models import Count
-        
         ministry = self.get_object()
-        
         mes = request.query_params.get('mes')
         anio = request.query_params.get('anio')
-        
-        if not mes:
-            mes = date.today().month
-        if not anio:
-            anio = date.today().year
-        
-        queryset = ministry.asistencias.filter(
-            fecha__month=int(mes),
-            fecha__year=int(anio)
+        resultado = asistencia_selectors.estadisticas_asistencia(
+            ministry, int(mes) if mes else None, int(anio) if anio else None
         )
-        
-        miembros = ministry.miembros.filter(activo=True)
-        
-        clases = ['ninos', 'jovenes', 'adultos_jovenes', 'adultos', 'adultos_mayores']
-        estadisticas = {}
-        
-        for clase in clases:
-            clase_query = queryset.filter(clase=clase)
-            estadisticas[clase] = {
-                'miembros_registrados': miembros.filter(clase=clase).count(),
-                'asistencias_totales': clase_query.filter(presente=True).count(),
-                'visitas': clase_query.filter(es_visita=True).count(),
-                'biblias': clase_query.filter(tiene_biblia=True).count()
-            }
-        
-        return Response(estadisticas)
+        return Response(resultado)
 
     @action(detail=True, methods=['get', 'post'])
     def eventos(self, request, slug=None):
-        """Ver/crear eventos"""
         ministry = self.get_object()
-
         if request.method == 'GET':
-            eventos = ministry.eventos.all()
+            eventos = eventos_selectors.listar_eventos_por_ministerio(ministry)
             return Response(EventoSerializer(eventos, many=True).data)
 
         serializer = EventoSerializer(data=request.data)
@@ -393,18 +322,13 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def planificaciones(self, request, slug=None):
-        """Ver/crear planificaciones de actividades"""
-        from .serializers import PlanificacionActividadSerializer
-        from .models import PlanificacionActividad
-        
         ministry = self.get_object()
-
         if request.method == 'GET':
-            planificaciones = ministry.planificaciones.all()
-            filtro_estado = request.query_params.get('estado')
-            if filtro_estado:
-                planificaciones = planificaciones.filter(estado=filtro_estado)
-            return Response(PlanificacionActividadSerializer(planificaciones, many=True).data)
+            estado = request.query_params.get('estado')
+            planes = eventos_selectors.listar_planificaciones(
+                ministry, {'estado': estado} if estado else None
+            )
+            return Response(PlanificacionActividadSerializer(planes, many=True).data)
 
         serializer = PlanificacionActividadSerializer(data=request.data)
         if serializer.is_valid():
@@ -414,403 +338,212 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
 
 class CancionViewSet(viewsets.ModelViewSet):
-    """CRUD de canciones (Banco de alabanzas)"""
     queryset = Cancion.objects.all()
     serializer_class = CancionSerializer
 
     def get_queryset(self):
-        queryset = Cancion.objects.all()
         categoria = self.request.query_params.get('categoria')
-        if categoria:
-            queryset = queryset.filter(categoria=categoria)
-        return queryset
+        return alabanza_selectors.listar_canciones(categoria)
 
     @action(detail=False, methods=['post'])
     def generar_programa(self, request):
-        """Generar programa dominical automático"""
         fecha_str = request.data.get('fecha')
         ministry_slug = request.data.get('ministerio')
-
         try:
             fecha = date.fromisoformat(fecha_str)
-            ministry = Ministerio.objects.get(slug=ministerio_slug)
+            ministry = Ministerio.objects.get(slug=ministry_slug)
         except (ValueError, Ministerio.DoesNotExist):
             return Response(
                 {'error': 'Fecha o ministry inválido'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        ultimo_programa = ProgramaAlabanza.objects.filter(
-            ministry=ministry,
-            fecha__lt=fecha
-        ).order_by('-fecha').first()
-
-        canciones_usadas = []
-        if ultimo_programa:
-            canciones_usadas = [a['id'] for a in ultimo_programa.alabanzas]
-
-        programa = []
-        categorias = ['rapida', 'rapida', 'media', 'lenta', 'lenta']
-
-        for cat in categorias:
-            disponibles = Cancion.objects.filter(
-                categoria=cat
-            ).exclude(id__in=canciones_usadas)
-
-            if disponibles.exists():
-                cancion = disponibles.first()
-            else:
-                disponibles = Cancion.objects.filter(categoria=cat)
-                cancion = disponibles.order_by('?').first() if disponibles.exists() else None
-
-            if cancion:
-                programa.append({
-                    'id': cancion.id,
-                    'titulo': cancion.titulo,
-                    'categoria': cancion.categoria,
-                    'tono': cancion.tono
-                })
-                canciones_usadas.append(cancion.id)
-
-        programa_obj = ProgramaAlabanza.objects.create(
-            ministry=ministry,
-            fecha=fecha,
-            alabanzas=programa,
-            creado_por=request.user
-        )
-
-        return Response(ProgramaAlabanzaSerializer(programa_obj).data)
+        programa = alabanza_services.generar_programa_automatico(ministry, fecha, request.user)
+        return Response(ProgramaAlabanzaSerializer(programa).data)
 
 
 class ProgramaAlabanzaViewSet(viewsets.ModelViewSet):
-    """CRUD de programas de alabanzas"""
     queryset = ProgramaAlabanza.objects.all()
     serializer_class = ProgramaAlabanzaSerializer
 
     def get_queryset(self):
-        queryset = ProgramaAlabanza.objects.all()
         ministry_slug = self.request.query_params.get('ministerio')
-        if ministry_slug:
-            queryset = queryset.filter(ministry__slug=ministry_slug)
-        return queryset
+        return alabanza_selectors.listar_programas(ministry_slug)
 
 
 class LeccionEXPLOViewSet(viewsets.ModelViewSet):
-    """CRUD de lecciones EXPLO"""
     queryset = LeccionEXPLO.objects.all()
     serializer_class = LeccionEXPLOSerializer
 
 
 class RecursoComunicacionViewSet(viewsets.ModelViewSet):
-    """CRUD de recursos de comunicaciones"""
     queryset = RecursoComunicacion.objects.all()
     serializer_class = RecursoComunicacionSerializer
 
     def get_queryset(self):
-        queryset = RecursoComunicacion.objects.all()
-        ministry_slug = self.request.query_params.get('ministerio')
-        tipo = self.request.query_params.get('tipo')
-
-        if ministry_slug:
-            queryset = queryset.filter(ministry__slug=ministry_slug)
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
-        return queryset
+        return comunicacion_selectors.listar_recursos({
+            'ministerio': self.request.query_params.get('ministerio'),
+            'tipo': self.request.query_params.get('tipo'),
+        })
 
 
 class IdeaComunicacionViewSet(viewsets.ModelViewSet):
-    """CRUD de ideas de comunicaciones"""
     queryset = IdeaComunicacion.objects.all()
     serializer_class = IdeaComunicacionSerializer
 
     def get_queryset(self):
-        queryset = IdeaComunicacion.objects.all()
-        ministry_slug = self.request.query_params.get('ministerio')
-        completada = self.request.query_params.get('completada')
-
-        if ministry_slug:
-            queryset = queryset.filter(ministry__slug=ministry_slug)
-        if completada is not None:
-            queryset = queryset.filter(completada=completada.lower() == 'true')
-        return queryset
+        return comunicacion_selectors.listar_ideas({
+            'ministerio': self.request.query_params.get('ministerio'),
+            'completada': self.request.query_params.get('completada'),
+        })
 
 
 class MiembroViewSet(viewsets.ModelViewSet):
-    """CRUD de miembros (global)"""
     queryset = Miembro.objects.all()
     serializer_class = MiembroSerializer
 
     def get_queryset(self):
-        queryset = Miembro.objects.all()
-        ministry_slug = self.request.query_params.get('ministerio')
-        clase = self.request.query_params.get('clase')
-        estado_civil = self.request.query_params.get('estado_civil')
-        search = self.request.query_params.get('search')
-
-        if ministry_slug:
-            queryset = queryset.filter(ministry__slug=ministry_slug)
-        if clase:
-            queryset = queryset.filter(clase=clase)
-        if estado_civil:
-            queryset = queryset.filter(estado_civil=estado_civil)
-        if search:
-            queryset = queryset.filter(
-                Q(primer_nombre__icontains=search) |
-                Q(segundo_nombre__icontains=search) |
-                Q(primer_apellido__icontains=search) |
-                Q(segundo_apellido__icontains=search)
-            )
-
-        return queryset
+        return miembro_selectors.listar_miembros({
+            'ministerio': self.request.query_params.get('ministerio'),
+            'clase': self.request.query_params.get('clase'),
+            'estado_civil': self.request.query_params.get('estado_civil'),
+            'search': self.request.query_params.get('search'),
+        })
 
     @action(detail=False, methods=['get'])
     def cumpleanos(self, request):
-        """Lista de cumpleaños del mes"""
-        today = date.today()
-        mes_actual = today.month
-
-        miembros = Miembro.objects.filter(
-            activo=True,
-            fecha_nacimiento__month=mes_actual
-        ).order_by('fecha_nacimiento__day')
-
-        resultado = []
-        for m in miembros:
-            dias_faltantes = (m.fecha_nacimiento.replace(year=today.year) - today).days
-            resultado.append({
-                'id': m.id,
-                'nombre_completo': m.nombre_completo,
-                'fecha_nacimiento': m.fecha_nacimiento,
-                'dia': m.fecha_nacimiento.day,
-                'dias_faltantes': dias_faltantes if dias_faltantes >= 0 else 365 + dias_faltantes
-            })
-
-        return Response(resultado)
+        return Response(miembro_selectors.listar_cumpleanos_del_mes())
 
 
 class EventoViewSet(viewsets.ModelViewSet):
-    """CRUD de eventos (global)"""
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
 
     def get_queryset(self):
-        queryset = Evento.objects.all()
-        ministry_slug = self.request.query_params.get('ministerio')
-        fecha_inicio = self.request.query_params.get('fecha_inicio')
-        fecha_fin = self.request.query_params.get('fecha_fin')
-        tipo = self.request.query_params.get('tipo')
-
-        if ministry_slug:
-            queryset = queryset.filter(
-                Q(ministry__slug=ministry_slug) |
-                Q(ministerios_relacionados__slug=ministry_slug)
-            ).distinct()
-        if fecha_inicio:
-            queryset = queryset.filter(fecha_inicio__gte=fecha_inicio)
-        if fecha_fin:
-            queryset = queryset.filter(fecha_inicio__lte=fecha_fin)
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
-
-        return queryset
+        return eventos_selectors.listar_eventos({
+            'ministerio': self.request.query_params.get('ministerio'),
+            'fecha_inicio': self.request.query_params.get('fecha_inicio'),
+            'fecha_fin': self.request.query_params.get('fecha_fin'),
+            'tipo': self.request.query_params.get('tipo'),
+        })
 
 
 class UsuarioViewSet(viewsets.ViewSet):
-    """ViewSet para gestión de usuarios"""
-
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'roles']:
-            return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated()]
 
     def list(self, request):
-        """Listar todos los usuarios"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        perfiles = PerfilUsuario.objects.select_related('user', 'creado_por').order_by('-fecha_creacion')
-        serializer = UsuarioCompletoSerializer(perfiles, many=True)
-        return Response(serializer.data)
+        usuarios = usuarios_selectors.listar_usuarios()
+        return Response(UsuarioCompletoSerializer(usuarios, many=True).data)
 
     def retrieve(self, request, pk=None):
-        """Obtener detalle de un usuario"""
-        try:
-            perfil = PerfilUsuario.objects.select_related('user').get(pk=pk)
-        except PerfilUsuario.DoesNotExist:
+        usuario = usuarios_selectors.obtener_usuario(pk)
+        if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
-        if not self._puede_acceder(request, perfil):
+        if not self._puede_acceder(request, usuario):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        serializer = UsuarioCompletoSerializer(perfil)
-        return Response(serializer.data)
+        return Response(UsuarioCompletoSerializer(usuario).data)
 
     def create(self, request):
-        """Crear nuevo usuario"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
         serializer = UsuarioCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            from django.contrib.auth.models import User
-            from django.db import transaction
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            with transaction.atomic():
-                user = User.objects.create_user(
-                    username=serializer.validated_data['username'],
-                    first_name=serializer.validated_data['first_name'],
-                    last_name=serializer.validated_data['last_name'],
-                    email=serializer.validated_data['email'],
-                    password=serializer.validated_data['password']
-                )
-
-                perfil_data = {
-                    'user': user,
-                    'rol': serializer.validated_data['rol'],
-                    'telefono': serializer.validated_data.get('telefono', ''),
-                    'permisos_especificos': serializer.validated_data.get('permisos_especificos', {}),
-                    'activo': serializer.validated_data.get('activo', True),
-                    'creado_por': request.user,
-                }
-                perfil = PerfilUsuario.objects.create(**perfil_data)
-
-                ministerios_ids = serializer.validated_data.get('ministerios_lidera', [])
-                if ministerios_ids:
-                    ministerios = Ministerio.objects.filter(id__in=ministerios_ids)
-                    perfil.ministerios_lidera.set(ministerios)
-
-            return Response(UsuarioCompletoSerializer(perfil).data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        usuario = usuarios_services.crear_usuario(
+            creado_por=request.user,
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password'],
+            first_name=serializer.validated_data['first_name'],
+            last_name=serializer.validated_data['last_name'],
+            email=serializer.validated_data['email'],
+            rol=serializer.validated_data['rol'],
+            telefono=serializer.validated_data.get('telefono', ''),
+            permisos_especificos=serializer.validated_data.get('permisos_especificos', {}),
+            is_active=serializer.validated_data.get('is_active', True),
+            ministerios_lidera_ids=serializer.validated_data.get('ministerios_lidera', []),
+        )
+        return Response(UsuarioCompletoSerializer(usuario).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk=None):
-        """Actualizar usuario"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            perfil = PerfilUsuario.objects.select_related('user').get(pk=pk)
-        except PerfilUsuario.DoesNotExist:
+        usuario = usuarios_selectors.obtener_usuario(pk)
+        if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UsuarioUpdateSerializer(data=request.data, context={'user': perfil})
-        if serializer.is_valid():
-            user = perfil.user
+        serializer = UsuarioUpdateSerializer(data=request.data, context={'user': usuario})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if 'first_name' in serializer.validated_data:
-                user.first_name = serializer.validated_data['first_name']
-            if 'last_name' in serializer.validated_data:
-                user.last_name = serializer.validated_data['last_name']
-            if 'email' in serializer.validated_data:
-                user.email = serializer.validated_data['email']
-            user.save()
+        update_data = {k: v for k, v in serializer.validated_data.items()
+                       if k not in ('password_confirm', 'password_nueva', 'ministerios_lidera')}
+        if 'ministerios_lidera' in serializer.validated_data:
+            update_data['ministerios_lidera_ids'] = serializer.validated_data['ministerios_lidera']
+        if 'password_nueva' in serializer.validated_data and serializer.validated_data['password_nueva']:
+            update_data['password_nueva'] = serializer.validated_data['password_nueva']
 
-            if 'rol' in serializer.validated_data:
-                perfil.rol = serializer.validated_data['rol']
-            if 'telefono' in serializer.validated_data:
-                perfil.telefono = serializer.validated_data['telefono']
-            if 'activo' in serializer.validated_data:
-                perfil.activo = serializer.validated_data['activo']
-            if 'permisos_especificos' in serializer.validated_data:
-                perfil.permisos_especificos = serializer.validated_data['permisos_especificos']
-            if 'ministerios_lidera' in serializer.validated_data:
-                ministerios = Ministerio.objects.filter(id__in=serializer.validated_data['ministerios_lidera'])
-                perfil.ministerios_lidera.set(ministerios)
-
-            perfil.save()
-
-            if serializer.validated_data.get('password_nueva'):
-                user.set_password(serializer.validated_data['password_nueva'])
-                user.save()
-
-            return Response(UsuarioCompletoSerializer(perfil).data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        usuario = usuarios_services.actualizar_usuario(usuario, **update_data)
+        return Response(UsuarioCompletoSerializer(usuario).data)
 
     def partial_update(self, request, pk=None):
         return self.update(request, pk)
 
     def destroy(self, request, pk=None):
-        """Eliminar usuario (desactivar)"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            perfil = PerfilUsuario.objects.get(pk=pk)
-        except PerfilUsuario.DoesNotExist:
+        usuario = usuarios_selectors.obtener_usuario(pk)
+        if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
-        if perfil.user == request.user:
-            return Response({'error': 'No puedes eliminarte a ti mismo'}, status=status.HTTP_400_BAD_REQUEST)
-
-        perfil.activo = False
-        perfil.save()
+        if usuario == request.user:
+            return Response({'error': 'No puedes desactivarte a ti mismo'}, status=status.HTTP_400_BAD_REQUEST)
+        usuarios_services.desactivar_usuario(usuario)
         return Response({'success': True, 'message': 'Usuario desactivado'})
 
     @action(detail=False, methods=['get'])
     def roles(self, request):
-        """Listar roles disponibles"""
-        return Response(PerfilUsuario.ROLES)
+        return Response(usuarios_selectors.listar_roles())
 
     @action(detail=True, methods=['post'], url_path='cambiar-rol')
     def cambiar_rol(self, request, pk=None):
-        """Cambiar rol de usuario"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            perfil = PerfilUsuario.objects.get(pk=pk)
-        except PerfilUsuario.DoesNotExist:
+        usuario = usuarios_selectors.obtener_usuario(pk)
+        if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
         nuevo_rol = request.data.get('rol')
-        if nuevo_rol not in dict(PerfilUsuario.ROLES):
+        if nuevo_rol not in dict(User.ROLES):
             return Response({'error': 'Rol inválido'}, status=status.HTTP_400_BAD_REQUEST)
-
-        perfil.rol = nuevo_rol
-        perfil.save()
-        return Response(UsuarioCompletoSerializer(perfil).data)
+        usuario = usuarios_services.cambiar_rol_usuario(usuario, nuevo_rol)
+        return Response(UsuarioCompletoSerializer(usuario).data)
 
     @action(detail=True, methods=['post'], url_path='asignar-ministerios')
     def asignar_ministerios(self, request, pk=None):
-        """Asignar ministerios que lidera un usuario"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            perfil = PerfilUsuario.objects.get(pk=pk)
-        except PerfilUsuario.DoesNotExist:
+        usuario = usuarios_selectors.obtener_usuario(pk)
+        if not usuario:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
         ministerios_ids = request.data.get('ministerios', [])
-        ministerios = Ministerio.objects.filter(id__in=ministerios_ids)
-        perfil.ministerios_lidera.set(ministerios)
-        perfil.save()
-
-        return Response(UsuarioCompletoSerializer(perfil).data)
+        usuario = usuarios_services.asignar_ministerios_usuario(usuario, ministerios_ids)
+        return Response(UsuarioCompletoSerializer(usuario).data)
 
     @action(detail=False, methods=['get'], url_path='ministerios-disponibles')
     def ministerios_disponibles(self, request):
-        """Listar todos los ministerios para asignación"""
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
-
-        ministerios = Ministerio.objects.filter(activo=True).values('id', 'nombre', 'slug')
-        return Response(list(ministerios))
+        return Response(list(usuarios_selectors.listar_ministerios_para_asignacion()))
 
     def _es_admin(self, request):
-        perfil = getattr(request.user, 'perfil', None)
-        return perfil and perfil.rol == 'admin'
+        return request.user.is_authenticated and request.user.rol == 'admin'
 
-    def _puede_acceder(self, request, perfil):
-        if self._es_admin(request):
-            return True
-        perfil_actual = getattr(request.user, 'perfil', None)
-        return perfil_actual and perfil_actual.id == perfil.id
+    def _puede_acceder(self, request, usuario):
+        return self._es_admin(request) or request.user == usuario
 
 
 class PermisoViewSet(viewsets.ModelViewSet):
-    """ViewSet para gestión de permisos"""
     queryset = Permiso.objects.all()
     serializer_class = PermisoSerializer
 
@@ -818,10 +551,6 @@ class PermisoViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def list(self, request):
-        if not self._es_admin(request):
+        if not request.user.is_authenticated or request.user.rol != 'admin':
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
         return super().list(request)
-
-    def _es_admin(self, request):
-        perfil = getattr(request.user, 'perfil', None)
-        return perfil and perfil.rol == 'admin'
