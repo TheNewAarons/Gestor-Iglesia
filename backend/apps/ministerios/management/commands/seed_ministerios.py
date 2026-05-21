@@ -3,16 +3,16 @@ from apps.ministerios.models import Ministerio
 
 
 MINISTERIOS = [
-    {'nombre': 'MNI', 'slug': 'mni', 'descripcion': 'Ministerio de Nuevos Integrantes', 'color': '#10B981', 'icono': 'user-plus'},
-    {'nombre': 'DNI', 'slug': 'dni', 'descripcion': 'Discipulado Nuevo Instituto', 'color': '#3B82F6', 'icono': 'book-open'},
-    {'nombre': 'JNI', 'slug': 'jni', 'descripcion': 'Juventud Nueva Israel', 'color': '#8B5CF6', 'icono': 'users'},
-    {'nombre': 'MAM', 'slug': 'mam', 'descripcion': 'Ministerio de Animación y Ministère', 'color': '#EC4899', 'icono': 'heart'},
-    {'nombre': 'VID', 'slug': 'vid', 'descripcion': 'Visitas a Dios', 'color': '#F59E0B', 'icono': 'home'},
-    {'nombre': 'EXPLO', 'slug': 'explo', 'descripcion': 'Escuela de Predicadores y Líderes', 'color': '#EF4444', 'icono': 'graduation-cap'},
+    {'nombre': 'MNI', 'slug': 'mni', 'descripcion': 'Misiones Nazarenas Internacionales', 'color': '#10B981', 'icono': 'user-plus', 'logo': '/logos/ministerios/mni.png'},
+    {'nombre': 'DNI', 'slug': 'dni', 'descripcion': 'Discipulado Nazareno Internacional', 'color': '#3B82F6', 'icono': 'book-open', 'logo': '/logos/ministerios/dni.png'},
+    {'nombre': 'JNI', 'slug': 'jni', 'descripcion': 'Juventud Nazarena Internacional', 'color': '#8B5CF6', 'icono': 'users', 'logo': '/logos/ministerios/jni.png'},
+    {'nombre': 'MAM', 'slug': 'mam', 'descripcion': 'Ministerio de Mujeres', 'color': '#EC4899', 'icono': 'heart', 'logo': '/logos/ministerios/mam.png'},
+    {'nombre': 'VID', 'slug': 'vid', 'descripcion': 'Ministerio de Varones', 'color': '#F59E0B', 'icono': 'home'},
+    {'nombre': 'EXPLO', 'slug': 'explo', 'descripcion': 'Exploradores del Rey', 'color': '#EF4444', 'icono': 'graduation-cap'},
     {'nombre': 'Danza', 'slug': 'danza', 'descripcion': 'Ministerio de Danza', 'color': '#14B8A6', 'icono': 'music'},
     {'nombre': 'Teatro', 'slug': 'teatro', 'descripcion': 'Ministerio de Teatro', 'color': '#6366F1', 'icono': 'theater-masks'},
     {'nombre': 'Alabanza', 'slug': 'alabanza', 'descripcion': 'Ministerio de Alabanza', 'color': '#F97316', 'icono': 'microphone'},
-    {'nombre': 'Comunicaciones', 'slug': 'comunicaciones', 'descripcion': 'Ministerio de Comunicaciones', 'color': '#06B6D4', 'icono': 'broadcast'},
+    {'nombre': 'Comunicaciones', 'slug': 'comunicaciones', 'descripcion': 'Ministerio de Comunicaciones', 'color': '#06B6D4', 'icono': 'broadcast', 'logo': '/logos/ministerios/comunicaciones.png'},
     {'nombre': 'Compasión', 'slug': 'compasion', 'descripcion': 'Ministerio de Compasión', 'color': '#84CC16', 'icono': 'hand-holding-heart'},
     {'nombre': 'NazaKids', 'slug': 'nazakids', 'descripcion': 'Ministerio de Niños', 'color': '#FBBF24', 'icono': 'child'},
     {'nombre': 'Adulto Mayor', 'slug': 'adulto-mayor', 'descripcion': 'Ministerio de Adulto Mayor', 'color': '#78716C', 'icono': 'users'},
@@ -34,6 +34,7 @@ class Command(BaseCommand):
                     'descripcion': m['descripcion'],
                     'color': m['color'],
                     'icono': m['icono'],
+                    'logo': m.get('logo'),
                     'activo': True
                 }
             )

@@ -109,7 +109,7 @@ class MinisterioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ministerio
         fields = [
-            'id', 'nombre', 'slug', 'descripcion', 'color', 'icono', 'activo',
+            'id', 'nombre', 'slug', 'descripcion', 'color', 'icono', 'logo', 'activo',
             'miembros_count', 'lideres_nombres', 'fecha_creacion', 'fecha_actualizacion'
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
@@ -119,18 +119,33 @@ class MinisterioSerializer(serializers.ModelSerializer):
 
 
 class MiembroSerializer(serializers.ModelSerializer):
+    ministry = serializers.PrimaryKeyRelatedField(read_only=True)
     nombre_completo = serializers.CharField(read_only=True)
     ministry_nombre = serializers.CharField(source='ministry.nombre', read_only=True)
+    usuario_nombre = serializers.SerializerMethodField(read_only=True)
+    usuario_rol = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Miembro
         fields = [
-            'id', 'ministry', 'ministry_nombre', 'usuario', 'primer_nombre', 'segundo_nombre',
+            'id', 'ministry', 'ministry_nombre', 'usuario', 'usuario_nombre',
+            'usuario_rol',
+            'primer_nombre', 'segundo_nombre',
             'primer_apellido', 'segundo_apellido', 'nombre_completo', 'fecha_nacimiento',
             'edad', 'estado_civil', 'telefono', 'email', 'direccion', 'clase',
-            'rol_en_ministerio', 'observaciones', 'activo', 'fecha_ingreso', 'fecha_actualizacion'
+            'rol_en_ministerio', 'observaciones', 'origen', 'activo', 'fecha_ingreso', 'fecha_actualizacion'
         ]
         read_only_fields = ['id', 'fecha_ingreso', 'fecha_actualizacion']
+
+    def get_usuario_nombre(self, obj):
+        if obj.usuario:
+            return obj.usuario.username
+        return None
+
+    def get_usuario_rol(self, obj):
+        if obj.usuario:
+            return obj.usuario.rol
+        return None
 
 
 class MovimientoCajaSerializer(serializers.ModelSerializer):

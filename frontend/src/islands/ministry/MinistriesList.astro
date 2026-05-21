@@ -49,9 +49,15 @@ import MinistryIcon from '../../components/MinistryIcon.astro';
         var m = ministerios[i];
         html += '<a href="/ministerios/' + m.slug + '" class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer no-underline block">';
         html += '<div class="flex items-center gap-3 mb-3">';
-        html += '<div class="w-10 h-10 rounded-md flex items-center justify-center text-white" style="background-color: ' + (m.color || '#3B82F6') + '">';
-        html += '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v4H4V6l8-4z"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><line x1="12" y1="6" x2="12" y2="10"/></svg>';
-        html += '</div>';
+        if (m.logo) {
+          html += '<div class="w-10 h-10 rounded-md flex items-center justify-center overflow-hidden bg-white">';
+          html += '<img class="w-full h-full object-contain" src="' + m.logo + '" alt="' + m.nombre + '" />';
+          html += '</div>';
+        } else {
+          html += '<div class="w-10 h-10 rounded-md flex items-center justify-center text-white" style="background-color: ' + (m.color || '#3B82F6') + '">';
+          html += '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v4H4V6l8-4z"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><line x1="12" y1="6" x2="12" y2="10"/></svg>';
+          html += '</div>';
+        }
         html += '<div><h3 class="text-base font-semibold text-gray-900">' + m.nombre + '</h3>';
         html += '<p class="text-xs text-gray-500 truncate" style="max-width: 180px">' + (m.descripcion || '') + '</p>';
         html += '</div></div>';

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from ..models import Ministerio, Permiso
 
 User = get_user_model()
@@ -9,6 +10,18 @@ def listar_usuarios():
     return User.objects.select_related('creado_por').prefetch_related(
         'ministerios_lidera'
     ).order_by('-date_joined')
+
+
+def listar_usuarios_simples(search=None):
+    """Lista usuarios con datos básicos para vinculación"""
+    qs = User.objects.filter(is_active=True)
+    if search:
+        qs = qs.filter(
+            Q(username__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search)
+        )
+    return qs.values('id', 'username', 'first_name', 'last_name', 'email', 'telefono', 'rol')[:50]
 
 
 def obtener_usuario(pk: int):

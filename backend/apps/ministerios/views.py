@@ -419,6 +419,11 @@ class MiembroViewSet(viewsets.ModelViewSet):
     queryset = Miembro.objects.all()
     serializer_class = MiembroSerializer
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'cumpleanos']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
     def get_queryset(self):
         return miembro_selectors.listar_miembros({
             'ministerio': self.request.query_params.get('ministerio'),
@@ -426,6 +431,9 @@ class MiembroViewSet(viewsets.ModelViewSet):
             'estado_civil': self.request.query_params.get('estado_civil'),
             'search': self.request.query_params.get('search'),
         })
+
+    def perform_destroy(self, instance):
+        miembro_services.desactivar_miembro(instance)
 
     @action(detail=False, methods=['get'])
     def cumpleanos(self, request):
@@ -620,6 +628,13 @@ class UsuarioViewSet(viewsets.ViewSet):
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
         return Response(list(usuarios_selectors.listar_ministerios_para_asignacion()))
+
+    @action(detail=False, methods=['get'], url_path='simples')
+    def usuarios_simples(self, request):
+        if not (request.user.is_authenticated and request.user.rol in ['admin', 'pastora']):
+            return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
+        search = request.query_params.get('search')
+        return Response(list(usuarios_selectors.listar_usuarios_simples(search)))
 
     def _es_admin(self, request):
         return request.user.is_authenticated and request.user.rol == 'admin'

@@ -114,6 +114,7 @@ class Ministerio(models.Model):
     descripcion = models.TextField(blank=True)
     color = models.CharField(max_length=7, default='#3B82F6')
     icono = models.CharField(max_length=50, default='church')
+    logo = models.CharField(max_length=200, blank=True, null=True)
     activo = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -189,6 +190,7 @@ class Miembro(models.Model):
     rol_en_ministerio = models.CharField(max_length=20, choices=ROLES_MINISTERIO, default='miembro')
 
     observaciones = models.TextField(blank=True)
+    origen = models.CharField(max_length=20, choices=[('manual', 'Manual'), ('sistema', 'Sistema')], default='manual', blank=True)
     activo = models.BooleanField(default=True)
     fecha_ingreso = models.DateField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)

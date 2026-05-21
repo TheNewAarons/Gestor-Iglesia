@@ -169,6 +169,15 @@ class UsuariosStore {
     }
   }
 
+  async fetchUsuariosSimples(search?: string) {
+    try {
+      const params = search ? `?search=${encodeURIComponent(search)}` : '';
+      return await api.get<{ id: number; username: string; first_name: string; last_name: string; email: string; telefono: string; rol: string }[]>(`/usuarios/simples/${params}`);
+    } catch (error) {
+      return [];
+    }
+  }
+
   clearUsuarioActual() {
     this.setState({ usuarioActual: null });
   }

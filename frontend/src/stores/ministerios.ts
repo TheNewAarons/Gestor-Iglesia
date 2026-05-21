@@ -7,6 +7,7 @@ export interface Ministerio {
   descripcion: string;
   color: string;
   icono: string;
+  logo: string | null;
   activo: boolean;
   miembros_count: number;
   lideres_nombres: string[];
@@ -28,6 +29,7 @@ export interface Miembro {
   email: string;
   clase: string;
   rol_en_ministerio: string;
+  usuario_rol?: string;
   activo: boolean;
 }
 
@@ -316,6 +318,29 @@ class MinisteriosStore {
       const nuevo = await api.post<Miembro>(`/ministerios/${slug}/miembros/`, data);
       this.setState({ miembros: [...this.state.miembros, nuevo] });
       return nuevo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateMiembro(id: number, data: Partial<Miembro>) {
+    try {
+      const updated = await api.patch<Miembro>(`/miembros/${id}/`, data);
+      const miembros = this.state.miembros.map(m =>
+        m.id === id ? { ...m, ...updated } : m
+      );
+      this.setState({ miembros });
+      return updated;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteMiembro(id: number) {
+    try {
+      await api.delete(`/miembros/${id}/`);
+      const miembros = this.state.miembros.filter(m => m.id !== id);
+      this.setState({ miembros });
     } catch (error) {
       throw error;
     }

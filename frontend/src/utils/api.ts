@@ -62,9 +62,17 @@ class ApiClient {
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-      const message = typeof body.error === 'object'
-        ? (body.error.mensaje || JSON.stringify(body.error))
-        : (body.detail || body.error || body.message || 'Error en la solicitud');
+      let message;
+      if (body.errors && typeof body.errors === 'object') {
+        const details = Object.entries(body.errors)
+          .map(([k, v]) => k + ': ' + (Array.isArray(v) ? v.join(', ') : v))
+          .join('; ');
+        message = (body.message || 'Error de validación') + ' (' + details + ')';
+      } else if (typeof body.error === 'object' && body.error !== null) {
+        message = body.error.mensaje || JSON.stringify(body.error);
+      } else {
+        message = body.message || body.detail || body.error || 'Error en la solicitud';
+      }
       const err = new Error(message);
       (err as any).body = body;
       (err as any).status = response.status;

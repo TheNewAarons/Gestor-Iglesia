@@ -1,6 +1,32 @@
 from django.db.models import Q
 from datetime import date
+from django.contrib.auth import get_user_model
 from ..models import Miembro, Ministerio
+
+User = get_user_model()
+
+
+def _sincronizar_usuarios_como_miembros(ministry):
+    """Asegura que todos los usuarios en ministerios_lidera tengan su registro Miembro"""
+    users = ministry.lideres.filter(is_active=True)
+    existing_user_ids = set(
+        Miembro.objects.filter(ministry=ministry, usuario__isnull=False)
+        .values_list('usuario_id', flat=True)
+    )
+    for user in users:
+        if user.id not in existing_user_ids:
+            rol_en_ministerio = 'lider' if user.rol == 'lider_ministerio' else 'miembro'
+            Miembro.objects.create(
+                ministry=ministry,
+                usuario=user,
+                primer_nombre=user.first_name or user.username,
+                primer_apellido=user.last_name or '',
+                email=user.email or '',
+                telefono=user.telefono or '',
+                rol_en_ministerio=rol_en_ministerio,
+                origen='sistema',
+                activo=True,
+            )
 
 
 def listar_miembros(filters: dict = None):
@@ -26,7 +52,8 @@ def listar_miembros(filters: dict = None):
 
 
 def listar_miembros_por_ministerio(ministry: Ministerio, clase: str = None):
-    """Lista miembros de un ministerio específico"""
+    """Lista miembros de un ministerio específico, sincronizando usuarios asignados"""
+    _sincronizar_usuarios_como_miembros(ministry)
     queryset = ministry.miembros.select_related('usuario').filter(activo=True)
     if clase:
         queryset = queryset.filter(clase=clase)

@@ -99,6 +99,12 @@ const BADGE_CLASSES: Record<string, string> = {
               {Object.entries(ROLE_DISPLAY).map(([k, v]) => <option value={k}>{v}</option>)}
             </select>
           </div>
+          <div id="um-ministerios-container" class="md:col-span-2 hidden">
+            <label class="text-sm font-medium text-gray-700">Ministerios</label>
+            <div id="um-ministerios-list" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto rounded-md border border-gray-200 p-3">
+            </div>
+            <p id="um-ministerios-hint" class="text-xs text-gray-500 mt-1"></p>
+          </div>
           <div id="um-password-fields" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Contraseña</label>
             <input id="um-password" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
@@ -122,6 +128,7 @@ const BADGE_CLASSES: Record<string, string> = {
   import { usuariosStore } from '../../stores/usuarios';
 
   var skeleton, content, tbody, searchInput, modal, modalTitle, modalClose, pwFields, pwConfirmFields;
+  var ministeriosContainer, ministeriosList, ministeriosHint, rolSelect;
 
   var editingUserId = null;
 
@@ -141,6 +148,43 @@ const BADGE_CLASSES: Record<string, string> = {
   function openModal() { if (modal) modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   function closeModal() { if (modal) modal.style.display = 'none'; document.body.style.overflow = ''; }
 
+  function renderMinisteriosCheckboxes(selectedIds) {
+    if (!ministeriosContainer || !ministeriosList || !ministeriosHint || !rolSelect) return;
+    var state = usuariosStore.getState();
+    var ministerios = state.ministeriosDisponibles || [];
+    var rol = rolSelect.value;
+
+    if (rol !== 'lider_ministerio' && rol !== 'concilio') {
+      ministeriosContainer.classList.add('hidden');
+      return;
+    }
+
+    ministeriosContainer.classList.remove('hidden');
+    if (rol === 'lider_ministerio') {
+      ministeriosHint.textContent = 'Selecciona un ministerio para liderar';
+    } else {
+      ministeriosHint.textContent = 'Selecciona uno o más ministerios para el concilio';
+    }
+
+    var isRadio = rol === 'lider_ministerio';
+    var html = '';
+    for (var i = 0; i < ministerios.length; i++) {
+      var m = ministerios[i];
+      var checked = selectedIds && selectedIds.indexOf(m.id) !== -1 ? 'checked' : '';
+      html += '<label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="' + (isRadio ? 'radio' : 'checkbox') + '" name="um-ministerio" value="' + m.id + '" ' + checked + ' class="rounded border-gray-300 text-primary focus:ring-accent/20"> ' + m.nombre + '</label>';
+    }
+    ministeriosList.innerHTML = html;
+  }
+
+  function getSelectedMinisterios() {
+    if (!ministeriosContainer || ministeriosContainer.classList.contains('hidden')) return [];
+    var inputs = document.querySelectorAll('input[name="um-ministerio"]:checked');
+    var ids = [];
+    for (var i = 0; i < inputs.length; i++) {
+      ids.push(parseInt(inputs[i].value));
+    }
+    return ids;
+  }
   function bindEvents() {
     if (!modal || !modalClose || !tbody || !searchInput) return;
 
@@ -149,8 +193,10 @@ const BADGE_CLASSES: Record<string, string> = {
     if (cancelBtn) cancelBtn.onclick = closeModal;
     modal.onclick = function(e) { if (e.target === modal) closeModal(); };
 
+    if (rolSelect) rolSelect.onchange = function() { renderMinisteriosCheckboxes([]); };
+
     var createBtn = document.getElementById('users-create-btn');
-    if (createBtn) createBtn.onclick = function() {
+    if (createBtn) createBtn.onclick = async function() {
       editingUserId = null;
       if (modalTitle) modalTitle.textContent = 'Nuevo Usuario';
       var usernameEl = document.getElementById('um-username');
@@ -159,13 +205,19 @@ const BADGE_CLASSES: Record<string, string> = {
       el = document.getElementById('um-first-name'); if (el) el.value = '';
       el = document.getElementById('um-last-name'); if (el) el.value = '';
       el = document.getElementById('um-phone'); if (el) el.value = '';
-      el = document.getElementById('um-rol'); if (el) el.value = 'concilio';
+      if (rolSelect) rolSelect.value = 'concilio';
       el = document.getElementById('um-password'); if (el) el.value = '';
       el = document.getElementById('um-password-confirm'); if (el) el.value = '';
       if (pwFields) pwFields.classList.remove('hidden');
       if (pwConfirmFields) pwConfirmFields.classList.remove('hidden');
       var saveBtn = document.getElementById('um-save');
       if (saveBtn) saveBtn.textContent = 'Crear';
+
+      var state = usuariosStore.getState();
+      if (!state.ministeriosDisponibles || state.ministeriosDisponibles.length === 0) {
+        await usuariosStore.fetchMinisteriosDisponibles();
+      }
+      renderMinisteriosCheckboxes([]);
       openModal();
     };
 
@@ -178,6 +230,7 @@ const BADGE_CLASSES: Record<string, string> = {
         last_name: (document.getElementById('um-last-name') || {}).value,
         telefono: (document.getElementById('um-phone') || {}).value,
         rol: (document.getElementById('um-rol') || {}).value,
+        ministerios_lidera: getSelectedMinisterios(),
       };
       if (!editingUserId) {
         data.password = (document.getElementById('um-password') || {}).value;
@@ -197,8 +250,14 @@ const BADGE_CLASSES: Record<string, string> = {
     searchInput.oninput = renderUsers;
   }
 
-  function openEdit(user) {
+  async function openEdit(user) {
     editingUserId = user.id;
+
+    var state = usuariosStore.getState();
+    if (!state.ministeriosDisponibles || state.ministeriosDisponibles.length === 0) {
+      await usuariosStore.fetchMinisteriosDisponibles();
+    }
+
     if (modalTitle) modalTitle.textContent = 'Editar Usuario';
     var el = document.getElementById('um-username');
     if (el) { el.value = user.username; el.disabled = true; }
@@ -206,10 +265,11 @@ const BADGE_CLASSES: Record<string, string> = {
     el = document.getElementById('um-first-name'); if (el) el.value = user.first_name || '';
     el = document.getElementById('um-last-name'); if (el) el.value = user.last_name || '';
     el = document.getElementById('um-phone'); if (el) el.value = user.telefono || '';
-    el = document.getElementById('um-rol'); if (el) el.value = user.rol || 'concilio';
+    if (rolSelect) rolSelect.value = user.rol || 'concilio';
     if (pwFields) pwFields.classList.add('hidden');
     if (pwConfirmFields) pwConfirmFields.classList.add('hidden');
     el = document.getElementById('um-save'); if (el) el.textContent = 'Actualizar';
+    renderMinisteriosCheckboxes(user.ministerios_lidera || []);
     openModal();
   }
 
@@ -275,6 +335,10 @@ const BADGE_CLASSES: Record<string, string> = {
     modalClose = document.getElementById('user-modal-close');
     pwFields = document.getElementById('um-password-fields');
     pwConfirmFields = document.getElementById('um-password-confirm-fields');
+    ministeriosContainer = document.getElementById('um-ministerios-container');
+    ministeriosList = document.getElementById('um-ministerios-list');
+    ministeriosHint = document.getElementById('um-ministerios-hint');
+    rolSelect = document.getElementById('um-rol');
 
     bindEvents();
 
