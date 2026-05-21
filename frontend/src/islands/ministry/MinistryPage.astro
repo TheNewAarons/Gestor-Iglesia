@@ -87,6 +87,7 @@ const TAB_LABELS: Record<string, string> = {
   var activeTab = 'dashboard';
   var ministryData = null;
   var dashboardData = null;
+  var contentArea = null;
 
   function formatCurrency(v) {
     return new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(v);
@@ -117,62 +118,76 @@ const TAB_LABELS: Record<string, string> = {
 
   async function loadTab(tab) {
     try {
-      const store = ministeriosStore.getState();
+      var st;
       switch (tab) {
         case 'dashboard':
           contentArea.innerHTML = renderDashboard();
           break;
         case 'miembros':
           await ministeriosStore.fetchMiembros(slug);
-          contentArea.innerHTML = renderMembersTab(store.miembros || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderMembersTab(st.miembros || []);
           bindMembersForm();
           break;
         case 'caja':
           await ministeriosStore.fetchCaja(slug);
-          contentArea.innerHTML = renderFinanceTab(store.caja);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderFinanceTab(st.caja);
           bindFinanceForm();
           break;
         case 'inventario':
           await ministeriosStore.fetchInventario(slug);
-          contentArea.innerHTML = renderInventoryTab(store.inventario || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderInventoryTab(st.inventario || []);
           bindInventoryForm();
           break;
         case 'ofrendas':
           await ministeriosStore.fetchOfrendas(slug);
-          contentArea.innerHTML = renderOfferingTab(store.ofrendas || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderOfferingTab(st.ofrendas || []);
           break;
         case 'eventos':
           await ministeriosStore.fetchEventos(slug);
-          contentArea.innerHTML = renderEventsTab(store.eventos || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderEventsTab(st.eventos || []);
+          bindEventsForm();
+          bindEventsActions();
           break;
         case 'asistencia':
           await ministeriosStore.fetchAsistencia(slug);
-          contentArea.innerHTML = renderAttendanceTab(store.asistencia || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderAttendanceTab(st.asistencia || []);
           break;
         case 'lecciones':
           await ministeriosStore.fetchLecciones();
-          contentArea.innerHTML = renderLessonsTab(store.lecciones || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderLessonsTab(st.lecciones || []);
           break;
         case 'canciones':
           await ministeriosStore.fetchCanciones();
-          contentArea.innerHTML = renderSongsTab(store.canciones || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderSongsTab(st.canciones || []);
           break;
         case 'programas':
           await ministeriosStore.fetchProgramas(slug);
-          contentArea.innerHTML = renderProgramsTab(store.programas || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderProgramsTab(st.programas || []);
           break;
         case 'recursos':
           await ministeriosStore.fetchRecursos(slug);
-          contentArea.innerHTML = renderResourcesTab(store.recursos || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderResourcesTab(st.recursos || []);
           break;
         case 'ideas':
           await ministeriosStore.fetchIdeas(slug);
-          contentArea.innerHTML = renderIdeasTab(store.ideas || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderIdeasTab(st.ideas || []);
           bindIdeasToggle();
           break;
         case 'planificacion':
           await ministeriosStore.fetchPlanificaciones(slug);
-          contentArea.innerHTML = renderPlansTab(store.planificaciones || []);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderPlansTab(st.planificaciones || []);
           break;
       }
     } catch (e) {
@@ -320,13 +335,299 @@ const TAB_LABELS: Record<string, string> = {
   }
 
   function renderEventsTab(eventos) {
-    var h = '<div class="space-y-4"><div class="grid gap-3">';
+    var h = '';
+    h += '<div class="space-y-4"><div class="flex justify-between items-center"><h3 class="font-semibold text-gray-900">Eventos (' + eventos.length + ')</h3><button id="events-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Agregar</button></div>';
+    h += '<div id="events-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Título</label><input id="ef-titulo" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" required /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Tipo</label><select id="ef-tipo" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="propio">Propio</option><option value="compartido">Compartido</option></select></div>';
+    h += '<div id="ef-shared-ministries" class="md:col-span-2 hidden"><label class="text-sm font-medium text-gray-700 block mb-2">Compartir con ministerios</label><div id="ef-ministries-list" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-md bg-gray-50/50"></div></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Fecha</label><input id="ef-fecha" type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Hora</label><input id="ef-hora" type="time" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Fecha fin (opcional)</label><input id="ef-fecha-fin" type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Hora fin (opcional)</label><input id="ef-hora-fin" type="time" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Ubicación</label><input id="ef-ubicacion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Descripción</label><textarea id="ef-desc" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white resize-none"></textarea></div>';
+    h += '</div><p id="events-form-error" class="text-sm text-red-600 mt-2 hidden"></p><div class="flex gap-2 mt-4"><button id="events-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="events-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '<div class="grid gap-3">';
     for (var i = 0; i < eventos.length; i++) {
       var ev = eventos[i];
-      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><div><h4 class="font-medium text-gray-900">' + ev.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + formatDate(ev.fecha_inicio) + '</p></div><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (ev.tipo === 'compartido' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700') + '">' + ev.tipo + '</span></div></div>';
+      var timeInfo = formatDate(ev.fecha_inicio);
+      if (ev.hora_inicio) {
+        timeInfo += ' ' + (ev.hora_inicio.length >= 5 ? ev.hora_inicio.substring(0, 5) : ev.hora_inicio);
+      }
+      if (ev.fecha_fin) {
+        timeInfo += ' - ' + formatDate(ev.fecha_fin);
+        if (ev.hora_fin) timeInfo += ' ' + (ev.hora_fin.length >= 5 ? ev.hora_fin.substring(0, 5) : ev.hora_fin);
+      }
+      var showActions = canEditEvent(ev);
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><div><h4 class="font-medium text-gray-900">' + ev.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + timeInfo + '</p>' + (ev.ministry_nombre ? '<p class="text-xs text-gray-400 mt-0.5">' + ev.ministry_nombre + '</p>' : '') + (ev.ubicacion ? '<p class="text-xs text-gray-400 mt-0.5">📍 ' + ev.ubicacion + '</p>' : '') + '</div><div class="flex items-start gap-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (ev.tipo === 'compartido' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700') + '">' + ev.tipo + '</span>' + (showActions ? '<div class="flex gap-1"><button data-edit-event="' + ev.id + '" class="p-1 text-gray-400 hover:text-accent cursor-pointer" title="Editar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button><button data-delete-event="' + ev.id + '" class="p-1 text-gray-400 hover:text-red-500 cursor-pointer" title="Eliminar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>' : '') + '</div></div></div>';
     }
+    if (eventos.length === 0) h += '<p class="text-center text-gray-500 py-8">Sin eventos</p>';
     h += '</div></div>';
     return h;
+  }
+
+  async function sendEvento(data, forzar) {
+    var API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    var finalData = forzar ? { ...data, forzar: true } : data;
+    var url, method;
+
+    if (editingEventId) {
+      url = API_BASE + '/eventos/' + editingEventId + '/';
+      method = 'PUT';
+      if (ministryData && ministryData.id) finalData.ministry = ministryData.id;
+    } else {
+      url = API_BASE + '/ministerios/' + slug + '/eventos/';
+      method = 'POST';
+    }
+
+    var response = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(finalData)
+    });
+    if (!response.ok) {
+      var body = await response.json().catch(function() { return {}; });
+      var errorInfo = body.error || body;
+      if (errorInfo && errorInfo.tipo === 'conflicto_horario' && !forzar) {
+        var conflictos = errorInfo.conflictos || [];
+        var mensaje = errorInfo.mensaje || 'Hay un conflicto de horario en esta ubicación.';
+        if (conflictos.length > 0) {
+          mensaje += '\n\nEventos que se solapan:';
+          conflictos.forEach(function(c) { mensaje += '\n- ' + c.titulo; });
+        }
+        mensaje += '\n\n¿Deseas forzar la creación de todos modos?';
+        if (confirm(mensaje)) {
+          return await sendEvento(data, true);
+        }
+        return false;
+      }
+      throw new Error(errorInfo.mensaje || errorInfo.detail || 'Error al ' + (editingEventId ? 'editar' : 'crear') + ' el evento');
+    }
+    return true;
+  }
+
+  function canEditEvent(ev) {
+    var user = authStore.getState().user;
+    if (!user) return false;
+    if (user.rol === 'admin' || user.rol === 'pastora') return true;
+    if (user.rol === 'lider_ministerio' && user.ministerios_lidera) {
+      var evIds = [ev.ministry];
+      if (ev.ministerios_relacionados) evIds = evIds.concat(ev.ministerios_relacionados);
+      var lideraIds = user.ministerios_lidera.map(function(m) { return m.id; });
+      return evIds.some(function(id) { return lideraIds.indexOf(id) !== -1; });
+    }
+    return false;
+  }
+
+  async function openEditForm(ev) {
+    editingEventId = ev.id;
+    var form = document.getElementById('events-form');
+    var saveBtn = document.getElementById('events-save');
+    if (!form) return;
+
+    document.getElementById('ef-titulo').value = ev.titulo || '';
+    document.getElementById('ef-desc').value = ev.descripcion || '';
+    document.getElementById('ef-ubicacion').value = ev.ubicacion || '';
+    document.getElementById('ef-tipo').value = ev.tipo || 'propio';
+    document.getElementById('ef-hora').value = ev.hora_inicio || '';
+
+    if (ev.fecha_inicio) {
+      var d = new Date(ev.fecha_inicio);
+      var dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      document.getElementById('ef-fecha').value = dateStr;
+      if (!ev.hora_inicio) {
+        document.getElementById('ef-hora').value = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+    }
+
+    if (ev.fecha_fin) {
+      var df = new Date(ev.fecha_fin);
+      document.getElementById('ef-fecha-fin').value = df.getFullYear() + '-' + String(df.getMonth() + 1).padStart(2, '0') + '-' + String(df.getDate()).padStart(2, '0');
+    }
+    if (ev.hora_fin) {
+      document.getElementById('ef-hora-fin').value = ev.hora_fin;
+    }
+
+    if (ev.tipo === 'compartido') {
+      var sharedDiv = document.getElementById('ef-shared-ministries');
+      if (sharedDiv) sharedDiv.classList.remove('hidden');
+      if (!ministriesLoaded) await loadMinistryCheckboxes();
+      var checks = document.querySelectorAll('.ef-min-check');
+      var relatedIds = (ev.ministerios_relacionados || []).slice();
+      if (ev.ministry) relatedIds.push(ev.ministry);
+      checks.forEach(function(cb) {
+        var id = parseInt(cb.value);
+        cb.checked = relatedIds.indexOf(id) !== -1;
+      });
+    }
+
+    form.classList.remove('hidden');
+    if (saveBtn) saveBtn.textContent = 'Actualizar';
+    hideError();
+  }
+
+  async function deleteEvento(ev) {
+    if (!confirm('¿Eliminar el evento "' + ev.titulo + '"?\nEsta acción no se puede deshacer.')) return;
+    var API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    try {
+      var response = await fetch(API_BASE + '/eventos/' + ev.id + '/', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        var body = await response.json().catch(function() { return {}; });
+        throw new Error(body.detail || 'Error al eliminar el evento');
+      }
+      await loadTab('eventos');
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  function bindEventsActions() {
+    var grid = document.querySelector('#mp-content-area .grid.gap-3');
+    if (!grid) return;
+    grid.addEventListener('click', function(e) {
+      var editBtn = e.target.closest('[data-edit-event]');
+      var deleteBtn = e.target.closest('[data-delete-event]');
+      if (editBtn) {
+        var id = parseInt(editBtn.getAttribute('data-edit-event'));
+        var st = ministeriosStore.getState();
+        var ev = (st.eventos || []).find(function(ev) { return ev.id === id; });
+        if (ev) openEditForm(ev);
+      }
+      if (deleteBtn) {
+        var delId = parseInt(deleteBtn.getAttribute('data-delete-event'));
+        var st2 = ministeriosStore.getState();
+        var ev2 = (st2.eventos || []).find(function(ev) { return ev.id === delId; });
+        if (ev2) deleteEvento(ev2);
+      }
+    });
+  }
+
+  var ministriesLoaded = false;
+  var editingEventId = null;
+
+  function bindEventsForm() {
+    var addBtn = document.getElementById('events-add-btn');
+    var form = document.getElementById('events-form');
+    var saveBtn = document.getElementById('events-save');
+    var cancelBtn = document.getElementById('events-cancel');
+    var tipoSelect = document.getElementById('ef-tipo');
+    var sharedDiv = document.getElementById('ef-shared-ministries');
+    if (!addBtn || !form) return;
+
+    addBtn.onclick = function() { editingEventId = null; resetEventsForm(); var sb = document.getElementById('events-save'); if (sb) sb.textContent = 'Guardar'; form.classList.toggle('hidden'); hideError(); };
+    if (cancelBtn) cancelBtn.addEventListener('click', function() { editingEventId = null; resetEventsForm(); var sb = document.getElementById('events-save'); if (sb) sb.textContent = 'Guardar'; form.classList.add('hidden'); hideError(); });
+
+    if (tipoSelect && sharedDiv) {
+      tipoSelect.addEventListener('change', async function() {
+        if (tipoSelect.value === 'compartido') {
+          sharedDiv.classList.remove('hidden');
+          if (!ministriesLoaded) await loadMinistryCheckboxes();
+        } else {
+          sharedDiv.classList.add('hidden');
+        }
+      });
+    }
+
+    if (saveBtn) saveBtn.addEventListener('click', async function() {
+      var fechaVal = document.getElementById('ef-fecha').value;
+      var horaVal = document.getElementById('ef-hora').value;
+      var fechaFinVal = document.getElementById('ef-fecha-fin').value;
+      var horaFinVal = document.getElementById('ef-hora-fin').value;
+      var tituloVal = document.getElementById('ef-titulo').value.trim();
+      var tipoVal = document.getElementById('ef-tipo').value;
+
+      if (!tituloVal || !fechaVal) {
+        showError('Título y Fecha son obligatorios');
+        return;
+      }
+
+      var data = {
+        titulo: tituloVal,
+        descripcion: document.getElementById('ef-desc').value.trim(),
+        fecha_inicio: fechaVal + 'T' + (horaVal || '00:00') + ':00',
+        hora_inicio: horaVal || null,
+        fecha_fin: fechaFinVal ? (fechaFinVal + 'T' + (horaFinVal || '00:00') + ':00') : null,
+        hora_fin: horaFinVal || null,
+        ubicacion: document.getElementById('ef-ubicacion').value.trim(),
+        tipo: tipoVal,
+      };
+
+      if (tipoVal === 'compartido') {
+        var selected = [];
+        var checks = document.querySelectorAll('#ef-ministries-list input[type="checkbox"]:checked');
+        checks.forEach(function(cb) { selected.push(parseInt(cb.value)); });
+        if (selected.length === 0) {
+          showError('Selecciona al menos un ministerio para compartir');
+          return;
+        }
+        data.ministerios_relacionados = selected;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      hideError();
+
+      try {
+        var result = await sendEvento(data, false);
+        if (result === false) return;
+        editingEventId = null;
+        form.classList.add('hidden');
+        resetEventsForm();
+        saveBtn.textContent = 'Guardar';
+        await loadTab('eventos');
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = editingEventId ? 'Actualizar' : 'Guardar';
+      }
+    });
+  }
+
+  async function loadMinistryCheckboxes() {
+    var listEl = document.getElementById('ef-ministries-list');
+    if (!listEl) return;
+    try {
+      var response = await api.get('/ministerios/');
+      var ministerios = response.results || [];
+      var html = '';
+      ministerios.forEach(function(m) {
+        if (m.slug === slug) return;
+        html += '<label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white cursor-pointer text-sm"><input type="checkbox" value="' + m.id + '" class="ef-min-check w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent" /><span class="text-gray-700">' + m.nombre + '</span></label>';
+      });
+      listEl.innerHTML = html;
+      ministriesLoaded = true;
+    } catch (e) {
+      console.error('Error loading ministries:', e);
+    }
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('events-form-error');
+    if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+  }
+  function hideError() {
+    var el = document.getElementById('events-form-error');
+    if (el) { el.textContent = ''; el.classList.add('hidden'); }
+  }
+  function resetEventsForm() {
+    var fields = ['ef-titulo', 'ef-desc', 'ef-fecha', 'ef-hora', 'ef-fecha-fin', 'ef-hora-fin', 'ef-ubicacion'];
+    fields.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    var tipoEl = document.getElementById('ef-tipo');
+    if (tipoEl) tipoEl.value = 'propio';
+    var sharedDiv = document.getElementById('ef-shared-ministries');
+    if (sharedDiv) sharedDiv.classList.add('hidden');
+    var checks = document.querySelectorAll('.ef-min-check');
+    checks.forEach(function(cb) { cb.checked = false; });
   }
 
   function renderAttendanceTab(asistencias) {
@@ -409,7 +710,7 @@ const TAB_LABELS: Record<string, string> = {
 
     var skeleton = document.getElementById('mp-skeleton');
     var content = document.getElementById('mp-content');
-    var contentArea = document.getElementById('mp-content-area');
+    contentArea = document.getElementById('mp-content-area');
     var mpName = document.getElementById('mp-name');
     var mpDesc = document.getElementById('mp-desc');
 

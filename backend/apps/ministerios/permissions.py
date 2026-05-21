@@ -97,3 +97,22 @@ class CanManageUsersOrSelf(permissions.BasePermission):
                 return False
 
         return True
+
+
+class CanEditEvento(permissions.BasePermission):
+    """Admin, pastora o líder de ministerio involucrado pueden editar/eliminar"""
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.rol in ('admin', 'pastora'):
+            return True
+
+        if request.user.rol == 'lider_ministerio':
+            lidera_ids = set(request.user.ministerios_lidera.values_list('id', flat=True))
+            evento_ids = {obj.ministry_id} | set(
+                obj.ministerios_relacionados.values_list('id', flat=True)
+            )
+            return bool(lidera_ids & evento_ids)
+
+        return False

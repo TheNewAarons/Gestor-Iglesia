@@ -22,9 +22,28 @@ def listar_eventos(filters: dict = None):
     return queryset
 
 
+def listar_eventos_calendario(year: int, month: int, ministerio_slug: str = None):
+    """Eventos del mes para la vista de calendario"""
+    queryset = Evento.objects.select_related('ministry', 'creado_por').prefetch_related('ministerios_relacionados')
+    queryset = queryset.filter(
+        fecha_inicio__year=year,
+        fecha_inicio__month=month,
+    )
+
+    if ministerio_slug:
+        queryset = queryset.filter(
+            Q(ministry__slug=ministerio_slug) |
+            Q(ministerios_relacionados__slug=ministerio_slug)
+        ).distinct()
+
+    return queryset.order_by('fecha_inicio')
+
+
 def listar_eventos_por_ministerio(ministry: Ministerio):
-    """Eventos de un ministerio específico"""
-    return ministry.eventos.select_related('creado_por').prefetch_related('ministerios_relacionados').all()
+    """Eventos de un ministerio específico, incluyendo compartidos"""
+    return Evento.objects.filter(
+        Q(ministry=ministry) | Q(ministerios_relacionados=ministry)
+    ).select_related('ministry', 'creado_por').prefetch_related('ministerios_relacionados').distinct().order_by('fecha_inicio')
 
 
 def listar_planificaciones(ministry: Ministerio, filters: dict = None):

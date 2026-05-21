@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
+from zoneinfo import ZoneInfo
 from .models import (
     Rol, Permiso, Ministerio, Miembro, CajaMinisterio,
     MovimientoCaja, Inventario, Ofrenda, Asistencia, Evento,
@@ -203,6 +204,8 @@ class EventoSerializer(serializers.ModelSerializer):
     ministry_nombre = serializers.CharField(source='ministry.nombre', read_only=True)
     ministerios_relacionados_nombres = serializers.SerializerMethodField()
     creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True)
+    fecha_inicio = serializers.DateTimeField(default_timezone=ZoneInfo('America/Asuncion'))
+    fecha_fin = serializers.DateTimeField(default_timezone=ZoneInfo('America/Asuncion'), required=False, allow_null=True)
 
     class Meta:
         model = Evento

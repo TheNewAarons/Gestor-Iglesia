@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, get_user_model
+from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
@@ -24,7 +25,7 @@ from .serializers import (
     UserSerializer, LoginSerializer, UsuarioCompletoSerializer,
     UsuarioCreateSerializer, UsuarioUpdateSerializer, PermisoSerializer
 )
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, CanEditEvento
 
 from .selectors import (
     ministerio as ministerio_selectors,
@@ -314,10 +315,27 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             eventos = eventos_selectors.listar_eventos_por_ministerio(ministry)
             return Response(EventoSerializer(eventos, many=True).data)
 
-        serializer = EventoSerializer(data=request.data)
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        data['ministry'] = ministry.id
+        serializer = EventoSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(ministry=ministry, creado_por=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            forzar = request.data.get('forzar', False)
+            try:
+                data = dict(serializer.validated_data)
+                ministerios_relacionados = data.pop('ministerios_relacionados', None)
+                data.pop('ministry', None)
+                data.pop('creado_por', None)
+                evento = eventos_services.crear_evento(
+                    ministry=ministry,
+                    creado_por=request.user,
+                    ministerios_relacionados=ministerios_relacionados,
+                    forzar=forzar,
+                    **data
+                )
+                return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
+            except ValidationError as e:
+                error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
+                return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get', 'post'])
@@ -418,6 +436,11 @@ class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
 
+    def get_permissions(self):
+        if self.action in ('update', 'partial_update', 'destroy'):
+            return [CanEditEvento()]
+        return [permissions.AllowAny()]
+
     def get_queryset(self):
         return eventos_selectors.listar_eventos({
             'ministerio': self.request.query_params.get('ministerio'),
@@ -425,6 +448,68 @@ class EventoViewSet(viewsets.ModelViewSet):
             'fecha_fin': self.request.query_params.get('fecha_fin'),
             'tipo': self.request.query_params.get('tipo'),
         })
+
+    @action(detail=False, methods=['get'])
+    def calendario(self, request):
+        year = request.query_params.get('year')
+        month = request.query_params.get('month')
+        ministerio = request.query_params.get('ministerio')
+
+        if not year or not month:
+            return Response(
+                {'error': 'Parámetros year y month son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        eventos = eventos_selectors.listar_eventos_calendario(
+            int(year), int(month), ministerio
+        )
+        return Response(EventoSerializer(eventos, many=True).data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        forzar = request.data.get('forzar', False)
+
+        try:
+            data = dict(serializer.validated_data)
+            ministry = data.pop('ministry')
+            ministerios_relacionados = data.pop('ministerios_relacionados', None)
+            data.pop('creado_por', None)
+            evento = eventos_services.crear_evento(
+                ministry=ministry,
+                creado_por=request.user,
+                ministerios_relacionados=ministerios_relacionados,
+                forzar=forzar,
+                **data
+            )
+            return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
+            return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        forzar = request.data.get('forzar', False)
+
+        try:
+            data = dict(serializer.validated_data)
+            ministerios_relacionados = data.pop('ministerios_relacionados', None)
+            data.pop('ministry', None)
+            data.pop('creado_por', None)
+            evento = eventos_services.actualizar_evento(
+                instance,
+                ministerios_relacionados=ministerios_relacionados,
+                forzar=forzar,
+                **data
+            )
+            return Response(EventoSerializer(evento).data)
+        except ValidationError as e:
+            error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
+            return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UsuarioViewSet(viewsets.ViewSet):

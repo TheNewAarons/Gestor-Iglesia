@@ -1,6 +1,6 @@
 from django.db.models import Count, Q, Sum
 from datetime import date
-from ..models import Ministerio
+from ..models import Ministerio, Evento
 
 
 def listar_ministerios(activos: bool = True):
@@ -30,9 +30,10 @@ def obtener_dashboard(ministry: Ministerio) -> dict:
     caja = getattr(ministry, 'caja', None)
     saldo_caja = caja.calcular_saldo() if caja else 0
 
-    eventos_proximos = ministry.eventos.filter(
+    eventos_proximos = Evento.objects.filter(
+        Q(ministry=ministry) | Q(ministerios_relacionados=ministry),
         fecha_inicio__gte=date.today()
-    ).order_by('fecha_inicio')[:5]
+    ).distinct().order_by('fecha_inicio')[:5]
 
     ofertas_mes = ministry.ofrendas.filter(
         fecha__month=date.today().month,

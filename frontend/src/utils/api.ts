@@ -61,8 +61,14 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-      throw new Error(error.detail || error.message || error.error || 'Error en la solicitud');
+      const body = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+      const message = typeof body.error === 'object'
+        ? (body.error.mensaje || JSON.stringify(body.error))
+        : (body.detail || body.error || body.message || 'Error en la solicitud');
+      const err = new Error(message);
+      (err as any).body = body;
+      (err as any).status = response.status;
+      throw err;
     }
 
     if (response.status === 204) {
