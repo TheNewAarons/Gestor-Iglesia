@@ -1,8 +1,8 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import MinistriesList from '../../islands/ministry/MinistriesList';
+import MinistriesList from '../../islands/ministry/MinistriesList.astro';
 ---
 
 <DashboardLayout title="Ministerios">
-  <MinistriesList client:only="react" />
+  <MinistriesList />
 </DashboardLayout>

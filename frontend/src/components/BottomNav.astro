@@ -44,13 +44,19 @@ const navItems = [
 </nav>
 
 <script>
-  const path = window.location.pathname;
-  document.querySelectorAll('.bottom-nav .nav-item').forEach((link: Element) => {
-    const href = (link as HTMLAnchorElement).getAttribute('href');
-    if (href && (path === href || (href !== '/' && path.startsWith(href)))) {
-      link.classList.add('active');
-    }
-  });
+  function updateActiveNav() {
+    var path = window.location.pathname;
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(function(link) {
+      var href = link.getAttribute('href');
+      if (href && (path === href || (href !== '/' && path.startsWith(href)))) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+  updateActiveNav();
+  document.addEventListener('astro:page-load', updateActiveNav);
 </script>
 
 <style>

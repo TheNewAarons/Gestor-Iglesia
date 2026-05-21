@@ -1,0 +1,453 @@
+---
+import { MINISTRY_COLORS } from '../../utils/colors';
+
+interface Props {
+  slug: string;
+  tabs: string[];
+}
+
+const { slug, tabs } = Astro.props;
+
+const colors = MINISTRY_COLORS[slug] || MINISTRY_COLORS.mni;
+
+const TAB_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  miembros: 'Miembros',
+  caja: 'Caja',
+  inventario: 'Inventario',
+  ofrendas: 'Ofrendas',
+  eventos: 'Eventos',
+  asistencia: 'Asistencia',
+  lecciones: 'Lecciones',
+  canciones: 'Canciones',
+  programas: 'Programas',
+  recursos: 'Recursos',
+  ideas: 'Ideas',
+  planificacion: 'Planificación',
+};
+---
+
+<div id="ministry-page" data-slug={slug}>
+  <!-- Loading skeleton -->
+  <div id="mp-skeleton" class="space-y-4 animate-pulse">
+    <div class="h-40 bg-gray-200 rounded-lg" />
+    <div class="h-10 bg-gray-200 rounded w-1/3" />
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {[1, 2, 3].map((i) => <div class="h-32 bg-gray-100 rounded-lg" />)}
+    </div>
+  </div>
+
+  <!-- Page content (hidden initially) -->
+  <div id="mp-content" class="hidden">
+    <!-- Hero -->
+    <div
+      id="mp-hero"
+      class="relative rounded-xl overflow-hidden mb-6 min-h-[160px] flex items-end"
+      style={`background: ${colors.gradient}`}
+    >
+      <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)"></div>
+      <div class="relative p-6 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+          <svg id="mp-icon" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l8 4v4H4V6l8-4z"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><line x1="12" y1="6" x2="12" y2="10"/>
+          </svg>
+        </div>
+        <div class="text-white">
+          <h1 id="mp-name" class="text-2xl font-bold">{slug.toUpperCase()}</h1>
+          <p id="mp-desc" class="text-sm text-white/80"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div id="mp-tabs" class="flex gap-0 overflow-x-auto border-b border-gray-200 mb-6 -mx-2 px-2">
+      {tabs.map((tab) => (
+        <button
+          type="button"
+          data-tab={tab}
+          class="mp-tab-btn inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+            ${tab === 'dashboard' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+        >
+          {TAB_LABELS[tab] || tab}
+        </button>
+      ))}
+    </div>
+
+    <!-- Content area -->
+    <div id="mp-content-area"></div>
+  </div>
+</div>
+
+<script>
+  import { api } from '../../utils/api';
+  import { ministeriosStore } from '../../stores/ministerios';
+  import { authStore } from '../../stores/auth';
+
+  var slug = '';
+  var activeTab = 'dashboard';
+  var ministryData = null;
+  var dashboardData = null;
+
+  function formatCurrency(v) {
+    return new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(v);
+  }
+
+  function formatDate(d) { return new Date(d).toLocaleDateString('es-PY'); }
+
+  function setupTabs() {
+    var tabsEl = document.getElementById('mp-tabs');
+    if (!tabsEl) return;
+    tabsEl.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-tab]');
+      if (!btn) return;
+      var tab = btn.dataset.tab;
+      if (tab === activeTab) return;
+      activeTab = tab;
+      document.querySelectorAll('.mp-tab-btn').forEach(function(b) {
+        b.className = b.className.replace(/border-accent text-accent/g, '').replace(/border-transparent text-gray-500 hover:text-gray-700/g, '');
+        if (b.dataset.tab === tab) {
+          b.className += ' border-accent text-accent';
+        } else {
+          b.className += ' border-transparent text-gray-500 hover:text-gray-700';
+        }
+      });
+      loadTab(tab);
+    });
+  }
+
+  async function loadTab(tab) {
+    try {
+      const store = ministeriosStore.getState();
+      switch (tab) {
+        case 'dashboard':
+          contentArea.innerHTML = renderDashboard();
+          break;
+        case 'miembros':
+          await ministeriosStore.fetchMiembros(slug);
+          contentArea.innerHTML = renderMembersTab(store.miembros || []);
+          bindMembersForm();
+          break;
+        case 'caja':
+          await ministeriosStore.fetchCaja(slug);
+          contentArea.innerHTML = renderFinanceTab(store.caja);
+          bindFinanceForm();
+          break;
+        case 'inventario':
+          await ministeriosStore.fetchInventario(slug);
+          contentArea.innerHTML = renderInventoryTab(store.inventario || []);
+          bindInventoryForm();
+          break;
+        case 'ofrendas':
+          await ministeriosStore.fetchOfrendas(slug);
+          contentArea.innerHTML = renderOfferingTab(store.ofrendas || []);
+          break;
+        case 'eventos':
+          await ministeriosStore.fetchEventos(slug);
+          contentArea.innerHTML = renderEventsTab(store.eventos || []);
+          break;
+        case 'asistencia':
+          await ministeriosStore.fetchAsistencia(slug);
+          contentArea.innerHTML = renderAttendanceTab(store.asistencia || []);
+          break;
+        case 'lecciones':
+          await ministeriosStore.fetchLecciones();
+          contentArea.innerHTML = renderLessonsTab(store.lecciones || []);
+          break;
+        case 'canciones':
+          await ministeriosStore.fetchCanciones();
+          contentArea.innerHTML = renderSongsTab(store.canciones || []);
+          break;
+        case 'programas':
+          await ministeriosStore.fetchProgramas(slug);
+          contentArea.innerHTML = renderProgramsTab(store.programas || []);
+          break;
+        case 'recursos':
+          await ministeriosStore.fetchRecursos(slug);
+          contentArea.innerHTML = renderResourcesTab(store.recursos || []);
+          break;
+        case 'ideas':
+          await ministeriosStore.fetchIdeas(slug);
+          contentArea.innerHTML = renderIdeasTab(store.ideas || []);
+          bindIdeasToggle();
+          break;
+        case 'planificacion':
+          await ministeriosStore.fetchPlanificaciones(slug);
+          contentArea.innerHTML = renderPlansTab(store.planificaciones || []);
+          break;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderDashboard() {
+    var h = '';
+    h += '<div class="space-y-4"><div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="flex items-start justify-between"><div><p class="text-sm text-gray-500 mb-1">Miembros</p><p class="text-2xl font-bold text-primary">' + (dashboardData?.miembros_count ?? 0) + '</p></div><div class="p-2.5 rounded-lg bg-primary/5 text-primary/70"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div></div>';
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="flex items-start justify-between"><div><p class="text-sm text-gray-500 mb-1">Saldo Caja</p><p class="text-2xl font-bold text-green-700">' + formatCurrency(dashboardData?.saldo_caja ?? 0) + '</p></div><div class="p-2.5 rounded-lg bg-green-50 text-green-600"><span class="text-lg">₲</span></div></div></div>';
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="flex items-start justify-between"><div><p class="text-sm text-gray-500 mb-1">Ofrendas Mes</p><p class="text-2xl font-bold text-amber-700">' + formatCurrency(dashboardData?.ofertas_mes ?? 0) + '</p></div><div class="p-2.5 rounded-lg bg-amber-50 text-amber-600"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div></div></div>';
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="flex items-start justify-between"><div><p class="text-sm text-gray-500 mb-1">Eventos</p><p class="text-2xl font-bold text-accent">' + (dashboardData?.eventos_proximos?.length ?? 0) + '</p></div><div class="p-2.5 rounded-lg bg-accent/5 text-accent/70"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div></div>';
+    h += '</div></div>';
+    return h;
+  }
+
+  // Members tab
+  function renderMembersTab(miembros) {
+    var h = '';
+    h += '<div class="space-y-4"><div class="flex justify-between items-center"><h3 class="font-semibold text-gray-900">Miembros (' + miembros.length + ')</h3><button id="members-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Agregar</button></div>';
+    h += '<div id="members-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Primer Nombre</label><input id="mf-nombre" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Primer Apellido</label><input id="mf-apellido" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Teléfono</label><input id="mf-telefono" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Email</label><input id="mf-email" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Clase</label><select id="mf-clase" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin clase</option><option value="ninos">Niños (0-12)</option><option value="jovenes">Jóvenes (13-17)</option><option value="adultos_jovenes">Adultos Jóvenes (18-35)</option><option value="adultos">Adultos (36-60)</option><option value="adultos_mayores">Adultos Mayores (60+)</option></select></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Rol</label><select id="mf-rol" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="miembro">Miembro</option><option value="lider">Líder</option><option value="sublider">Sublíder</option><option value="tesorero">Tesorero</option><option value="secretario">Secretario</option></select></div>';
+    h += '</div><div class="flex gap-2 mt-4"><button id="members-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="members-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Rol</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Teléfono</th></tr></thead><tbody>';
+    for (var i = 0; i < miembros.length; i++) {
+      var m = miembros[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + m.nombre_completo + '</td><td class="px-4 py-2 capitalize">' + m.rol_en_ministerio + '</td><td class="px-4 py-2 capitalize">' + ((m.clase || '-').replace('_', ' ')) + '</td><td class="px-4 py-2">' + (m.telefono || '-') + '</td></tr>';
+    }
+    if (miembros.length === 0) h += '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Sin miembros</td></tr>';
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function bindMembersForm() {
+    var addBtn = document.getElementById('members-add-btn');
+    var form = document.getElementById('members-form');
+    var saveBtn = document.getElementById('members-save');
+    var cancelBtn = document.getElementById('members-cancel');
+    if (!addBtn || !form) return;
+
+    addBtn.onclick = function() { form.classList.toggle('hidden'); };
+    if (cancelBtn) cancelBtn.addEventListener('click', function() { form.classList.add('hidden'); });
+    if (saveBtn) saveBtn.addEventListener('click', function() {
+      var data = {
+        primer_nombre: document.getElementById('mf-nombre').value,
+        primer_apellido: document.getElementById('mf-apellido').value,
+        telefono: document.getElementById('mf-telefono').value,
+        email: document.getElementById('mf-email').value,
+        clase: document.getElementById('mf-clase').value,
+        rol_en_ministerio: document.getElementById('mf-rol').value,
+      };
+      ministeriosStore.addMiembro(slug, data).then(function() { loadTab('miembros'); });
+    });
+  }
+
+  // Finance tab
+  function renderFinanceTab(caja) {
+    var h = '';
+    h += '<div class="space-y-4"><div class="flex justify-between items-center"><div><p class="text-sm text-gray-500">Saldo actual</p><p class="text-2xl font-bold text-gray-900">' + formatCurrency(caja?.saldo_calculado ?? 0) + '</p></div><button id="finance-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Movimiento</button></div>';
+    h += '<div id="finance-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Tipo</label><select id="ff-tipo" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Monto</label><input id="ff-monto" type="number" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Descripción</label><input id="ff-desc" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '</div><div class="flex gap-2 mt-4"><button id="finance-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="finance-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Descripción</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody>';
+    var movs = caja?.movimientos || [];
+    for (var i = 0; i < movs.length; i++) {
+      var m = movs[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (m.tipo === 'ingreso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + m.tipo + '</span></td><td class="px-4 py-2 font-medium">' + formatCurrency(m.monto) + '</td><td class="px-4 py-2 text-gray-600">' + m.descripcion + '</td><td class="px-4 py-2 text-gray-500 text-xs">' + formatDate(m.fecha) + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function bindFinanceForm() {
+    var addBtn = document.getElementById('finance-add-btn');
+    var form = document.getElementById('finance-form');
+    var saveBtn = document.getElementById('finance-save');
+    var cancelBtn = document.getElementById('finance-cancel');
+    if (!addBtn || !form) return;
+    addBtn.onclick = function() { form.classList.toggle('hidden'); };
+    if (cancelBtn) cancelBtn.addEventListener('click', function() { form.classList.add('hidden'); });
+    if (saveBtn) saveBtn.addEventListener('click', function() {
+      ministeriosStore.addMovimiento(slug, {
+        tipo: document.getElementById('ff-tipo').value,
+        monto: parseFloat(document.getElementById('ff-monto').value),
+        descripcion: document.getElementById('ff-desc').value,
+      }).then(function() { loadTab('caja'); });
+    });
+  }
+
+  // Inventory tab
+  function renderInventoryTab(items) {
+    var h = '';
+    h += '<div class="space-y-4"><div class="flex justify-between"><h3 class="font-semibold text-gray-900">Inventario (' + items.length + ')</h3><button id="inv-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Item</button></div>';
+    h += '<div id="inv-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Nombre</label><input id="if-nombre" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Categoría</label><select id="if-cat" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="muebles">Muebles</option><option value="electronicos">Electrónicos</option><option value="decoracion">Decoración</option><option value="utensilios">Utensilios</option><option value="musica">Música</option><option value="otro">Otro</option></select></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Cantidad</label><input id="if-cantidad" type="number" value="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Estado</label><select id="if-estado" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="nuevo">Nuevo</option><option value="bueno">Bueno</option><option value="regular">Regular</option><option value="mal_estado">Mal Estado</option></select></div>';
+    h += '</div><div class="flex gap-2 mt-4"><button id="inv-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="inv-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Cant.</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th></tr></thead><tbody>';
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + it.nombre + '</td><td class="px-4 py-2 capitalize">' + it.categoria + '</td><td class="px-4 py-2">' + it.cantidad + '</td><td class="px-4 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (it.estado === 'bueno' || it.estado === 'nuevo' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800') + '">' + it.estado + '</span></td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function bindInventoryForm() {
+    var addBtn = document.getElementById('inv-add-btn');
+    var form = document.getElementById('inv-form');
+    var saveBtn = document.getElementById('inv-save');
+    var cancelBtn = document.getElementById('inv-cancel');
+    if (!addBtn || !form) return;
+    addBtn.onclick = function() { form.classList.toggle('hidden'); };
+    if (cancelBtn) cancelBtn.addEventListener('click', function() { form.classList.add('hidden'); });
+    if (saveBtn) saveBtn.addEventListener('click', function() {
+      ministeriosStore.addInventarioItem(slug, {
+        nombre: document.getElementById('if-nombre').value,
+        categoria: document.getElementById('if-cat').value,
+        cantidad: parseInt(document.getElementById('if-cantidad').value),
+        estado: document.getElementById('if-estado').value,
+      }).then(function() { loadTab('inventario'); });
+    });
+  }
+
+  // Other simple render functions
+  function renderOfferingTab(ofrendas) {
+    var h = '<div class="space-y-4"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th></tr></thead><tbody>';
+    for (var i = 0; i < ofrendas.length; i++) {
+      var o = ofrendas[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + o.fecha + '</td><td class="px-4 py-2 font-medium">' + formatCurrency(o.monto) + '</td><td class="px-4 py-2 capitalize">' + (o.clase || '-') + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function renderEventsTab(eventos) {
+    var h = '<div class="space-y-4"><div class="grid gap-3">';
+    for (var i = 0; i < eventos.length; i++) {
+      var ev = eventos[i];
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><div><h4 class="font-medium text-gray-900">' + ev.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + formatDate(ev.fecha_inicio) + '</p></div><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (ev.tipo === 'compartido' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700') + '">' + ev.tipo + '</span></div></div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  function renderAttendanceTab(asistencias) {
+    var h = '<div class="space-y-4"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Presente</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th></tr></thead><tbody>';
+    for (var i = 0; i < asistencias.length; i++) {
+      var a = asistencias[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + (a.miembro_nombre || a.nombre_visita || '(visita)') + '</td><td class="px-4 py-2">' + a.fecha + '</td><td class="px-4 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (a.presente ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (a.presente ? 'Sí' : 'No') + '</span></td><td class="px-4 py-2 capitalize">' + (a.clase || '-') + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function renderLessonsTab(lecciones) {
+    var h = '<div class="space-y-4">';
+    for (var i = 0; i < lecciones.length; i++) {
+      var lec = lecciones[i];
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><h4 class="font-medium text-gray-900">' + lec.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + lec.descripcion + '</p></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderSongsTab(canciones) {
+    var h = '<div class="space-y-4"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Título</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Artista</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tono</th></tr></thead><tbody>';
+    for (var i = 0; i < canciones.length; i++) {
+      var c = canciones[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + c.titulo + '</td><td class="px-4 py-2">' + (c.artista || '-') + '</td><td class="px-4 py-2 capitalize">' + c.categoria + '</td><td class="px-4 py-2">' + (c.tono || '-') + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function renderProgramsTab(programas) {
+    var h = '<div class="space-y-4">';
+    for (var i = 0; i < programas.length; i++) {
+      var p = programas[i];
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><h4 class="font-medium text-gray-900">Programa - ' + formatDate(p.fecha) + '</h4><span class="text-sm text-gray-500">' + (p.alabanzas?.length || 0) + ' canciones</span></div></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderResourcesTab(recursos) {
+    var h = '<div class="space-y-4">';
+    for (var i = 0; i < recursos.length; i++) {
+      var r = recursos[i];
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><div><h4 class="font-medium text-gray-900">' + r.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + r.descripcion + '</p></div><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">' + r.tipo + '</span></div></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderIdeasTab(ideas) {
+    var h = '<div class="space-y-4">';
+    for (var i = 0; i < ideas.length; i++) {
+      var id = ideas[i];
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex items-center justify-between"><div><h4 class="font-medium text-gray-900">' + id.titulo + '</h4><p class="text-sm text-gray-500">' + id.descripcion + '</p></div><div class="flex items-center gap-3"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (id.completada ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800') + '">' + (id.completada ? 'Completada' : 'Pendiente') + '</span><button data-toggle-idea="' + id.id + '" data-completada="' + (!id.completada) + '" class="text-sm text-accent hover:underline cursor-pointer">' + (id.completada ? 'Reabrir' : 'Completar') + '</button></div></div></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderPlansTab(planificaciones) {
+    var h = '<div class="space-y-4"><div class="grid gap-3">';
+    for (var i = 0; i < planificaciones.length; i++) {
+      var p = planificaciones[i];
+      var variant = 'bg-amber-100 text-amber-800';
+      if (p.estado === 'completada') variant = 'bg-green-100 text-green-800';
+      else if (p.estado === 'en_proceso') variant = 'bg-blue-100 text-blue-800';
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><div><h4 class="font-medium text-gray-900">' + p.titulo + '</h4><p class="text-sm text-gray-500 mt-1">' + formatDate(p.fecha_planificada) + '</p></div><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + variant + '">' + ((p.estado || '').replace('_', ' ')) + '</span></div></div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  // Initialize
+  async function init() {
+    var pageEl = document.getElementById('ministry-page');
+    slug = (pageEl && pageEl.dataset.slug) || '';
+
+    var skeleton = document.getElementById('mp-skeleton');
+    var content = document.getElementById('mp-content');
+    var contentArea = document.getElementById('mp-content-area');
+    var mpName = document.getElementById('mp-name');
+    var mpDesc = document.getElementById('mp-desc');
+
+    if (!skeleton || !content || !contentArea || !mpName || !mpDesc) return;
+
+    activeTab = 'dashboard';
+    ministryData = null;
+    dashboardData = null;
+
+    setupTabs();
+
+    await new Promise(function(r) { setTimeout(r, 0); });
+
+    await authStore.checkAuth();
+    var authState = authStore.getState();
+    if (!authState.isAuthenticated) {
+      window.location.href = '/login';
+      return;
+    }
+
+    var results = await Promise.all([
+      api.get('/ministerios/' + slug + '/'),
+      api.get('/ministerios/' + slug + '/dashboard/'),
+    ]);
+
+    ministryData = results[0];
+    dashboardData = results[1];
+
+    mpName.textContent = results[0].nombre || slug.toUpperCase();
+    mpDesc.textContent = results[0].descripcion || '';
+
+    skeleton.classList.add('hidden');
+    content.classList.remove('hidden');
+
+    contentArea.innerHTML = renderDashboard();
+  }
+
+  document.addEventListener('astro:page-load', function() {
+    if (document.getElementById('ministry-page')) init();
+  });
+</script>

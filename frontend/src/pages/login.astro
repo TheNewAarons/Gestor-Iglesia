@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import LoginForm from '../islands/LoginForm';
+import LoginForm from '../islands/LoginForm.astro';
 ---
 
 <BaseLayout title="Login">
-  <LoginForm client:only="react" />
+  <LoginForm />
 </BaseLayout>

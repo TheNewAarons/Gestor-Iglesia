@@ -1,0 +1,69 @@
+---
+interface Props {
+  id?: string;
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+const modalId = Astro.props.id || 'modal-' + Math.random().toString(36).slice(2, 8);
+---
+
+<div id={modalId} class={`fixed inset-0 z-50 items-center justify-center bg-black/50 animate-fade-in ${className}`} style="display: none;">
+  <div class="bg-white rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto max-w-lg">
+    <div id={`${modalId}-header`} class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 id={`${modalId}-title`} class="text-lg font-semibold text-gray-900"></h2>
+      <button type="button" id={`${modalId}-close`} class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id={`${modalId}-body`} class="p-6">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  var modal = document.getElementById('{modalId}');
+  if (!modal) throw new Error('Modal not found');
+
+  var closeBtn = document.getElementById('{modalId}-close');
+  var titleEl = document.getElementById('{modalId}-title');
+  var headerEl = document.getElementById('{modalId}-header');
+
+  function openModal(title) {
+    if (title && titleEl) titleEl.textContent = title;
+    if (headerEl) headerEl.style.display = title ? '' : 'none';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  closeBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+  });
+
+  window.addEventListener('open-modal', function(e) {
+    var detail = e.detail || {};
+    if (detail.id === '{modalId}') openModal(detail.title);
+  });
+
+  window.addEventListener('close-modal', function(e) {
+    var detail = e.detail || {};
+    if (!detail.id || detail.id === '{modalId}') closeModal();
+  });
+
+  var closeBtns = modal.querySelectorAll('[data-modal-close]');
+  closeBtns.forEach(function(btn) { btn.addEventListener('click', closeModal); });
+</script>

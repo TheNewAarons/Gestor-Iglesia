@@ -1,0 +1,38 @@
+---
+interface Props {
+  label: string;
+  value: string | number;
+  color?: 'primary' | 'accent' | 'success' | 'warning' | 'danger';
+  trend?: { value: number; positive: boolean };
+  class?: string;
+}
+
+const { label, value, color = 'primary', trend, class: className = '' } = Astro.props;
+
+const colorMap: Record<string, { bg: string; text: string; icon: string }> = {
+  primary: { bg: 'bg-primary/5', text: 'text-primary', icon: 'text-primary/70' },
+  accent: { bg: 'bg-accent/5', text: 'text-accent', icon: 'text-accent/70' },
+  success: { bg: 'bg-green-50', text: 'text-green-700', icon: 'text-green-600' },
+  warning: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-600' },
+  danger: { bg: 'bg-red-50', text: 'text-red-700', icon: 'text-red-600' },
+};
+
+const c = colorMap[color];
+---
+
+<div class={`bg-white rounded-lg shadow-sm border border-gray-100 p-5 ${className}`}>
+  <div class="flex items-start justify-between">
+    <div>
+      <p class="text-sm text-gray-500 mb-1">{label}</p>
+      <p class={`text-2xl font-bold ${c.text}`}>{value}</p>
+      {trend && (
+        <p class={`text-xs mt-1.5 ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+          {trend.positive ? '↑' : '↓'} {Math.abs(trend.value)}%
+        </p>
+      )}
+    </div>
+    <div class={`p-2.5 rounded-lg ${c.bg} ${c.icon}`}>
+      <slot name="icon" />
+    </div>
+  </div>
+</div>

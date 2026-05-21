@@ -1,6 +1,6 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import MinistryPage from '../../islands/ministry/MinistryPage';
+import MinistryPage from '../../islands/ministry/MinistryPage.astro';
 
 export function getStaticPaths() {
   const ministerios = [
@@ -25,5 +25,5 @@ const tabs = ministryTabs[slug || ''] || ministryTabs.default;
 ---
 
 <DashboardLayout title="Ministerio" showBack={true}>
-  <MinistryPage slug={slug!} tabs={tabs} client:only="react" />
+  <MinistryPage slug={slug!} tabs={tabs} />
 </DashboardLayout>

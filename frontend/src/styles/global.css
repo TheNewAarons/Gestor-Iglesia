@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFC;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-danger: #EF4444;
+  --color-primary: #1E3A5F;
+  --color-text: #111827;
+  --color-text-muted: #9CA3AF;
+  --color-text-secondary: #6B7280;
+  --radius-md: 8px;
+  --transition: 200ms;
+}
+
 @layer base {
   body {
     @apply font-sans text-gray-800 bg-white antialiased;

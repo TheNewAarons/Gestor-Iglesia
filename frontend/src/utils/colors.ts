@@ -1,0 +1,15 @@
+export const MINISTRY_COLORS: Record<string, { primary: string; gradient: string }> = {
+  mni: { primary: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' },
+  dni: { primary: '#0ea5e9', gradient: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)' },
+  jni: { primary: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+  mam: { primary: '#ec4899', gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' },
+  vid: { primary: '#10b981', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
+  explo: { primary: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' },
+  danza: { primary: '#f43f5e', gradient: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' },
+  teatro: { primary: '#a855f7', gradient: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)' },
+  alabanza: { primary: '#14b8a6', gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)' },
+  comunicaciones: { primary: '#f97316', gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' },
+  compasion: { primary: '#e11d48', gradient: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)' },
+  nazakids: { primary: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 100%)' },
+  'adulto-mayor': { primary: '#64748b', gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' },
+};

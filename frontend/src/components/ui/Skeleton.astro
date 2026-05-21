@@ -1,0 +1,18 @@
+---
+interface Props {
+  class?: string;
+  lines?: number;
+}
+
+const { lines, class: className = '' } = Astro.props;
+---
+
+{lines ? (
+  <div class={`space-y-3 ${className}`}>
+    {Array.from({ length: lines }).map((_, i) => (
+      <div class="skeleton h-4 rounded" style={{ width: i === lines - 1 ? '60%' : '100%' }} />
+    ))}
+  </div>
+) : (
+  <div class={`skeleton ${className}`} />
+)}

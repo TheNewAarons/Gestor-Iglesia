@@ -1,0 +1,141 @@
+---
+interface Column {
+  key: string;
+  header: string;
+  sortable?: boolean;
+  class?: string;
+}
+
+interface Props {
+  columns: Column[];
+  id?: string;
+  class?: string;
+  emptyMessage?: string;
+}
+
+const { columns, emptyMessage = 'No hay datos disponibles', class: className = '' } = Astro.props;
+const tableId = Astro.props.id || 'table-' + Math.random().toString(36).slice(2, 8);
+---
+
+<div id={tableId} class={`overflow-x-auto ${className}`}
+  data-empty-message={emptyMessage}
+  data-columns={JSON.stringify(columns)}
+>
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-gray-200">
+        {columns.map((col) => (
+          <th
+            data-col-key={col.key}
+            data-sortable={col.sortable ? 'true' : 'false'}
+            class={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
+              ${col.sortable ? 'cursor-pointer hover:text-gray-700 select-none' : ''}
+              ${col.class || ''}`}
+          >
+            <span class="inline-flex items-center gap-1">
+              {col.header}
+              {col.sortable && (
+                <svg class={`sort-icon-${col.key} h-3 w-3 transition-transform hidden`} viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7 10l5 5 5-5z" />
+                </svg>
+              )}
+            </span>
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody id={`${tableId}-body`}>
+      <tr><td colspan={columns.length} class="px-4 py-12 text-center text-gray-500">
+        <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>{emptyMessage}</p>
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script is:inline>
+  (function() {
+    var container = document.getElementById('{tableId}');
+    var tbody = document.getElementById('{tableId}-body');
+    if (!container || !tbody) return;
+
+    var emptyMessage = container.dataset.emptyMessage || 'No hay datos disponibles';
+    var columns = JSON.parse(container.dataset.columns || '[]');
+
+    var currentSortKey = null;
+    var currentSortDir = 'asc';
+    var data = [];
+
+    container.addEventListener('click', function(e) {
+      var th = e.target.closest('[data-sortable="true"]');
+      if (!th) return;
+      var key = th.getAttribute('data-col-key');
+      if (!key) return;
+      if (currentSortKey === key) {
+        currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSortKey = key;
+        currentSortDir = 'asc';
+      }
+      sortAndRender();
+      updateSortIcons();
+    });
+
+    function updateSortIcons() {
+      for (var i = 0; i < columns.length; i++) {
+        var col = columns[i];
+        if (!col.sortable) continue;
+        var icon = document.querySelector('.sort-icon-' + col.key);
+        if (!icon) continue;
+        icon.classList.toggle('hidden', currentSortKey !== col.key);
+        if (currentSortKey === col.key) {
+          icon.style.transform = currentSortDir === 'desc' ? 'rotate(180deg)' : '';
+        }
+      }
+    }
+
+    function sortAndRender() {
+      if (!currentSortKey) return;
+      var sorted = data.slice().sort(function(a, b) {
+        var aVal = a[currentSortKey] != null ? a[currentSortKey] : '';
+        var bVal = b[currentSortKey] != null ? b[currentSortKey] : '';
+        var cmp = String(aVal).localeCompare(String(bVal), undefined, { numeric: true });
+        return currentSortDir === 'asc' ? cmp : -cmp;
+      });
+      renderRows(sorted);
+    }
+
+    function renderRows(rows) {
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="' + columns.length + '" class="px-4 py-12 text-center text-gray-500"><svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p>' + emptyMessage + '</p></td></tr>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < rows.length; i++) {
+        var item = rows[i];
+        var rowClass = i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30';
+        html += '<tr class="border-b border-gray-100 transition-colors ' + rowClass + '">';
+        for (var j = 0; j < columns.length; j++) {
+          var col = columns[j];
+          html += '<td class="px-4 py-3 text-gray-700 ' + (col.class || '') + '">' + (item['__html_' + col.key] || (item[col.key] != null ? item[col.key] : '')) + '</td>';
+        }
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    window.addEventListener('table-set-data', function(e) {
+      var detail = e.detail || {};
+      if (detail.id === '{tableId}') {
+        data = detail.data || [];
+        if (currentSortKey) {
+          sortAndRender();
+        } else {
+          renderRows(data);
+        }
+      }
+    });
+  })();
+</script>

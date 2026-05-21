@@ -67,24 +67,40 @@ const navItems = [
   </nav>
 
   <div class="sidebar-footer">
-    <a href="/login" class="logout-btn">
+    <button id="logout-btn" class="logout-btn">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
         <polyline points="16 17 21 12 16 7"></polyline>
         <line x1="21" y1="12" x2="9" y2="12"></line>
       </svg>
       Cerrar sesión
-    </a>
+    </button>
   </div>
 </aside>
 
 <script>
-  const path = window.location.pathname;
-  document.querySelectorAll('.sidebar .nav-item').forEach((link: Element) => {
-    const href = (link as HTMLAnchorElement).getAttribute('href');
-    if (href && (path === href || (href !== '/' && path.startsWith(href)))) {
-      link.classList.add('active');
+  function updateActiveNav() {
+    var path = window.location.pathname;
+    document.querySelectorAll('.sidebar .nav-item').forEach(function(link) {
+      var href = link.getAttribute('href');
+      if (href && (path === href || (href !== '/' && path.startsWith(href)))) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+  updateActiveNav();
+  document.addEventListener('astro:page-load', updateActiveNav);
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    try {
+      await fetch(`${API_BASE}/auth/logout/`, { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      // Continue even if logout fails
     }
+    window.location.href = '/login';
   });
 </script>
 

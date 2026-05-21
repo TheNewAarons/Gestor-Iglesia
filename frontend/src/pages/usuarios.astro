@@ -1,8 +1,8 @@
 ---
 import DashboardLayout from '../layouts/DashboardLayout.astro';
-import UsersPage from '../islands/users/UsersPage';
+import UsersPage from '../islands/users/UsersPage.astro';
 ---
 
 <DashboardLayout title="Usuarios">
-  <UsersPage client:only="react" />
+  <UsersPage />
 </DashboardLayout>

@@ -1,8 +1,8 @@
 ---
 import DashboardLayout from '../layouts/DashboardLayout.astro';
-import DashboardHome from '../islands/DashboardHome';
+import DashboardHome from '../islands/DashboardHome.astro';
 ---
 
 <DashboardLayout title="Inicio">
-  <DashboardHome client:only="react" />
+  <DashboardHome />
 </DashboardLayout>

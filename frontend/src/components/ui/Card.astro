@@ -1,0 +1,12 @@
+---
+interface Props {
+  class?: string;
+  padding?: boolean;
+}
+
+const { padding = true, class: className = '' } = Astro.props;
+---
+
+<div class={`bg-white rounded-lg shadow-sm border border-gray-100 ${padding ? 'p-6' : ''} ${className}`}>
+  <slot />
+</div>

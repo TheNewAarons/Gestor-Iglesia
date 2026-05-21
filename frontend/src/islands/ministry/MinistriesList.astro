@@ -1,0 +1,78 @@
+---
+import MinistryIcon from '../../components/MinistryIcon.astro';
+---
+
+<div id="ministries-list">
+  <!-- Loading skeleton -->
+  <div id="ministries-skeleton" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {[1, 2, 3, 4, 5, 6].map((i) => <div class="h-28 bg-gray-100 rounded-lg animate-pulse" />)}
+  </div>
+
+  <!-- Content (hidden initially) -->
+  <div id="ministries-content" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
+    <!-- Rendered dynamically by script -->
+  </div>
+
+  <div id="ministries-empty" class="text-center py-12 text-gray-500 hidden">
+    No se encontraron ministerios
+  </div>
+</div>
+
+<script>
+  import { api } from '../../utils/api';
+
+  async function init() {
+    var skeleton = document.getElementById('ministries-skeleton');
+    var content = document.getElementById('ministries-content');
+    var empty = document.getElementById('ministries-empty');
+
+    console.log('[MinistriesList] init() called');
+    if (!skeleton || !content || !empty) {
+      console.error('[MinistriesList] DOM elements not found');
+      return;
+    }
+
+    try {
+      var data = await api.get('/ministerios/');
+      var ministerios = data && data.results ? data.results : [];
+
+      skeleton.classList.add('hidden');
+
+      if (!ministerios || ministerios.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      content.classList.remove('hidden');
+      var html = '';
+      for (var i = 0; i < ministerios.length; i++) {
+        var m = ministerios[i];
+        html += '<a href="/ministerios/' + m.slug + '" class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer no-underline block">';
+        html += '<div class="flex items-center gap-3 mb-3">';
+        html += '<div class="w-10 h-10 rounded-md flex items-center justify-center text-white" style="background-color: ' + (m.color || '#3B82F6') + '">';
+        html += '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v4H4V6l8-4z"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><line x1="12" y1="6" x2="12" y2="10"/></svg>';
+        html += '</div>';
+        html += '<div><h3 class="text-base font-semibold text-gray-900">' + m.nombre + '</h3>';
+        html += '<p class="text-xs text-gray-500 truncate" style="max-width: 180px">' + (m.descripcion || '') + '</p>';
+        html += '</div></div>';
+        html += '<div class="flex gap-4 pt-3 border-t border-gray-100">';
+        html += '<span class="text-xs text-gray-500"><b class="text-gray-900">' + (m.miembros_count || 0) + '</b> miembros</span>';
+        if (m.lideres_nombres && m.lideres_nombres.length) {
+          html += '<span class="text-xs text-gray-500"><b class="text-gray-900">' + m.lideres_nombres.length + '</b> líder' + (m.lideres_nombres.length > 1 ? 'es' : '') + '</span>';
+        }
+        html += '</div></a>';
+      }
+      content.innerHTML = html;
+    } catch (err) {
+      console.error('[MinistriesList] error:', err);
+      var emptyEl = document.getElementById('ministries-empty');
+      var skeletonEl = document.getElementById('ministries-skeleton');
+      if (skeletonEl) skeletonEl.classList.add('hidden');
+      if (emptyEl) emptyEl.classList.remove('hidden');
+    }
+  }
+
+  document.addEventListener('astro:page-load', function() {
+    if (document.getElementById('ministries-list')) init();
+  });
+</script>

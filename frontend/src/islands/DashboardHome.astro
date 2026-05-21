@@ -1,0 +1,96 @@
+---
+import MinistryIcon from '../components/MinistryIcon.astro';
+
+const STATS = [
+  { label: 'Ministerios', value: '13', color: 'primary' as const },
+  { label: 'Finanzas', value: 'PYG', color: 'success' as const },
+  { label: 'Calendario', value: 'Próximo', color: 'accent' as const },
+  { label: 'Secretaría', value: 'Miembros', color: 'warning' as const },
+];
+
+const QUICK_LINKS = [
+  { slug: 'mni', name: 'MNI', icon: 'user-plus' },
+  { slug: 'dni', name: 'DNI', icon: 'book-open' },
+  { slug: 'alabanza', name: 'Alabanza', icon: 'microphone' },
+  { slug: 'comunicaciones', name: 'Comunicaciones', icon: 'broadcast' },
+];
+---
+
+<div id="dashboard-home">
+  <!-- Loading skeleton -->
+  <div id="dashboard-skeleton" class="space-y-6 animate-pulse">
+    <div class="h-8 bg-gray-200 rounded w-48" />
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => <div class="h-28 bg-gray-100 rounded-lg" />)}
+    </div>
+  </div>
+
+  <!-- Dashboard content (hidden initially) -->
+  <div id="dashboard-content" class="space-y-6 hidden">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900" id="dashboard-greeting">Bienvenido</h2>
+      <p class="text-sm text-gray-500">Panel de control de la iglesia</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {STATS.map((stat) => (
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+          <p class="text-sm text-gray-500">{stat.label}</p>
+          <p class="text-xl font-bold text-gray-900 mt-1">{stat.value}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {QUICK_LINKS.map((m) => (
+        <a
+          href={`/ministerios/${m.slug}`}
+          class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-accent/30 hover:bg-accent/5 transition-colors"
+        >
+          <MinistryIcon name={m.icon} class="w-8 h-8 text-accent" />
+          <span class="text-sm font-medium text-gray-700">{m.name}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { authStore } from '../stores/auth';
+
+  var unsub = null;
+
+  async function init() {
+    // Clean up previous subscription
+    if (unsub) { unsub(); unsub = null; }
+
+    var skeleton = document.getElementById('dashboard-skeleton');
+    var content = document.getElementById('dashboard-content');
+    var greeting = document.getElementById('dashboard-greeting');
+
+    if (!skeleton || !content || !greeting) return;
+
+    await new Promise(r => setTimeout(r, 0));
+
+    unsub = authStore.subscribe(function(state) {
+      if (!state.isLoading) {
+        if (!state.isAuthenticated) {
+          window.location.href = '/login';
+          return;
+        }
+        var user = state.user;
+        greeting.textContent = user && user.first_name
+          ? 'Bienvenido, ' + user.first_name
+          : 'Bienvenido';
+        skeleton.classList.add('hidden');
+        content.classList.remove('hidden');
+      }
+    });
+
+    authStore.checkAuth();
+  }
+
+  document.addEventListener('astro:page-load', function() {
+    if (document.getElementById('dashboard-home')) init();
+  });
+</script>

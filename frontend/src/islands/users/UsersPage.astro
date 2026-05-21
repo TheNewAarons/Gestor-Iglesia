@@ -1,0 +1,297 @@
+---
+import Modal from '../../components/ui/Modal.astro';
+
+const ROLE_DISPLAY: Record<string, string> = {
+  admin: 'Admin', pastora: 'Pastora', secretaria: 'Secretaria',
+  tesorera: 'Tesorera', lider_ministerio: 'Líder Ministerio', concilio: 'Concilio',
+};
+
+const ROLE_BADGE: Record<string, string> = {
+  admin: 'danger', pastora: 'default', secretaria: 'info',
+  tesorera: 'warning', lider_ministerio: 'success', concilio: 'default',
+};
+
+const BADGE_CLASSES: Record<string, string> = {
+  default: 'bg-gray-100 text-gray-700',
+  danger: 'bg-red-100 text-red-800',
+  info: 'bg-blue-100 text-blue-800',
+  warning: 'bg-amber-100 text-amber-800',
+  success: 'bg-green-100 text-green-800',
+};
+---
+
+<div id="users-page">
+  <!-- Loading skeleton -->
+  <div id="users-skeleton" class="space-y-4 animate-pulse">
+    <div class="h-8 bg-gray-200 rounded w-40" />
+    <div class="h-64 bg-gray-100 rounded-lg" />
+  </div>
+
+  <!-- Content (hidden initially) -->
+  <div id="users-content" class="space-y-4 hidden">
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-1.5 max-w-xs flex-1">
+        <input
+          id="users-search"
+          type="text"
+          placeholder="Buscar usuarios..."
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white placeholder:text-gray-400"
+        />
+      </div>
+      <button id="users-create-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">+ Nuevo Usuario</button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rol</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="user-modal" class="fixed inset-0 z-50 items-center justify-center bg-black/50" style="display:none">
+    <div class="bg-white rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto max-w-2xl">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 id="user-modal-title" class="text-lg font-semibold text-gray-900">Nuevo Usuario</h2>
+        <button type="button" id="user-modal-close" class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Usuario</label>
+            <input id="um-username" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Email</label>
+            <input id="um-email" type="email" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Nombre</label>
+            <input id="um-first-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Apellido</label>
+            <input id="um-last-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Teléfono</label>
+            <input id="um-phone" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Rol</label>
+            <select id="um-rol" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white">
+              {Object.entries(ROLE_DISPLAY).map(([k, v]) => <option value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div id="um-password-fields" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Contraseña</label>
+            <input id="um-password" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+          <div id="um-password-confirm-fields" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Confirmar contraseña</label>
+            <input id="um-password-confirm" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button id="um-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button>
+          <button id="um-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Crear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { authStore } from '../../stores/auth';
+  import { usuariosStore } from '../../stores/usuarios';
+
+  var skeleton, content, tbody, searchInput, modal, modalTitle, modalClose, pwFields, pwConfirmFields;
+
+  var editingUserId = null;
+
+  var ROLE_DISPLAY = {
+    admin: 'Admin', pastora: 'Pastora', secretaria: 'Secretaria',
+    tesorera: 'Tesorera', lider_ministerio: 'Líder Ministerio', concilio: 'Concilio',
+  };
+  var ROLE_BADGE_COLORS = {
+    admin: 'bg-red-100 text-red-800',
+    pastora: 'bg-gray-100 text-gray-700',
+    secretaria: 'bg-blue-100 text-blue-800',
+    tesorera: 'bg-amber-100 text-amber-800',
+    lider_ministerio: 'bg-green-100 text-green-800',
+    concilio: 'bg-gray-100 text-gray-700',
+  };
+
+  function openModal() { if (modal) modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  function closeModal() { if (modal) modal.style.display = 'none'; document.body.style.overflow = ''; }
+
+  function bindEvents() {
+    if (!modal || !modalClose || !tbody || !searchInput) return;
+
+    modalClose.onclick = closeModal;
+    var cancelBtn = document.getElementById('um-cancel');
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    modal.onclick = function(e) { if (e.target === modal) closeModal(); };
+
+    var createBtn = document.getElementById('users-create-btn');
+    if (createBtn) createBtn.onclick = function() {
+      editingUserId = null;
+      if (modalTitle) modalTitle.textContent = 'Nuevo Usuario';
+      var usernameEl = document.getElementById('um-username');
+      if (usernameEl) { usernameEl.value = ''; usernameEl.disabled = false; }
+      var el = document.getElementById('um-email'); if (el) el.value = '';
+      el = document.getElementById('um-first-name'); if (el) el.value = '';
+      el = document.getElementById('um-last-name'); if (el) el.value = '';
+      el = document.getElementById('um-phone'); if (el) el.value = '';
+      el = document.getElementById('um-rol'); if (el) el.value = 'concilio';
+      el = document.getElementById('um-password'); if (el) el.value = '';
+      el = document.getElementById('um-password-confirm'); if (el) el.value = '';
+      if (pwFields) pwFields.classList.remove('hidden');
+      if (pwConfirmFields) pwConfirmFields.classList.remove('hidden');
+      var saveBtn = document.getElementById('um-save');
+      if (saveBtn) saveBtn.textContent = 'Crear';
+      openModal();
+    };
+
+    var saveBtn = document.getElementById('um-save');
+    if (saveBtn) saveBtn.onclick = async function() {
+      var data = {
+        username: (document.getElementById('um-username') || {}).value,
+        email: (document.getElementById('um-email') || {}).value,
+        first_name: (document.getElementById('um-first-name') || {}).value,
+        last_name: (document.getElementById('um-last-name') || {}).value,
+        telefono: (document.getElementById('um-phone') || {}).value,
+        rol: (document.getElementById('um-rol') || {}).value,
+      };
+      if (!editingUserId) {
+        data.password = (document.getElementById('um-password') || {}).value;
+        data.password_confirm = (document.getElementById('um-password-confirm') || {}).value;
+      }
+      try {
+        if (editingUserId) {
+          await usuariosStore.updateUsuario(editingUserId, data);
+        } else {
+          await usuariosStore.createUsuario(data);
+        }
+        closeModal();
+        renderUsers();
+      } catch (err) { console.error(err); }
+    };
+
+    searchInput.oninput = renderUsers;
+  }
+
+  function openEdit(user) {
+    editingUserId = user.id;
+    if (modalTitle) modalTitle.textContent = 'Editar Usuario';
+    var el = document.getElementById('um-username');
+    if (el) { el.value = user.username; el.disabled = true; }
+    el = document.getElementById('um-email'); if (el) el.value = user.email || '';
+    el = document.getElementById('um-first-name'); if (el) el.value = user.first_name || '';
+    el = document.getElementById('um-last-name'); if (el) el.value = user.last_name || '';
+    el = document.getElementById('um-phone'); if (el) el.value = user.telefono || '';
+    el = document.getElementById('um-rol'); if (el) el.value = user.rol || 'concilio';
+    if (pwFields) pwFields.classList.add('hidden');
+    if (pwConfirmFields) pwConfirmFields.classList.add('hidden');
+    el = document.getElementById('um-save'); if (el) el.textContent = 'Actualizar';
+    openModal();
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('¿Desactivar este usuario?')) return;
+    try { await usuariosStore.deleteUsuario(id); renderUsers(); }
+    catch (err) { console.error(err); }
+  }
+
+  function renderUsers() {
+    if (!tbody) return;
+    var state = usuariosStore.getState();
+    var users = state.usuarios || [];
+    var search = searchInput ? searchInput.value.toLowerCase() : '';
+    if (search) {
+      users = users.filter(function(u) {
+        return u.username.toLowerCase().includes(search) ||
+          (u.first_name + ' ' + u.last_name).toLowerCase().includes(search);
+      });
+    }
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">No se encontraron usuarios</td></tr>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < users.length; i++) {
+      var user = users[i];
+      html += '<tr class="border-b border-gray-100 hover:bg-gray-50">';
+      html += '<td class="px-4 py-3 font-medium text-gray-900">' + user.username + '</td>';
+      html += '<td class="px-4 py-3">' + user.first_name + ' ' + user.last_name + '</td>';
+      html += '<td class="px-4 py-3"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (ROLE_BADGE_COLORS[user.rol] || 'bg-gray-100 text-gray-700') + '">' + (ROLE_DISPLAY[user.rol] || user.rol) + '</span></td>';
+      html += '<td class="px-4 py-3 text-gray-600">' + (user.email || '-') + '</td>';
+      var active = user.is_active !== false;
+      html += '<td class="px-4 py-3"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (active ? 'Activo' : 'Inactivo') + '</span></td>';
+      html += '<td class="px-4 py-3 text-right"><div class="flex justify-end gap-2">';
+      html += '<button data-edit="' + user.id + '" class="users-edit-btn inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer">Editar</button>';
+      html += '<button data-delete="' + user.id + '" class="users-delete-btn inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer text-danger">Desactivar</button>';
+      html += '</div></td></tr>';
+    }
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll('.users-edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = parseInt(btn.dataset.edit);
+        var user = (usuariosStore.getState().usuarios || []).find(function(u) { return u.id === id; });
+        if (user) openEdit(user);
+      });
+    });
+    tbody.querySelectorAll('.users-delete-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        handleDelete(parseInt(btn.dataset.delete));
+      });
+    });
+  }
+
+  async function init() {
+    skeleton = document.getElementById('users-skeleton');
+    content = document.getElementById('users-content');
+    tbody = document.getElementById('users-tbody');
+    searchInput = document.getElementById('users-search');
+    modal = document.getElementById('user-modal');
+    modalTitle = document.getElementById('user-modal-title');
+    modalClose = document.getElementById('user-modal-close');
+    pwFields = document.getElementById('um-password-fields');
+    pwConfirmFields = document.getElementById('um-password-confirm-fields');
+
+    bindEvents();
+
+    await new Promise(r => setTimeout(r, 0));
+    await authStore.checkAuth();
+    var authState = authStore.getState();
+    if (!authState.isAuthenticated || (authState.user && authState.user.rol !== 'admin')) {
+      window.location.href = '/login';
+      return;
+    }
+    await usuariosStore.fetchUsuarios();
+    if (skeleton) skeleton.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+    renderUsers();
+  }
+
+  document.addEventListener('astro:page-load', function() {
+    if (document.getElementById('users-page')) init();
+  });
+</script></script>
