@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
+
+from .services.eventos import ConflictoHorarioException
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
@@ -333,6 +335,8 @@ class MinisterioViewSet(viewsets.ModelViewSet):
                     **data
                 )
                 return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
+            except ConflictoHorarioException as e:
+                return Response({'error': e.data}, status=status.HTTP_400_BAD_REQUEST)
             except ValidationError as e:
                 error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
                 return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
@@ -492,6 +496,8 @@ class EventoViewSet(viewsets.ModelViewSet):
                 **data
             )
             return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
+        except ConflictoHorarioException as e:
+            return Response({'error': e.data}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
             return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
@@ -515,6 +521,8 @@ class EventoViewSet(viewsets.ModelViewSet):
                 **data
             )
             return Response(EventoSerializer(evento).data)
+        except ConflictoHorarioException as e:
+            return Response({'error': e.data}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
             return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)

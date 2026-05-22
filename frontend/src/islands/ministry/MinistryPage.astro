@@ -492,6 +492,7 @@ const TAB_LABELS: Record<string, string> = {
     h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Ubicación</label><input id="ef-ubicacion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Descripción</label><textarea id="ef-desc" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white resize-none"></textarea></div>';
     h += '</div><p id="events-form-error" class="text-sm text-red-600 mt-2 hidden whitespace-pre-line"></p><div class="flex gap-2 mt-4"><button id="events-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="events-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '<div id="conflict-modal" class="hidden fixed inset-0 z-50 items-center justify-center"><div class="fixed inset-0 bg-black/40" id="conflict-modal-backdrop"></div><div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 z-10 border-l-4 border-amber-500"><div class="flex items-center gap-2 mb-3"><span class="text-amber-500 text-xl">⚠</span><h3 class="text-lg font-semibold text-gray-900">Conflicto de horario</h3></div><p id="conflict-message" class="text-sm text-gray-700 mb-3"></p><div id="conflict-list" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div><div class="flex gap-2 justify-end"><button id="conflict-cancel" class="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">Cancelar</button><button id="conflict-force" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 cursor-pointer">Forzar de todos modos</button></div></div></div>';
     h += '<div class="grid gap-3">';
     for (var i = 0; i < eventos.length; i++) {
       var ev = eventos[i];
@@ -533,6 +534,7 @@ const TAB_LABELS: Record<string, string> = {
     });
     if (!response.ok) {
       var body = await response.json().catch(function() { return {}; });
+      console.log('[sendEvento] Error ' + response.status, body);
 
       // Formato manual: {error: {tipo, mensaje, conflictos}}
       var manualError = body.error || null;
@@ -548,19 +550,49 @@ const TAB_LABELS: Record<string, string> = {
           }
         }
       }
+      console.log('[sendEvento] isConflict=' + isConflict + ' forzar=' + forzar, manualError);
 
       if (isConflict && !forzar) {
-        var conflictos = manualError.conflictos || [];
-        var mensaje = manualError.mensaje || 'Hay un conflicto de horario en esta ubicación.';
-        if (conflictos.length > 0) {
-          mensaje += '\n\nEventos que se solapan:';
-          conflictos.forEach(function(c) { mensaje += '\n- ' + c.titulo; });
-        }
-        mensaje += '\n\n¿Deseas forzar la creación de todos modos?';
-        if (confirm(mensaje)) {
-          return await sendEvento(data, true);
-        }
-        return false;
+        return await new Promise(function(resolve) {
+          var conflictos = manualError.conflictos || [];
+          var mensaje = manualError.mensaje || 'La ubicación ya está ocupada en ese horario.';
+          
+          var msgEl = document.getElementById('conflict-message');
+          var listEl = document.getElementById('conflict-list');
+          var modal = document.getElementById('conflict-modal');
+          
+          if (!modal || !msgEl || !listEl) {
+            console.error('[sendEvento] Elementos del modal no encontrados:', {modal: !!modal, msgEl: !!msgEl, listEl: !!listEl});
+            alert(mensaje + '\n\n' + conflictos.map(function(c) { return '- ' + c.titulo; }).join('\n'));
+            resolve(false);
+            return;
+          }
+
+          msgEl.textContent = mensaje;
+
+          var listHtml = '';
+          conflictos.forEach(function(c) {
+            var timeInfo = c.hora_inicio ? c.hora_inicio : '';
+            timeInfo += c.hora_fin ? ' - ' + c.hora_fin : '';
+            listHtml += '<div class="flex items-center gap-2 p-2 rounded border border-amber-100 bg-amber-50"><span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><div><p class="text-sm font-medium text-gray-900">' + c.titulo + '</p>' + (timeInfo ? '<p class="text-xs text-gray-500">' + timeInfo + '</p>' : '') + '</div></div>';
+          });
+          listEl.innerHTML = listHtml;
+
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+
+          function closeAndResolve(result) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            resolve(result);
+          }
+
+          document.getElementById('conflict-force').onclick = async function() {
+            closeAndResolve(await sendEvento(data, true));
+          };
+          document.getElementById('conflict-cancel').onclick = function() { closeAndResolve(false); };
+          document.getElementById('conflict-modal-backdrop').onclick = function() { closeAndResolve(false); };
+        });
       }
 
       // Build display message from all available error info
@@ -791,6 +823,7 @@ const TAB_LABELS: Record<string, string> = {
   function showError(msg) {
     var el = document.getElementById('events-form-error');
     if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+    else { console.error('[showError] elemento no encontrado, msg:', msg); alert(msg); }
   }
   function hideError() {
     var el = document.getElementById('events-form-error');

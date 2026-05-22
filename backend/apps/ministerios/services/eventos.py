@@ -6,6 +6,17 @@ from django.db import transaction
 from ..models import Evento, PlanificacionActividad
 
 
+class ConflictoHorarioException(Exception):
+    """Excepción que preserva los datos de conflicto de horario sin que Django los aplane"""
+    def __init__(self, mensaje, conflictos):
+        self.data = {
+            'tipo': 'conflicto_horario',
+            'mensaje': mensaje,
+            'conflictos': conflictos,
+        }
+        super().__init__(mensaje)
+
+
 def validar_conflicto_horario(ubicacion, fecha_inicio, fecha_fin=None, exclude_id=None):
     """Valida que no haya otro evento en la misma ubicación con solapamiento de horario.
     Retorna una lista de eventos conflictivos (vacía si no hay conflicto)."""
@@ -42,14 +53,19 @@ def crear_evento(ministry, creado_por, ministerios_relacionados=None, forzar=Fal
     if ubicacion and fecha_inicio and not forzar:
         conflictos = validar_conflicto_horario(ubicacion, fecha_inicio, fecha_fin)
         if conflictos:
-            raise ValidationError({
-                'tipo': 'conflicto_horario',
-                'mensaje': f'Ya existe un evento en "{ubicacion}" en ese horario.',
-                'conflictos': [
-                    {'id': e.id, 'titulo': e.titulo, 'fecha_inicio': e.fecha_inicio.isoformat()}
+            raise ConflictoHorarioException(
+                mensaje=f'La ubicación "{ubicacion}" ya está ocupada en ese horario.',
+                conflictos=[
+                    {
+                        'id': e.id,
+                        'titulo': e.titulo,
+                        'fecha_inicio': e.fecha_inicio.isoformat(),
+                        'hora_inicio': e.hora_inicio.strftime('%H:%M') if e.hora_inicio else None,
+                        'hora_fin': e.hora_fin.strftime('%H:%M') if e.hora_fin else None,
+                    }
                     for e in conflictos
                 ]
-            })
+            )
 
     evento = Evento.objects.create(ministry=ministry, creado_por=creado_por, **kwargs)
     if ministerios_relacionados:
@@ -67,14 +83,19 @@ def actualizar_evento(evento: Evento, ministerios_relacionados=None, forzar=Fals
     if ubicacion and fecha_inicio and not forzar:
         conflictos = validar_conflicto_horario(ubicacion, fecha_inicio, fecha_fin, exclude_id=evento.id)
         if conflictos:
-            raise ValidationError({
-                'tipo': 'conflicto_horario',
-                'mensaje': f'Ya existe un evento en "{ubicacion}" en ese horario.',
-                'conflictos': [
-                    {'id': e.id, 'titulo': e.titulo, 'fecha_inicio': e.fecha_inicio.isoformat()}
+            raise ConflictoHorarioException(
+                mensaje=f'La ubicación "{ubicacion}" ya está ocupada en ese horario.',
+                conflictos=[
+                    {
+                        'id': e.id,
+                        'titulo': e.titulo,
+                        'fecha_inicio': e.fecha_inicio.isoformat(),
+                        'hora_inicio': e.hora_inicio.strftime('%H:%M') if e.hora_inicio else None,
+                        'hora_fin': e.hora_fin.strftime('%H:%M') if e.hora_fin else None,
+                    }
                     for e in conflictos
                 ]
-            })
+            )
 
     for field, value in kwargs.items():
         setattr(evento, field, value)
