@@ -491,7 +491,7 @@ const TAB_LABELS: Record<string, string> = {
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Hora fin (opcional)</label><input id="ef-hora-fin" type="time" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Ubicación</label><input id="ef-ubicacion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Descripción</label><textarea id="ef-desc" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white resize-none"></textarea></div>';
-    h += '</div><p id="events-form-error" class="text-sm text-red-600 mt-2 hidden"></p><div class="flex gap-2 mt-4"><button id="events-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="events-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+    h += '</div><p id="events-form-error" class="text-sm text-red-600 mt-2 hidden whitespace-pre-line"></p><div class="flex gap-2 mt-4"><button id="events-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="events-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
     h += '<div class="grid gap-3">';
     for (var i = 0; i < eventos.length; i++) {
       var ev = eventos[i];
@@ -533,10 +533,25 @@ const TAB_LABELS: Record<string, string> = {
     });
     if (!response.ok) {
       var body = await response.json().catch(function() { return {}; });
-      var errorInfo = body.error || body;
-      if (errorInfo && errorInfo.tipo === 'conflicto_horario' && !forzar) {
-        var conflictos = errorInfo.conflictos || [];
-        var mensaje = errorInfo.mensaje || 'Hay un conflicto de horario en esta ubicación.';
+
+      // Formato manual: {error: {tipo, mensaje, conflictos}}
+      var manualError = body.error || null;
+      var isConflict = false;
+      if (manualError && manualError.tipo === 'conflicto_horario') isConflict = true;
+      if (body.errors && typeof body.errors === 'object') {
+        var keys = Object.keys(body.errors);
+        for (var i = 0; i < keys.length; i++) {
+          var val = body.errors[keys[i]];
+          if (typeof val === 'object' && !Array.isArray(val) && val.tipo === 'conflicto_horario') {
+            manualError = val;
+            isConflict = true;
+          }
+        }
+      }
+
+      if (isConflict && !forzar) {
+        var conflictos = manualError.conflictos || [];
+        var mensaje = manualError.mensaje || 'Hay un conflicto de horario en esta ubicación.';
         if (conflictos.length > 0) {
           mensaje += '\n\nEventos que se solapan:';
           conflictos.forEach(function(c) { mensaje += '\n- ' + c.titulo; });
@@ -547,7 +562,28 @@ const TAB_LABELS: Record<string, string> = {
         }
         return false;
       }
-      throw new Error(errorInfo.mensaje || errorInfo.detail || 'Error al ' + (editingEventId ? 'editar' : 'crear') + ' el evento');
+
+      // Build display message from all available error info
+      var msg = '';
+      // Custom handler: {code, message, errors: {campo: [mensajes]}}
+      if (body.errors && typeof body.errors === 'object' && !Array.isArray(body.errors)) {
+        msg = Object.keys(body.errors).map(function(key) {
+          var val = body.errors[key];
+          if (typeof val === 'string') return key + ': ' + val;
+          if (typeof val === 'object' && !Array.isArray(val)) return key + ': ' + (val.mensaje || val.detail || val.message || JSON.stringify(val));
+          if (Array.isArray(val)) return key + ': ' + val.join(', ');
+          return key + ': ' + String(val);
+        }).join('\n');
+      }
+      // Raw DRF format: {campo: [mensajes]} (from ministry view's eventos POST)
+      if (!msg && typeof body === 'object' && !body.code && !body.message) {
+        msg = Object.keys(body).map(function(key) {
+          var val = body[key];
+          return key + ': ' + (Array.isArray(val) ? val.join(', ') : String(val));
+        }).join('\n');
+      }
+      if (!msg) msg = body.message || (manualError && manualError.mensaje) || body.detail || 'Error al ' + (editingEventId ? 'editar' : 'crear') + ' el evento';
+      throw new Error(msg);
     }
     return true;
   }

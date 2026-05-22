@@ -219,8 +219,16 @@ class EventoSerializer(serializers.ModelSerializer):
     ministry_nombre = serializers.CharField(source='ministry.nombre', read_only=True)
     ministerios_relacionados_nombres = serializers.SerializerMethodField()
     creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True)
-    fecha_inicio = serializers.DateTimeField(default_timezone=ZoneInfo('America/Asuncion'))
-    fecha_fin = serializers.DateTimeField(default_timezone=ZoneInfo('America/Asuncion'), required=False, allow_null=True)
+    fecha_inicio = serializers.DateTimeField(
+        default_timezone=ZoneInfo('America/Asuncion'),
+        input_formats=['iso-8601', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M'],
+    )
+    fecha_fin = serializers.DateTimeField(
+        default_timezone=ZoneInfo('America/Asuncion'),
+        required=False,
+        allow_null=True,
+        input_formats=['iso-8601', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M'],
+    )
 
     class Meta:
         model = Evento

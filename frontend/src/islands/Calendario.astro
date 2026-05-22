@@ -103,6 +103,55 @@ const MESES = [
     return '#3B82F6';
   }
 
+  function isMultiDay(ev) {
+    if (!ev.fecha_fin) return false;
+    var s = ev.fecha_inicio ? ev.fecha_inicio.substring(0, 10) : null;
+    var e = ev.fecha_fin.substring(0, 10);
+    return s && s !== e;
+  }
+
+  function eventDaysInMonth(ev) {
+    var days = [];
+    var start = new Date(ev.fecha_inicio);
+    start.setHours(0, 0, 0, 0);
+    var end = ev.fecha_fin ? new Date(ev.fecha_fin) : new Date(ev.fecha_inicio);
+    end.setHours(23, 59, 59, 999);
+    var monthStart = new Date(year, month - 1, 1);
+    var monthEnd = new Date(year, month, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    var iter = new Date(start);
+    while (iter <= end) {
+      if (iter >= monthStart && iter <= monthEnd) {
+        var ds = iter.getFullYear() + '-' + String(iter.getMonth() + 1).padStart(2, '0') + '-' + String(iter.getDate()).padStart(2, '0');
+        days.push(ds);
+      }
+      iter.setDate(iter.getDate() + 1);
+    }
+    return days;
+  }
+
+  function getDayType(ev, dateStr) {
+    if (!isMultiDay(ev)) return 'single';
+    var days = eventDaysInMonth(ev);
+    if (days.length === 0) return 'single';
+    if (dateStr === days[0]) return 'start';
+    if (dateStr === days[days.length - 1]) return 'end';
+    return 'middle';
+  }
+
+  function isAllDay(ev) {
+    return !ev.hora_inicio;
+  }
+
+  function getMinistryAbbr(nombre) {
+    if (!nombre) return '';
+    if (nombre.length <= 8) return nombre;
+    var words = nombre.split(/\s+/);
+    if (words.length <= 2) return nombre.substring(0, 8);
+    return words.map(function(w) { return w[0].toUpperCase(); }).join('');
+  }
+
   async function loadCalendario() {
     const skeleton = document.getElementById('calendario-skeleton');
     const content = document.getElementById('calendario-content');
@@ -169,13 +218,23 @@ const MESES = [
     for (var d = 1; d <= daysInMonth; d++) {
       var dateStr = year + '-' + String(month).padStart(2, '0') + '-' + String(d).padStart(2, '0');
       var isToday = dateStr === todayStr;
-      var dayEvents = events.filter(function(ev) {
-        return ev.fecha_inicio && ev.fecha_inicio.startsWith(dateStr);
-      });
+      var isWeekend = (offset + d) % 7 >= 5;
 
-      html += '<div class="bg-white min-h-[96px] p-1.5 ' + (isToday ? 'ring-2 ring-accent ring-inset' : '') + '">';
-      html += '<div class="text-right mb-1">';
-      html += '<span class="inline-flex items-center justify-center w-7 h-7 text-sm rounded-full ' + (isToday ? 'bg-accent text-white font-bold' : 'text-gray-700') + '">' + d + '</span>';
+      var dayEvents = [];
+      if (events && events.length) {
+        dayEvents = events.filter(function(ev) {
+          if (!ev.fecha_inicio) return false;
+          var evStart = ev.fecha_inicio.substring(0, 10);
+          var evEnd = ev.fecha_fin ? ev.fecha_fin.substring(0, 10) : evStart;
+          return dateStr >= evStart && dateStr <= evEnd;
+        });
+      }
+
+      var bgClass = isWeekend ? 'bg-gray-50' : 'bg-white';
+
+      html += '<div class="' + bgClass + ' min-h-[96px] p-1.5 ' + (isToday ? 'ring-2 ring-accent ring-inset rounded-sm' : '') + '">';
+      html += '<div class="text-right mb-0.5">';
+      html += '<span class="inline-flex items-center justify-center w-7 h-7 text-sm rounded-full ' + (isToday ? 'bg-accent text-white font-bold' : (isWeekend ? 'text-gray-400' : 'text-gray-700')) + '">' + d + '</span>';
       html += '</div>';
       html += '<div class="space-y-0.5">';
 
@@ -183,12 +242,30 @@ const MESES = [
       for (var e = 0; e < maxShow; e++) {
         var ev = dayEvents[e];
         var color = getEventColor(ev);
-        var timeStr = ev.hora_inicio ? fmtTime(ev.hora_inicio) + ' ' : '';
-        html += '<div class="evento-badge truncate text-xs px-1.5 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity" style="background-color:' + color + '1a;color:' + color + ';border-left:2px solid ' + color + '" data-event-id="' + ev.id + '" title="' + ev.titulo + '">' + timeStr + ev.titulo + '</div>';
+        var abbr = getMinistryAbbr(ev.ministry_nombre || '');
+        var dayType = getDayType(ev, dateStr);
+
+        if (dayType === 'middle' || dayType === 'end') {
+          html += '<div class="evento-badge multi-day-cont flex items-center truncate text-[10px] px-1.5 py-0.5 rounded-r cursor-pointer hover:opacity-90 transition-opacity" style="background:' + color + '12;border-left:3px solid ' + color + '" data-event-id="' + ev.id + '" title="' + ev.titulo + '">' + (dayType === 'end' ? '<span class="shrink-0 mr-0.5 opacity-60">↳</span>' : '') + '<span class="truncate font-medium" style="color:' + color + '">' + ev.titulo + '</span></div>';
+        } else {
+          var timeHtml = '';
+          if (isAllDay(ev)) {
+            timeHtml = '<span class="font-semibold shrink-0 text-[10px] leading-tight" style="color:' + color + '">Todo el día</span>';
+          } else if (ev.hora_inicio) {
+            timeHtml = '<span class="font-mono font-semibold shrink-0 text-[10px] leading-tight" style="color:' + color + '">' + fmtTime(ev.hora_inicio) + '</span>';
+          }
+
+          var sharedDot = '';
+          if (ev.tipo === 'compartido' && ev.ministerios_relacionados_nombres && ev.ministerios_relacionados_nombres.length > 0) {
+            sharedDot = '<span class="shrink-0 text-[9px] text-gray-400" title="Compartido con ' + ev.ministerios_relacionados_nombres.join(', ') + '">◇</span>';
+          }
+
+          html += '<div class="evento-badge group flex items-center gap-1 truncate text-xs px-1.5 py-0.5 rounded-r cursor-pointer hover:shadow-sm transition-all relative" style="background:' + color + '10;border-left:3px solid ' + color + '" data-event-id="' + ev.id + '" title="' + ev.titulo + '">' + timeHtml + '<span class="truncate font-medium text-gray-800">' + ev.titulo + '</span>' + sharedDot + '<span class="ml-auto shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold leading-none" style="background:' + color + ';color:#fff">' + abbr + '</span></div>';
+        }
       }
 
       if (dayEvents.length > 3) {
-        html += '<div class="text-xs text-gray-400 pl-1 cursor-pointer hover:text-accent" data-day-events="' + dateStr + '">+' + (dayEvents.length - 2) + ' más</div>';
+        html += '<div class="text-xs text-gray-400 pl-1 cursor-pointer hover:text-accent transition-colors" data-day-events="' + dateStr + '">+' + (dayEvents.length - 2) + ' más</div>';
       }
 
       html += '</div>';
@@ -222,7 +299,10 @@ const MESES = [
         e.stopPropagation();
         var dateStr = el.getAttribute('data-day-events');
         var dayEvents = events.filter(function(ev) {
-          return ev.fecha_inicio && ev.fecha_inicio.startsWith(dateStr);
+          if (!ev.fecha_inicio) return false;
+          var evStart = ev.fecha_inicio.substring(0, 10);
+          var evEnd = ev.fecha_fin ? ev.fecha_fin.substring(0, 10) : evStart;
+          return dateStr >= evStart && dateStr <= evEnd;
         });
         if (dayEvents.length > 0) {
           showDayEvents(dateStr, dayEvents);
@@ -237,7 +317,7 @@ const MESES = [
   function renderMobileEvents() {
     var mobile = document.getElementById('events-list-mobile');
     if (!mobile || events.length === 0) {
-      if (mobile) mobile.innerHTML = '<p class="text-sm text-gray-400 text-center py-8">No hay eventos este mes</p>';
+      if (mobile) mobile.innerHTML = '<div class="text-center py-10"><svg class="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="1.5"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.5"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.5"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.5"/></svg><p class="text-sm text-gray-400">No hay eventos este mes</p></div>';
       return;
     }
 
@@ -253,15 +333,32 @@ const MESES = [
     Object.keys(grouped).sort().forEach(function(dateKey) {
       var dateEvents = grouped[dateKey];
       html += '<div class="mb-4">';
-      html += '<h3 class="text-sm font-semibold text-gray-700 mb-2">' + formatDate(dateKey) + '</h3>';
+      html += '<h3 class="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wider">' + formatDate(dateKey) + '</h3>';
       dateEvents.forEach(function(ev) {
         var color = getEventColor(ev);
-        html += '<div class="evento-badge flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 mb-2 cursor-pointer hover:border-accent/30 transition-colors" data-event-id="' + ev.id + '" style="border-left: 3px solid ' + color + '">';
+        var abbr = getMinistryAbbr(ev.ministry_nombre || '');
+        var isStart = !isMultiDay(ev) || eventDaysInMonth(ev)[0] === dateKey;
+
+        html += '<div class="evento-badge flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 mb-2 cursor-pointer hover:border-accent/40 hover:shadow-sm transition-all" data-event-id="' + ev.id + '" style="border-left: 4px solid ' + color + '">';
         html += '<div class="flex-1 min-w-0">';
         html += '<p class="text-sm font-medium text-gray-900 truncate">' + ev.titulo + '</p>';
-        html += '<p class="text-xs text-gray-500">' + fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' - ' + fmtTime(ev.hora_fin) : '') + (ev.ubicacion ? ' &middot; ' + ev.ubicacion : '') + '</p>';
+        var timeInfo = '';
+        if (isAllDay(ev)) {
+          timeInfo = 'Todo el día';
+        } else {
+          timeInfo = fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' - ' + fmtTime(ev.hora_fin) : '');
+        }
+        if (isMultiDay(ev) && isStart) {
+          timeInfo += ' &middot; Hasta ' + (ev.fecha_fin ? new Date(ev.fecha_fin).toLocaleDateString('es-PY', { day: 'numeric', month: 'short' }) : '');
+        }
+        html += '<p class="text-xs text-gray-500 mt-0.5">' + timeInfo + (ev.ubicacion ? ' &middot; ' + ev.ubicacion : '') + '</p>';
         html += '</div>';
-        html += '<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background-color:' + color + '1a;color:' + color + '">' + (ev.ministry_nombre || '') + '</span>';
+        html += '<div class="flex flex-col items-end gap-1 shrink-0">';
+        html += '<span class="text-[10px] px-1.5 py-0.5 rounded font-semibold leading-none" style="background:' + color + ';color:#fff">' + abbr + '</span>';
+        if (ev.tipo === 'compartido' && ev.ministerios_relacionados_nombres && ev.ministerios_relacionados_nombres.length > 0) {
+          html += '<span class="text-[9px] text-gray-400">◇ compartido</span>';
+        }
+        html += '</div>';
         html += '</div>';
       });
       html += '</div>';
@@ -280,16 +377,32 @@ const MESES = [
 
   function showDayEvents(dateStr, dayEvents) {
     var content = document.getElementById('evento-modal-content');
-    var color = dayEvents.length > 0 ? getEventColor(dayEvents[0]) : '#3B82F6';
 
     var html = '<h3 class="text-lg font-semibold text-gray-900 mb-1">' + formatDate(dateStr) + '</h3>';
     html += '<p class="text-sm text-gray-500 mb-4">' + dayEvents.length + ' evento' + (dayEvents.length !== 1 ? 's' : '') + '</p>';
     html += '<div class="space-y-3 max-h-96 overflow-y-auto">';
 
     dayEvents.forEach(function(ev) {
-      html += '<div class="p-3 rounded-lg border border-gray-100" style="border-left: 3px solid ' + getEventColor(ev) + '">';
+      var color = getEventColor(ev);
+      var abbr = getMinistryAbbr(ev.ministry_nombre || '');
+
+      html += '<div class="p-3 rounded-lg border border-gray-100 hover:border-accent/20 transition-colors" style="border-left: 4px solid ' + color + '">';
+      html += '<div class="flex items-center gap-2 mb-1">';
+      html += '<span class="text-[10px] px-1.5 py-0.5 rounded font-semibold leading-none" style="background:' + color + ';color:#fff">' + abbr + '</span>';
+      if (ev.tipo === 'compartido' && ev.ministerios_relacionados_nombres && ev.ministerios_relacionados_nombres.length > 0) {
+        html += '<span class="text-[10px] text-gray-400">◇ compartido</span>';
+      }
+      html += '</div>';
       html += '<p class="font-medium text-gray-900">' + ev.titulo + '</p>';
-      html += '<p class="text-sm text-gray-500 mt-1">' + fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' - ' + fmtTime(ev.hora_fin) : '') + '</p>';
+      if (isAllDay(ev)) {
+        html += '<p class="text-sm text-gray-500 mt-1">Todo el día';
+        if (isMultiDay(ev)) html += ' &middot; Hasta ' + formatDateRange(ev.fecha_inicio, ev.fecha_fin);
+        html += '</p>';
+      } else {
+        html += '<p class="text-sm text-gray-500 mt-1">' + fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' &mdash; ' + fmtTime(ev.hora_fin) : '');
+        if (isMultiDay(ev)) html += ' &middot; Hasta ' + formatDateRange(ev.fecha_inicio, ev.fecha_fin);
+        html += '</p>';
+      }
       if (ev.ubicacion) html += '<p class="text-sm text-gray-500">📍 ' + ev.ubicacion + '</p>';
       if (ev.descripcion) html += '<p class="text-sm text-gray-600 mt-2">' + ev.descripcion + '</p>';
       html += '<p class="text-xs text-gray-400 mt-2">' + (ev.ministry_nombre || '') + ' &middot; Creado por ' + (ev.creado_por_nombre || '—') + '</p>';
@@ -303,19 +416,42 @@ const MESES = [
     document.getElementById('evento-modal').classList.add('flex');
   }
 
+  function formatDateRange(start, end) {
+    var s = new Date(start);
+    var e = new Date(end);
+    var opts = { day: 'numeric', month: 'short' };
+    return s.toLocaleDateString('es-PY', opts) + ' &mdash; ' + e.toLocaleDateString('es-PY', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
   function openEventoModal(ev) {
     var content = document.getElementById('evento-modal-content');
     var color = getEventColor(ev);
+    var abbr = getMinistryAbbr(ev.ministry_nombre || '');
 
     var html = '';
-    html += '<div class="w-3 h-3 rounded-full mb-3" style="background-color:' + color + '"></div>';
+    html += '<div class="flex items-center gap-2 mb-3">';
+    html += '<div class="w-3 h-3 rounded-full shrink-0" style="background-color:' + color + '"></div>';
+    html += '<span class="text-[10px] px-1.5 py-0.5 rounded font-semibold leading-none" style="background:' + color + ';color:#fff">' + abbr + '</span>';
+    if (ev.tipo === 'compartido' && ev.ministerios_relacionados_nombres && ev.ministerios_relacionados_nombres.length > 0) {
+      html += '<span class="text-xs text-gray-400">◇ compartido</span>';
+    }
+    html += '</div>';
     html += '<h3 class="text-xl font-semibold text-gray-900">' + ev.titulo + '</h3>';
     html += '<p class="text-sm text-gray-500 mt-1">' + (ev.ministry_nombre || '') + '</p>';
     html += '<div class="mt-4 space-y-3">';
-    html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400">🕐</span><span class="text-gray-700">' + formatDate(ev.fecha_inicio) + ' &middot; ' + fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' - ' + fmtTime(ev.hora_fin) : '') + '</span></div>';
-    if (ev.ubicacion) html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400">📍</span><span class="text-gray-700">' + ev.ubicacion + '</span></div>';
+    html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400 shrink-0 w-5 text-center">🕐</span><div><span class="text-gray-700">' + formatDate(ev.fecha_inicio) + '</span>';
+    if (isAllDay(ev)) {
+      html += ' <span class="text-gray-500">&middot; Todo el día</span>';
+    } else {
+      html += ' <span class="text-gray-500">&middot; ' + fmtTime(ev.hora_inicio) + (ev.hora_fin ? ' - ' + fmtTime(ev.hora_fin) : '') + '</span>';
+    }
+    if (isMultiDay(ev)) {
+      html += '<br><span class="text-gray-500 text-xs">Hasta el ' + formatDateRange(ev.fecha_inicio, ev.fecha_fin) + '</span>';
+    }
+    html += '</div></div>';
+    if (ev.ubicacion) html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400 shrink-0 w-5 text-center">📍</span><span class="text-gray-700">' + ev.ubicacion + '</span></div>';
     if (ev.tipo === 'compartido' && ev.ministerios_relacionados_nombres && ev.ministerios_relacionados_nombres.length > 0) {
-      html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400">👥</span><span class="text-gray-700">Compartido con: ' + ev.ministerios_relacionados_nombres.join(', ') + '</span></div>';
+      html += '<div class="flex items-center gap-2 text-sm"><span class="text-gray-400 shrink-0 w-5 text-center">👥</span><span class="text-gray-700">Compartido con: ' + ev.ministerios_relacionados_nombres.join(', ') + '</span></div>';
     }
     if (ev.descripcion) html += '<div class="mt-3 pt-3 border-t border-gray-100"><p class="text-sm text-gray-600">' + ev.descripcion + '</p></div>';
     html += '<p class="text-xs text-gray-400 mt-4">Creado por ' + (ev.creado_por_nombre || '—') + ' &middot; ' + formatDate(ev.created_at || ev.fecha_inicio) + '</p>';

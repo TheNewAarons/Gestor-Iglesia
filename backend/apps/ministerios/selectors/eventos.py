@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models import Q
 from ..models import Evento, PlanificacionActividad, Ministerio
 
@@ -23,11 +25,17 @@ def listar_eventos(filters: dict = None):
 
 
 def listar_eventos_calendario(year: int, month: int, ministerio_slug: str = None):
-    """Eventos del mes para la vista de calendario"""
+    """Eventos del mes para la vista de calendario, incluyendo multi-día"""
+    import calendar
+    last_day = calendar.monthrange(year, month)[1]
+    month_start = date(year, month, 1)
+    month_end = date(year, month, last_day)
+
     queryset = Evento.objects.select_related('ministry', 'creado_por').prefetch_related('ministerios_relacionados')
     queryset = queryset.filter(
-        fecha_inicio__year=year,
-        fecha_inicio__month=month,
+        Q(fecha_inicio__year=year, fecha_inicio__month=month) |
+        Q(fecha_fin__year=year, fecha_fin__month=month) |
+        Q(fecha_inicio__lte=month_end, fecha_fin__gte=month_start)
     )
 
     if ministerio_slug:
