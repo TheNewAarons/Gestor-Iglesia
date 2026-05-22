@@ -1,0 +1,735 @@
+---
+export interface Props {
+  tabs: string[];
+}
+---
+
+<main class="treasury-page">
+  <header class="page-header">
+    <h1 class="page-title">Tesorería</h1>
+    <p class="page-subtitle">Gestión centralizada de finanzas de la iglesia</p>
+  </header>
+
+  <nav class="tabs-nav" id="tabs-nav">
+    <button class="tab-btn active" data-tab="dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="tab-btn" data-tab="flujo-caja">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Flujo de Caja
+    </button>
+    <button class="tab-btn" data-tab="boletas">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
+      Boletas
+    </button>
+    <button class="tab-btn" data-tab="traspasos">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Traspasos
+    </button>
+    <button class="tab-btn" data-tab="informe">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Informe Mensual
+    </button>
+    <button class="tab-btn" data-tab="configuracion">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Configuración
+    </button>
+  </nav>
+
+  <div id="loading-indicator" class="loading-bar" style="display:none"></div>
+  <div id="error-banner" class="error-banner" style="display:none"></div>
+  <div id="success-banner" class="success-banner" style="display:none"></div>
+
+  <div class="tab-content" id="tab-dashboard"></div>
+  <div class="tab-content" style="display:none" id="tab-flujo-caja"></div>
+  <div class="tab-content" style="display:none" id="tab-boletas"></div>
+  <div class="tab-content" style="display:none" id="tab-traspasos"></div>
+  <div class="tab-content" style="display:none" id="tab-informe"></div>
+  <div class="tab-content" style="display:none" id="tab-configuracion"></div>
+</main>
+
+<script>
+  import { tesoreriaStore } from '../../stores/tesoreria';
+
+  const store = tesoreriaStore;
+  let currentTab = 'dashboard';
+
+  function formatCurrency(val: number | string): string {
+    const n = typeof val === 'string' ? parseFloat(val) : val;
+    return new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
+  }
+
+  function showLoading() { document.getElementById('loading-indicator')!.style.display = 'block'; }
+  function hideLoading() { document.getElementById('loading-indicator')!.style.display = 'none'; }
+
+  function showError(msg: string) {
+    const el = document.getElementById('error-banner')!;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function showSuccess(msg: string) {
+    const el = document.getElementById('success-banner')!;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+
+  store.subscribe(() => {
+    const state = store.getState();
+    if (state.loading) showLoading(); else hideLoading();
+    if (state.error) showError(state.error);
+    if (state.successMessage) showSuccess(state.successMessage);
+    renderCurrentTab();
+  });
+
+  function switchTab(tabName: string) {
+    currentTab = tabName;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach((el: any) => el.style.display = 'none');
+    document.getElementById(`tab-${tabName}`)!.style.display = 'block';
+    renderCurrentTab();
+  }
+
+  function renderCurrentTab() {
+    store.clearMessages();
+    const state = store.getState();
+    switch (currentTab) {
+      case 'dashboard': renderDashboard(state); break;
+      case 'flujo-caja': renderFlujoCaja(state); break;
+      case 'boletas': renderBoletas(state); break;
+      case 'traspasos': renderTraspasos(state); break;
+      case 'informe': renderInforme(state); break;
+      case 'configuracion': renderConfiguracion(state); break;
+    }
+  }
+
+  // --- Dashboard ---
+  function renderDashboard(state: any) {
+    const el = document.getElementById('tab-dashboard')!;
+    if (!state.saldos || state.saldos.length === 0) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <p>No hay ministerios con cajas activas.</p>
+          <button class="btn btn-sm btn-primary" onclick="location.reload()">Recargar</button>
+        </div>`;
+      return;
+    }
+    const totalSaldo = state.saldos.reduce((acc: number, s: any) => acc + s.saldo, 0);
+    const totalIngresos = state.saldos.reduce((acc: number, s: any) => acc + s.total_ingresos, 0);
+    const totalEgresos = state.saldos.reduce((acc: number, s: any) => acc + s.total_egresos, 0);
+    el.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Saldo Total</div>
+          <div class="stat-value ${totalSaldo >= 0 ? 'positive' : 'negative'}">${formatCurrency(totalSaldo)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Ingresos</div>
+          <div class="stat-value positive">${formatCurrency(totalIngresos)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Egresos</div>
+          <div class="stat-value negative">${formatCurrency(totalEgresos)}</div>
+        </div>
+      </div>
+      <h3 class="section-title">Saldos por Ministerio</h3>
+      <div class="ministry-cards">
+        ${state.saldos.map((s: any) => `
+          <div class="ministry-card" style="border-left: 3px solid ${s.ministry_color}">
+            <div class="card-header">
+              <span class="ministry-name">${s.ministry_nombre}</span>
+              <span class="ministry-balance ${s.saldo >= 0 ? 'positive' : 'negative'}">${formatCurrency(s.saldo)}</span>
+            </div>
+            <div class="card-details">
+              <span>Ingresos: ${formatCurrency(s.total_ingresos)}</span>
+              <span>Egresos: ${formatCurrency(s.total_egresos)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  // --- Flujo de Caja ---
+  function renderFlujoCaja(state: any) {
+    const el = document.getElementById('tab-flujo-caja')!;
+    const now = new Date();
+    el.innerHTML = `
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Mes</label>
+          <select id="flujo-mes">
+            ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Año</label>
+          <select id="flujo-anio">
+            ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-buscar-flujo">Buscar</button>
+      </div>
+      <div id="flujo-content">
+        ${!state.flujo ? '<div class="empty-state"><p>Selecciona mes y año para ver el flujo de caja.</p></div>' : `
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Ofrendas</div><div class="stat-value positive">${formatCurrency(state.flujo.total_ofrendas)}</div></div>
+            <div class="stat-card"><div class="stat-label">Ingresos Caja</div><div class="stat-value positive">${formatCurrency(state.flujo.total_ingresos_caja)}</div></div>
+            <div class="stat-card"><div class="stat-label">Egresos</div><div class="stat-value negative">${formatCurrency(state.flujo.total_egresos)}</div></div>
+            <div class="stat-card"><div class="stat-label">Saldo Neto</div><div class="stat-value ${state.flujo.saldo_neto >= 0 ? 'positive' : 'negative'}">${formatCurrency(state.flujo.saldo_neto)}</div></div>
+          </div>
+        `}
+      </div>`;
+    setTimeout(() => {
+      document.getElementById('btn-buscar-flujo')?.addEventListener('click', () => {
+        const mes = parseInt((document.getElementById('flujo-mes') as HTMLSelectElement).value);
+        const anio = parseInt((document.getElementById('flujo-anio') as HTMLSelectElement).value);
+        store.fetchFlujoCaja(mes, anio);
+      });
+    }, 0);
+  }
+
+  // --- Boletas ---
+  function renderBoletas(state: any) {
+    const el = document.getElementById('tab-boletas')!;
+    el.innerHTML = `
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Desde</label>
+          <input type="date" id="boleta-inicio" class="input" />
+        </div>
+        <div class="filter-group">
+          <label>Hasta</label>
+          <input type="date" id="boleta-fin" class="input" />
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-buscar-boletas">Buscar</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table" id="boletas-table">
+          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th><th>Boleta</th></tr></thead>
+          <tbody>
+            ${state.boletas.results && state.boletas.results.length > 0
+              ? state.boletas.results.map((b: any) => `
+                <tr>
+                  <td>${new Date(b.fecha).toLocaleDateString('es-PY')}</td>
+                  <td><span class="badge" style="background:${b.ministry_color || '#6b7280'}20;color:${b.ministry_color || '#6b7280'}">${b.ministry_nombre}</span></td>
+                  <td class="negative">${formatCurrency(b.monto)}</td>
+                  <td>${b.descripcion}</td>
+                  <td>${b.registrado_por_nombre || '-'}</td>
+                  <td>${b.imagen ? `<a href="${b.imagen}" target="_blank" class="btn btn-sm btn-outline">Ver</a>` : '-'}</td>
+                </tr>`).join('')
+              : '<tr><td colspan="6" class="text-center empty-cell">No hay boletas registradas</td></tr>'}
+          </tbody>
+        </table>
+      </div>`;
+    setTimeout(() => {
+      document.getElementById('btn-buscar-boletas')?.addEventListener('click', () => {
+        const ini = (document.getElementById('boleta-inicio') as HTMLInputElement).value;
+        const fin = (document.getElementById('boleta-fin') as HTMLInputElement).value;
+        store.fetchBoletas(ini || undefined, fin || undefined);
+      });
+    }, 0);
+  }
+
+  // --- Traspasos ---
+  function renderTraspasos(state: any) {
+    const el = document.getElementById('tab-traspasos')!;
+    el.innerHTML = `
+      <div class="table-container">
+        <table class="data-table">
+          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th><th>Enviado</th></tr></thead>
+          <tbody>
+            ${state.traspasos.results && state.traspasos.results.length > 0
+              ? state.traspasos.results.map((t: any) => `
+                <tr>
+                  <td>${new Date(t.fecha).toLocaleDateString('es-PY')}</td>
+                  <td><span class="badge" style="background:${t.ministry_color || '#6b7280'}20;color:${t.ministry_color || '#6b7280'}">${t.ministry_nombre}</span></td>
+                  <td class="positive">${formatCurrency(t.monto)}</td>
+                  <td>${t.descripcion}</td>
+                  <td>${t.registrado_por_nombre || '-'}</td>
+                  <td>${t.enviado_tesoreria ? '<span class="badge badge-success">Enviado</span>' : '<span class="badge badge-warning">Pendiente</span>'}</td>
+                </tr>`).join('')
+              : '<tr><td colspan="6" class="text-center empty-cell">No hay traspasos registrados</td></tr>'}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // --- Informe Mensual ---
+  function renderInforme(state: any) {
+    const el = document.getElementById('tab-informe')!;
+    const now = new Date();
+    el.innerHTML = `
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Mes</label>
+          <select id="informe-mes">
+            ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Año</label>
+          <select id="informe-anio">
+            ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-generar-informe">Generar</button>
+        <button class="btn btn-outline btn-sm" id="btn-exportar-informe">Exportar JSON</button>
+      </div>
+      <div id="informe-content">
+        ${!state.informe
+          ? '<div class="empty-state"><p>Genera un informe para ver los detalles.</p></div>'
+          : renderInformeDetalle(state.informe)
+        }
+      </div>`;
+    setTimeout(() => {
+      document.getElementById('btn-generar-informe')?.addEventListener('click', () => {
+        const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
+        const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
+        store.fetchInforme(mes, anio, true);
+      });
+      document.getElementById('btn-exportar-informe')?.addEventListener('click', () => {
+        const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
+        const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
+        store.exportarInforme(mes, anio);
+      });
+    }, 0);
+  }
+
+  function renderInformeDetalle(informe: any) {
+    const d = informe.datos;
+    return `
+      <div class="informe-detalle">
+        <section>
+          <h3>INGRESOS</h3>
+          <h4>Saldo del Mes Pasado</h4>
+          <p>Otros Ministerios: ${formatCurrency(d.ingresos.saldo_mes_pasado.otros_ministerios)}</p>
+          <p>MNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.mni)} | DNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.dni)} | JNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.jni)}</p>
+          <h4>Ofrendas Totales</h4>
+          <p>Total: ${formatCurrency(d.ingresos.ofrendas_totales)}</p>
+          <h4>Ministerios Principales</h4>
+          <p>MNI: ${formatCurrency(d.ingresos.principales.mni)} | DNI: ${formatCurrency(d.ingresos.principales.dni)} | JNI: ${formatCurrency(d.ingresos.principales.jni)}</p>
+          ${d.ingresos.ministerios_secundarios && d.ingresos.ministerios_secundarios.length > 0 ? `
+            <h4>Ministerios Secundarios</h4>
+            ${d.ingresos.ministerios_secundarios.map((ms: any) => `<p>${ms.nombre}: ${formatCurrency(ms.ingresos)}</p>`).join('')}
+          ` : ''}
+        </section>
+        <section>
+          <h3>EGRESOS</h3>
+          <h4>Iglesia Local</h4>
+          <p>PRES.DISTRITAL (${d.configuracion.pres_distrital_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_distrital)}</p>
+          <p>PRES EDUCACIONAL (${d.configuracion.pres_educacional_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_educacional)}</p>
+          <p>PRES.EVANGELISMO (${d.configuracion.pres_evangelismo_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_evangelismo)}</p>
+          <p>Jubilación: ${formatCurrency(d.egresos.iglesia_local.jubilacion)}</p>
+          <h4>Ministerios Principales</h4>
+          <p>MNI: ${formatCurrency(d.egresos.principales.mni)} | DNI: ${formatCurrency(d.egresos.principales.dni)} | JNI: ${formatCurrency(d.egresos.principales.jni)}</p>
+        </section>
+        <section>
+          <h3>TOTALES</h3>
+          <p>Total Ingresos: ${formatCurrency(d.totales.total_ingresos)}</p>
+          <p>Total Egresos: ${formatCurrency(d.totales.total_egresos)}</p>
+          <p class="saldo-final ${d.totales.saldo_final >= 0 ? 'positive' : 'negative'}">Saldo Final: ${formatCurrency(d.totales.saldo_final)}</p>
+        </section>
+      </div>`;
+  }
+
+  // --- Configuración ---
+  function renderConfiguracion(state: any) {
+    const el = document.getElementById('tab-configuracion')!;
+    const c = state.config;
+    if (!c) {
+      el.innerHTML = '<div class="empty-state"><p>Cargando configuración...</p></div>';
+      return;
+    }
+    el.innerHTML = `
+      <h3 class="section-title">Parámetros de Finanzas</h3>
+      <form id="config-form" class="config-form">
+        <div class="form-group">
+          <label>PRES.DISTRITAL (%)</label>
+          <input type="number" name="pres_distrital_pct" value="${c.pres_distrital_pct}" step="0.01" min="0" max="100" class="input" />
+        </div>
+        <div class="form-group">
+          <label>PRES EDUCACIONAL (%)</label>
+          <input type="number" name="pres_educacional_pct" value="${c.pres_educacional_pct}" step="0.01" min="0" max="100" class="input" />
+        </div>
+        <div class="form-group">
+          <label>PRES.EVANGELISMO (%)</label>
+          <input type="number" name="pres_evangelismo_pct" value="${c.pres_evangelismo_pct}" step="0.01" min="0" max="100" class="input" />
+        </div>
+        <div class="form-group">
+          <label>Jubilación (Monto Fijo)</label>
+          <input type="number" name="jubilacion_monto" value="${parseFloat(c.jubilacion_monto)}" step="1000" min="0" class="input" />
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+      </form>
+      <p class="text-muted" style="margin-top:8px">Última actualización: ${new Date(c.updated_at).toLocaleString('es-PY')}</p>`;
+    setTimeout(() => {
+      document.getElementById('config-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const fd = new FormData(form);
+        store.updateConfig({
+          pres_distrital_pct: fd.get('pres_distrital_pct') as string,
+          pres_educacional_pct: fd.get('pres_educacional_pct') as string,
+          pres_evangelismo_pct: fd.get('pres_evangelismo_pct') as string,
+          jubilacion_monto: fd.get('jubilacion_monto') as string,
+        });
+      });
+    }, 0);
+  }
+
+  // --- Init ---
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab((btn as HTMLElement).dataset.tab!));
+  });
+
+  store.fetchDashboard();
+  switchTab('dashboard');
+</script>
+
+<style>
+  .treasury-page {
+    padding: 0;
+    max-width: 1100px;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .page-subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.9375rem;
+  }
+
+  .tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: nowrap;
+  }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+  }
+
+  .tab-btn.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+  }
+
+  .loading-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), #93c5fd);
+    animation: loading-slide 1.5s infinite;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes loading-slide {
+    0% { width: 0; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0; margin-left: 100%; }
+  }
+
+  .error-banner {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+  }
+
+  .success-banner {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .positive { color: #059669; }
+  .negative { color: #dc2626; }
+
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 1rem;
+  }
+
+  .ministry-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ministry-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .ministry-name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .ministry-balance {
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .card-details {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+  }
+
+  .filters-bar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+  }
+
+  .filter-group select,
+  .filter-group .input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.875rem;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .data-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state p {
+    margin-bottom: 1rem;
+  }
+
+  .empty-cell {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: 2rem 1rem !important;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.125rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .badge-success { background: #dcfce7; color: #166534; }
+  .badge-warning { background: #fef9c3; color: #854d0e; }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition);
+  }
+
+  .btn-primary { background: var(--color-primary); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-outline { background: transparent; border-color: var(--color-border); color: var(--color-text); }
+  .btn-outline:hover { background: var(--color-bg-secondary); }
+  .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+
+  .config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .form-group label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .form-group .input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.875rem;
+  }
+
+  .informe-detalle section {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .informe-detalle h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .informe-detalle h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .informe-detalle p {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .saldo-final {
+    font-weight: 700;
+    font-size: 1.125rem !important;
+    margin-top: 0.5rem;
+  }
+
+  .text-muted { color: var(--color-text-secondary); font-size: 0.8125rem; }
+</style>

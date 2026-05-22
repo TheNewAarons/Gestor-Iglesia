@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'apps.ministerios',
+    'apps.tesoreria',
 ]
 
 MIDDLEWARE = [

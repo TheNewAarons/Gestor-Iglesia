@@ -1,0 +1,10 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import TreasuryPage from '../islands/treasury/TreasuryPage.astro';
+
+const tabs = ['dashboard', 'flujo-caja', 'boletas', 'traspasos', 'informe', 'configuracion'];
+---
+
+<DashboardLayout title="Finanzas">
+  <TreasuryPage tabs={tabs} />
+</DashboardLayout>
