@@ -1,6 +1,6 @@
 from django.db.models import Sum, Q
 from apps.ministerios.models import Ministerio, CajaMinisterio, MovimientoCaja, Ofrenda
-from ..models import ConfiguracionFinanzas, InformeMensual
+from ..models import ConfiguracionFinanzas, InformeMensual, MovimientoTesoreria, CuotaFija
 
 
 def saldos_ministerios():
@@ -27,7 +27,7 @@ def saldos_ministerios():
 
 
 def consolidar_flujo_caja(mes, anio):
-    """Consolida el flujo de caja mensual: ingresos y egresos por categoría."""
+    """Consolida el flujo de caja mensual: ingresos y egresos por categoria."""
     ingresos = Ofrenda.objects.filter(fecha__year=anio, fecha__month=mes).aggregate(
         total=Sum('monto')
     )['total'] or 0
@@ -53,17 +53,14 @@ def consolidar_flujo_caja(mes, anio):
 
 
 def configuracion_actual():
-    """Retorna la configuración de finanzas vigente."""
     return ConfiguracionFinanzas.obtener()
 
 
 def informes_mensuales():
-    """Retorna todos los informes mensuales generados."""
     return InformeMensual.objects.all()
 
 
 def obtener_informe(anio, mes):
-    """Retorna un informe específico o None."""
     try:
         return InformeMensual.objects.get(anio=anio, mes=mes)
     except InformeMensual.DoesNotExist:
@@ -71,7 +68,6 @@ def obtener_informe(anio, mes):
 
 
 def listar_boletas_egresos(fecha_inicio=None, fecha_fin=None):
-    """Lista boletas (imágenes) de egresos de todos los ministerios."""
     qs = MovimientoCaja.objects.filter(
         tipo='egreso', imagen__isnull=False
     ).exclude(imagen='').select_related('caja__ministry', 'registrado_por')
@@ -85,7 +81,55 @@ def listar_boletas_egresos(fecha_inicio=None, fecha_fin=None):
 
 
 def listar_traspasos():
-    """Lista movimientos marcados como enviados a tesorería."""
     return MovimientoCaja.objects.filter(
         enviado_tesoreria=True
     ).select_related('caja__ministry', 'registrado_por').order_by('-fecha')
+
+
+def listar_movimientos_tesoreria(tipo=None):
+    qs = MovimientoTesoreria.objects.select_related('registrado_por')
+    if tipo:
+        qs = qs.filter(tipo=tipo)
+    return qs
+
+
+def listar_cuotas_fijas():
+    return CuotaFija.objects.select_related('ministry').all()
+
+
+def obtener_informe_mes_anterior(anio, mes):
+    if mes == 1:
+        anio_ant = anio - 1
+        mes_ant = 12
+    else:
+        anio_ant = anio
+        mes_ant = mes - 1
+    try:
+        return InformeMensual.objects.get(anio=anio_ant, mes=mes_ant)
+    except InformeMensual.DoesNotExist:
+        return None
+
+
+def ofrendas_por_categoria_mni(mes, anio):
+    """Retorna total de ofrendas MNI agrupadas por categoria."""
+    ofrendas = Ofrenda.objects.filter(
+        ministry__slug='mni', fecha__year=anio, fecha__month=mes
+    )
+    total_general = ofrendas.filter(categoria='ofrenda_general').aggregate(t=Sum('monto'))['t'] or 0
+    caja_alabastro = ofrendas.filter(categoria='caja_alabastro').aggregate(t=Sum('monto'))['t'] or 0
+    accion_gracias = ofrendas.filter(categoria='accion_gracias').aggregate(t=Sum('monto'))['t'] or 0
+    dip = ofrendas.filter(categoria='dip').aggregate(t=Sum('monto'))['t'] or 0
+    oracion_ayuno = ofrendas.filter(categoria='oracion_ayuno').aggregate(t=Sum('monto'))['t'] or 0
+    fem = ofrendas.filter(categoria='fem').aggregate(t=Sum('monto'))['t'] or 0
+    otros = ofrendas.filter(categoria='otros').aggregate(t=Sum('monto'))['t'] or 0
+    sin_categoria = ofrendas.filter(categoria='').aggregate(t=Sum('monto'))['t'] or 0
+    return {
+        'ofrenda_general': float(total_general) + float(sin_categoria),
+        'caja_alabastro': float(caja_alabastro),
+        'accion_gracias': float(accion_gracias),
+        'dip': float(dip),
+        'oracion_ayuno': float(oracion_ayuno),
+        'fem': float(fem),
+        'otros': float(otros),
+        'total': float((total_general + caja_alabastro + accion_gracias + dip + oracion_ayuno + fem + otros + sin_categoria)),
+    }

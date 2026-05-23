@@ -43,6 +43,17 @@ export interface BoletaEgreso {
   enviado_tesoreria: boolean;
 }
 
+export interface BoletaDetalle {
+  id: number;
+  monto: number;
+  descripcion: string;
+  fecha: string;
+  imagen: string | null;
+  ministry_nombre: string;
+  ministry_color: string;
+  registrado_por_nombre: string;
+}
+
 export interface InformeMensual {
   id: number;
   anio: number;
@@ -51,6 +62,28 @@ export interface InformeMensual {
   generado_por: number | null;
   generado_por_nombre: string | null;
   fecha_generacion: string;
+  updated_at: string;
+}
+
+export interface MovimientoTesorería {
+  id: number;
+  tipo: string;
+  monto: string;
+  descripcion: string;
+  fecha: string;
+  imagen: string | null;
+  registrado_por: number | null;
+  registrado_por_nombre: string | null;
+  created_at: string;
+}
+
+export interface CuotaFija {
+  id: number;
+  ministry: number;
+  ministry_nombre: string;
+  ministry_slug: string;
+  tipo: string;
+  monto: string;
   updated_at: string;
 }
 
@@ -64,9 +97,12 @@ class TesoreriaStore {
     config: null as ConfiguracionFinanzas | null,
     flujo: null as FlujoCaja | null,
     boletas: { count: 0, next: null as string | null, previous: null as string | null, results: [] as BoletaEgreso[] },
+    boletaDetalle: null as BoletaDetalle | null,
     traspasos: { count: 0, next: null as string | null, previous: null as string | null, results: [] as BoletaEgreso[] },
     informe: null as InformeMensual | null,
     informes: [] as InformeMensual[],
+    movimientos: { count: 0, next: null as string | null, previous: null as string | null, results: [] as MovimientoTesorería[] },
+    cuotas: [] as CuotaFija[],
     loading: false,
     error: null as string | null,
     successMessage: null as string | null,
@@ -106,7 +142,6 @@ class TesoreriaStore {
 
   async fetchFlujoCaja(mes?: number, anio?: number): Promise<void> {
     this.setState({ loading: true, error: null });
-    const now = new Date();
     const params = new URLSearchParams();
     if (mes) params.set('mes', String(mes));
     if (anio) params.set('anio', String(anio));
@@ -133,11 +168,33 @@ class TesoreriaStore {
     }
   }
 
+  async fetchBoletaDetalle(id: number): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      const data = await api.get<BoletaDetalle>(`/tesoreria/boleta-detalle/?id=${id}`);
+      this.setState({ boletaDetalle: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
   async fetchTraspasos(): Promise<void> {
     this.setState({ loading: true, error: null });
     try {
       const data = await api.get<any>('/tesoreria/traspasos/');
       this.setState({ traspasos: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async crearTraspaso(data: { ministry_slug: string; monto: string; descripcion: string }): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      await api.post('/tesoreria/traspasos/', data);
+      this.setState({ loading: false, successMessage: 'Traspaso registrado exitosamente' });
+      await this.fetchTraspasos();
+      await this.fetchDashboard();
     } catch (err: any) {
       this.setState({ loading: false, error: err.message });
     }
@@ -172,20 +229,73 @@ class TesoreriaStore {
     this.setState({ loading: true, error: null });
     try {
       const updated = await api.put<ConfiguracionFinanzas>('/tesoreria/configuracion/', data);
-      this.setState({ config: updated, loading: false, successMessage: 'Configuración actualizada correctamente' });
+      this.setState({ config: updated, loading: false, successMessage: 'Configuracion actualizada correctamente' });
     } catch (err: any) {
       this.setState({ loading: false, error: err.message });
     }
   }
 
-  async exportarInforme(mes?: number, anio?: number): Promise<void> {
+  exportarInformeJson(mes?: number, anio?: number): void {
     const params = new URLSearchParams();
     if (mes) params.set('mes', String(mes));
     if (anio) params.set('anio', String(anio));
     const qs = params.toString();
     const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-    const url = `${API_BASE}/tesoreria/exportar-informe/${qs ? '?' + qs : ''}`;
-    window.open(url, '_blank');
+    window.open(`${API_BASE}/tesoreria/exportar-informe/${qs ? '?' + qs : ''}`, '_blank');
+  }
+
+  exportarInformePdf(mes?: number, anio?: number): void {
+    const params = new URLSearchParams();
+    if (mes) params.set('mes', String(mes));
+    if (anio) params.set('anio', String(anio));
+    const qs = params.toString();
+    const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    window.open(`${API_BASE}/tesoreria/exportar-pdf/${qs ? '?' + qs : ''}`, '_blank');
+  }
+
+  async fetchMovimientos(tipo?: string): Promise<void> {
+    this.setState({ loading: true, error: null });
+    const params = new URLSearchParams();
+    if (tipo) params.set('tipo', tipo);
+    const qs = params.toString();
+    try {
+      const data = await api.get<any>(`/tesoreria/movimientos/${qs ? '?' + qs : ''}`);
+      this.setState({ movimientos: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async crearMovimiento(data: any): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      await api.post('/tesoreria/movimientos/', data);
+      this.setState({ loading: false, successMessage: 'Movimiento registrado exitosamente' });
+      await this.fetchMovimientos();
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async fetchCuotas(): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      const data = await api.get<CuotaFija[]>('/tesoreria/cuotas/');
+      this.setState({ cuotas: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async updateCuotas(data: any[]): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      await api.put('/tesoreria/cuotas/', data);
+      this.setState({ loading: false, successMessage: 'Cuotas actualizadas correctamente' });
+      await this.fetchCuotas();
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
   }
 }
 

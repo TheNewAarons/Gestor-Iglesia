@@ -47,6 +47,17 @@ export interface Props {
   <div class="tab-content" style="display:none" id="tab-traspasos"></div>
   <div class="tab-content" style="display:none" id="tab-informe"></div>
   <div class="tab-content" style="display:none" id="tab-configuracion"></div>
+
+  <!-- Boleta detail modal -->
+  <div id="boleta-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">Detalle de Boleta</h3>
+        <button id="modal-close" class="modal-close">&times;</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -213,13 +224,13 @@ export interface Props {
           <tbody>
             ${state.boletas.results && state.boletas.results.length > 0
               ? state.boletas.results.map((b: any) => `
-                <tr>
+                <tr class="clickable-row" data-boleta-id="${b.id}">
                   <td>${new Date(b.fecha).toLocaleDateString('es-PY')}</td>
                   <td><span class="badge" style="background:${b.ministry_color || '#6b7280'}20;color:${b.ministry_color || '#6b7280'}">${b.ministry_nombre}</span></td>
                   <td class="negative">${formatCurrency(b.monto)}</td>
                   <td>${b.descripcion}</td>
                   <td>${b.registrado_por_nombre || '-'}</td>
-                  <td>${b.imagen ? `<a href="${b.imagen}" target="_blank" class="btn btn-sm btn-outline">Ver</a>` : '-'}</td>
+                  <td>${b.imagen ? '<span class="badge badge-info">Ver</span>' : '-'}</td>
                 </tr>`).join('')
               : '<tr><td colspan="6" class="text-center empty-cell">No hay boletas registradas</td></tr>'}
           </tbody>
@@ -231,16 +242,44 @@ export interface Props {
         const fin = (document.getElementById('boleta-fin') as HTMLInputElement).value;
         store.fetchBoletas(ini || undefined, fin || undefined);
       });
+      document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const id = parseInt((row as HTMLElement).dataset.boletaId!);
+          openBoletaModal(id);
+        });
+      });
     }, 0);
   }
 
   // --- Traspasos ---
   function renderTraspasos(state: any) {
     const el = document.getElementById('tab-traspasos')!;
+    const ministryOptions = state.saldos.map((s: any) =>
+      `<option value="${s.ministry_slug}">${s.ministry_nombre}</option>`
+    ).join('');
     el.innerHTML = `
+      <h3 class="section-title">Nuevo Traspaso</h3>
+      <form id="traspaso-form" class="traspaso-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ministerio</label>
+            <select name="ministry_slug" class="input" required>${ministryOptions}</select>
+          </div>
+          <div class="form-group">
+            <label>Monto</label>
+            <input type="number" name="monto" class="input" step="1000" min="1" required />
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" name="descripcion" class="input" placeholder="Traspaso mensual" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-end">Registrar Traspaso</button>
+        </div>
+      </form>
+      <h3 class="section-title" style="margin-top:1.5rem">Historial de Traspasos</h3>
       <div class="table-container">
         <table class="data-table">
-          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th><th>Enviado</th></tr></thead>
+          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th></tr></thead>
           <tbody>
             ${state.traspasos.results && state.traspasos.results.length > 0
               ? state.traspasos.results.map((t: any) => `
@@ -250,12 +289,23 @@ export interface Props {
                   <td class="positive">${formatCurrency(t.monto)}</td>
                   <td>${t.descripcion}</td>
                   <td>${t.registrado_por_nombre || '-'}</td>
-                  <td>${t.enviado_tesoreria ? '<span class="badge badge-success">Enviado</span>' : '<span class="badge badge-warning">Pendiente</span>'}</td>
                 </tr>`).join('')
-              : '<tr><td colspan="6" class="text-center empty-cell">No hay traspasos registrados</td></tr>'}
+              : '<tr><td colspan="5" class="text-center empty-cell">No hay traspasos registrados</td></tr>'}
           </tbody>
         </table>
       </div>`;
+    setTimeout(() => {
+      document.getElementById('traspaso-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const fd = new FormData(form);
+        store.crearTraspaso({
+          ministry_slug: fd.get('ministry_slug') as string,
+          monto: fd.get('monto') as string,
+          descripcion: fd.get('descripcion') as string,
+        });
+      });
+    }, 0);
   }
 
   // --- Informe Mensual ---
@@ -278,6 +328,7 @@ export interface Props {
         </div>
         <button class="btn btn-primary btn-sm" id="btn-generar-informe">Generar</button>
         <button class="btn btn-outline btn-sm" id="btn-exportar-informe">Exportar JSON</button>
+        <button class="btn btn-outline btn-sm" id="btn-exportar-pdf">Exportar PDF</button>
       </div>
       <div id="informe-content">
         ${!state.informe
@@ -294,7 +345,12 @@ export interface Props {
       document.getElementById('btn-exportar-informe')?.addEventListener('click', () => {
         const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
         const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
-        store.exportarInforme(mes, anio);
+        store.exportarInformeJson(mes, anio);
+      });
+      document.getElementById('btn-exportar-pdf')?.addEventListener('click', () => {
+        const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
+        const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
+        store.exportarInformePdf(mes, anio);
       });
     }, 0);
   }
@@ -380,6 +436,33 @@ export interface Props {
       });
     }, 0);
   }
+
+  // --- Boleta Modal ---
+  async function openBoletaModal(id: number) {
+    await store.fetchBoletaDetalle(id);
+    const detalle = store.getState().boletaDetalle;
+    if (!detalle) return;
+    const body = document.getElementById('modal-body')!;
+    body.innerHTML = `
+      <div class="boleta-detalle">
+        <p><strong>Ministerio:</strong> <span class="badge" style="background:${detalle.ministry_color || '#6b7280'}20;color:${detalle.ministry_color || '#6b7280'}">${detalle.ministry_nombre}</span></p>
+        <p><strong>Monto:</strong> ${formatCurrency(detalle.monto)}</p>
+        <p><strong>Fecha:</strong> ${new Date(detalle.fecha).toLocaleDateString('es-PY')}</p>
+        <p><strong>Descripcion:</strong> ${detalle.descripcion}</p>
+        <p><strong>Registrado por:</strong> ${detalle.registrado_por_nombre || '-'}</p>
+        ${detalle.imagen ? `<p><strong>Boleta:</strong><br/><img src="${detalle.imagen}" alt="Boleta" class="boleta-img" /></p>` : ''}
+      </div>`;
+    document.getElementById('boleta-modal')!.style.display = 'flex';
+  }
+
+  document.getElementById('modal-close')?.addEventListener('click', () => {
+    document.getElementById('boleta-modal')!.style.display = 'none';
+  });
+  document.getElementById('boleta-modal')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).id === 'boleta-modal') {
+      document.getElementById('boleta-modal')!.style.display = 'none';
+    }
+  });
 
   // --- Init ---
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -732,4 +815,34 @@ export interface Props {
   }
 
   .text-muted { color: var(--color-text-secondary); font-size: 0.8125rem; }
+
+  .traspaso-form { margin-bottom: 1rem; }
+  .form-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+
+  .clickable-row { cursor: pointer; transition: background 0.15s; }
+  .clickable-row:hover { background: var(--color-bg-secondary); }
+
+  .badge-info { background: #dbeafe; color: #1e40af; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-box {
+    background: var(--color-bg); border-radius: var(--radius-lg);
+    max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
+  }
+  .modal-header h3 { font-size: 1rem; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer;
+    color: var(--color-text-secondary); line-height: 1;
+  }
+  .modal-close:hover { color: var(--color-text); }
+  #modal-body { padding: 1.25rem; }
+  .boleta-detalle p { margin-bottom: 0.5rem; font-size: 0.875rem; }
+  .boleta-img { max-width: 100%; border-radius: var(--radius-md); margin-top: 0.5rem; border: 1px solid var(--color-border); }
 </style>

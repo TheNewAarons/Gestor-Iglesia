@@ -291,9 +291,20 @@ class Inventario(models.Model):
 
 class Ofrenda(models.Model):
     """Registro de ofrendas por ministry"""
+    CATEGORIAS_MNI = [
+        ('ofrenda_general', 'Ofrenda General'),
+        ('caja_alabastro', 'Caja de Alabastro'),
+        ('accion_gracias', 'Acción de Gracias'),
+        ('dip', 'DIP'),
+        ('oracion_ayuno', 'Oración y Ayuno'),
+        ('fem', 'FEM'),
+        ('otros', 'Otros'),
+    ]
+
     ministry = models.ForeignKey(Ministerio, on_delete=models.CASCADE, related_name='ofrendas')
     fecha = models.DateField()
     monto = models.DecimalField(max_digits=12, decimal_places=2)
+    categoria = models.CharField(max_length=30, choices=CATEGORIAS_MNI, blank=True, help_text='Categoría de ofrenda (MNI)')
     clase = models.CharField(max_length=30, blank=True, help_text='Para DNI - clase específica')
     envidada_tesoreria = models.BooleanField(default=False)
     fecha_envio = models.DateTimeField(null=True, blank=True)

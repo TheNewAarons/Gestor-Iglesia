@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import ConfiguracionFinanzas, InformeMensual
+from .models import ConfiguracionFinanzas, InformeMensual, MovimientoTesoreria, CuotaFija
+from apps.ministerios.serializers import MovimientoCajaSerializer
 
 
 class ConfiguracionFinanzasSerializer(serializers.ModelSerializer):
@@ -28,3 +29,36 @@ class InformeMensualSerializer(serializers.ModelSerializer):
         if obj.generado_por:
             return obj.generado_por.get_full_name() or obj.generado_por.username
         return None
+
+
+class MovimientoTesoreriaSerializer(serializers.ModelSerializer):
+    registrado_por_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MovimientoTesoreria
+        fields = [
+            'id', 'tipo', 'monto', 'descripcion', 'fecha',
+            'imagen', 'registrado_por', 'registrado_por_nombre', 'created_at'
+        ]
+        read_only_fields = ['registrado_por', 'registrado_por_nombre', 'created_at']
+
+    def get_registrado_por_nombre(self, obj):
+        if obj.registrado_por:
+            return obj.registrado_por.get_full_name() or obj.registrado_por.username
+        return None
+
+
+class CuotaFijaSerializer(serializers.ModelSerializer):
+    ministry_nombre = serializers.SerializerMethodField()
+    ministry_slug = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CuotaFija
+        fields = ['id', 'ministry', 'ministry_nombre', 'ministry_slug', 'tipo', 'monto', 'updated_at']
+        read_only_fields = ['ministry_nombre', 'ministry_slug', 'updated_at']
+
+    def get_ministry_nombre(self, obj):
+        return obj.ministry.nombre
+
+    def get_ministry_slug(self, obj):
+        return obj.ministry.slug

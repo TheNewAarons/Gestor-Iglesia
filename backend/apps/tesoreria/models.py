@@ -1,9 +1,10 @@
 from django.db import models
 from django.conf import settings
+from apps.ministerios.models import Ministerio
 
 
 class ConfiguracionFinanzas(models.Model):
-    """Configuración de finanzas de la iglesia (singleton)."""
+    """Configuracion de finanzas de la iglesia (singleton)."""
     pres_distrital_pct = models.DecimalField(
         max_digits=5, decimal_places=2, default=10.00,
         help_text='Porcentaje de PRES.DISTRITAL (ej: 10.00 = 10%)'
@@ -18,7 +19,7 @@ class ConfiguracionFinanzas(models.Model):
     )
     jubilacion_monto = models.DecimalField(
         max_digits=12, decimal_places=2, default=0,
-        help_text='Monto fijo de jubilación mensual'
+        help_text='Monto fijo de jubilacion mensual'
     )
     actualizado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
@@ -26,15 +27,14 @@ class ConfiguracionFinanzas(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Configuración de Finanzas'
-        verbose_name_plural = 'Configuración de Finanzas'
+        verbose_name = 'Configuracion de Finanzas'
+        verbose_name_plural = 'Configuracion de Finanzas'
 
     def __str__(self):
-        return 'Configuración de Finanzas'
+        return 'Configuracion de Finanzas'
 
     @classmethod
     def obtener(cls):
-        """Retorna la configuración existente o crea una con valores por defecto."""
         config, _ = cls.objects.get_or_create(pk=1)
         return config
 
@@ -58,3 +58,56 @@ class InformeMensual(models.Model):
 
     def __str__(self):
         return f'Informe {self.mes}/{self.anio}'
+
+
+class MovimientoTesoreria(models.Model):
+    """Movimientos directos de tesoreria (no atados a un ministerio)."""
+    TIPOS = [
+        ('ingreso_diezmo', 'Diezmo'),
+        ('ingreso_especial', 'Donacion Especial'),
+        ('ingreso_ahorro', 'Ahorro'),
+        ('ingreso_proyectos', 'Proyectos'),
+        ('egreso_sosten_pastoral', 'Sosten Pastoral'),
+        ('egreso_beneficios_pastorales', 'Beneficios Pastorales'),
+        ('egreso_varios_iglesia', 'Gastos Varios Iglesia'),
+        ('egreso_fondo_contingencia', 'Fondo de Contingencia'),
+    ]
+
+    tipo = models.CharField(max_length=35, choices=TIPOS)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    descripcion = models.TextField(blank=True)
+    fecha = models.DateField()
+    imagen = models.ImageField(upload_to='tesoreria/', blank=True, null=True)
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Movimiento de Tesoreria'
+        verbose_name_plural = 'Movimientos de Tesoreria'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} - {self.monto}'
+
+
+class CuotaFija(models.Model):
+    """Cuotas fijas mensuales de ministerios principales (COCE, cuota distrital)."""
+    TIPOS = [
+        ('coce', 'COCE'),
+        ('cuota_distrital', 'Cuota Distrital'),
+    ]
+
+    ministry = models.ForeignKey(Ministerio, on_delete=models.CASCADE, related_name='cuotas_fijas')
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Cuota Fija'
+        verbose_name_plural = 'Cuotas Fijas'
+        unique_together = ['ministry', 'tipo']
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} - {self.ministry.nombre}'
