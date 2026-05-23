@@ -4,42 +4,24 @@ export interface Props {
 }
 ---
 
-<main class="treasury-page">
-  <header class="page-header">
-    <h1 class="page-title">Tesorería</h1>
-    <p class="page-subtitle">Gestión centralizada de finanzas de la iglesia</p>
-  </header>
+<main>
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Tesorería</h1>
+    <p class="text-sm text-gray-500 mt-1">Gestion centralizada de finanzas de la iglesia</p>
+  </div>
 
-  <nav class="tabs-nav" id="tabs-nav">
-    <button class="tab-btn active" data-tab="dashboard">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Dashboard
-    </button>
-    <button class="tab-btn" data-tab="flujo-caja">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      Flujo de Caja
-    </button>
-    <button class="tab-btn" data-tab="boletas">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
-      Boletas
-    </button>
-    <button class="tab-btn" data-tab="traspasos">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-      Traspasos
-    </button>
-    <button class="tab-btn" data-tab="informe">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Informe Mensual
-    </button>
-    <button class="tab-btn" data-tab="configuracion">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Configuración
-    </button>
+  <nav class="flex gap-0 overflow-x-auto border-b border-gray-200 mb-6" id="tabs-nav">
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-colors whitespace-nowrap" data-tab="dashboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="flujo-caja"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Flujo de Caja</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="boletas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>Boletas</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="traspasos"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Traspasos</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="informe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Informe Mensual</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="configuracion"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuracion</button>
   </nav>
 
-  <div id="loading-indicator" class="loading-bar" style="display:none"></div>
-  <div id="error-banner" class="error-banner" style="display:none"></div>
-  <div id="success-banner" class="success-banner" style="display:none"></div>
+  <div id="loading-indicator" class="h-1 bg-gradient-to-r from-primary to-blue-300 rounded animate-pulse mb-4" style="display:none"></div>
+  <div id="error-banner" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 text-sm" style="display:none"></div>
+  <div id="success-banner" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4 text-sm" style="display:none"></div>
 
   <div class="tab-content" id="tab-dashboard"></div>
   <div class="tab-content" style="display:none" id="tab-flujo-caja"></div>
@@ -48,14 +30,10 @@ export interface Props {
   <div class="tab-content" style="display:none" id="tab-informe"></div>
   <div class="tab-content" style="display:none" id="tab-configuracion"></div>
 
-  <!-- Boleta detail modal -->
-  <div id="boleta-modal" class="modal-overlay" style="display:none">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="modal-title">Detalle de Boleta</h3>
-        <button id="modal-close" class="modal-close">&times;</button>
-      </div>
-      <div id="modal-body"></div>
+  <div id="boleta-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display:none">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center px-5 py-4 border-b border-gray-100"><h3 class="text-base font-semibold text-gray-900">Detalle de Boleta</h3><button id="modal-close" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button></div>
+      <div id="modal-body" class="p-5"></div>
     </div>
   </div>
 </main>
@@ -98,8 +76,13 @@ export interface Props {
 
   function switchTab(tabName: string) {
     currentTab = tabName;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    document.querySelectorAll('.mp-tab').forEach((b) => {
+      b.className = 'mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap';
+    });
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeBtn) {
+      activeBtn.className = 'mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-colors whitespace-nowrap';
+    }
     document.querySelectorAll('.tab-content').forEach((el: any) => el.style.display = 'none');
     document.getElementById(`tab-${tabName}`)!.style.display = 'block';
     renderCurrentTab();
@@ -122,9 +105,9 @@ export interface Props {
     const el = document.getElementById('tab-dashboard')!;
     if (!state.saldos || state.saldos.length === 0) {
       el.innerHTML = `
-        <div class="empty-state">
-          <p>No hay ministerios con cajas activas.</p>
-          <button class="btn btn-sm btn-primary" onclick="location.reload()">Recargar</button>
+        <div class="text-center py-12 text-gray-500">
+          <p class="text-sm text-gray-700 mb-1">No hay ministerios con cajas activas.</p>
+          <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" onclick="location.reload()">Recargar</button>
         </div>`;
       return;
     }
@@ -132,29 +115,29 @@ export interface Props {
     const totalIngresos = state.saldos.reduce((acc: number, s: any) => acc + s.total_ingresos, 0);
     const totalEgresos = state.saldos.reduce((acc: number, s: any) => acc + s.total_egresos, 0);
     el.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Saldo Total</div>
-          <div class="stat-value ${totalSaldo >= 0 ? 'positive' : 'negative'}">${formatCurrency(totalSaldo)}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+          <div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Saldo Total</div>
+          <div class="text-2xl font-bold ${totalSaldo >= 0 ? 'text-green-700' : 'text-red-600'}">${formatCurrency(totalSaldo)}</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Ingresos</div>
-          <div class="stat-value positive">${formatCurrency(totalIngresos)}</div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+          <div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Total Ingresos</div>
+          <div class="text-2xl font-bold text-green-700">${formatCurrency(totalIngresos)}</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Egresos</div>
-          <div class="stat-value negative">${formatCurrency(totalEgresos)}</div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+          <div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Total Egresos</div>
+          <div class="text-2xl font-bold text-red-600">${formatCurrency(totalEgresos)}</div>
         </div>
       </div>
-      <h3 class="section-title">Saldos por Ministerio</h3>
-      <div class="ministry-cards">
+      <h3 class="font-semibold text-gray-900 mb-4">Saldos por Ministerio</h3>
+      <div class="flex flex-col gap-3">
         ${state.saldos.map((s: any) => `
-          <div class="ministry-card" style="border-left: 3px solid ${s.ministry_color}">
-            <div class="card-header">
-              <span class="ministry-name">${s.ministry_nombre}</span>
-              <span class="ministry-balance ${s.saldo >= 0 ? 'positive' : 'negative'}">${formatCurrency(s.saldo)}</span>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4" style="border-left: 3px solid ${s.ministry_color}">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-semibold text-gray-900">${s.ministry_nombre}</span>
+              <span class="font-bold text-lg ${s.saldo >= 0 ? 'text-green-700' : 'text-red-600'}">${formatCurrency(s.saldo)}</span>
             </div>
-            <div class="card-details">
+            <div class="flex gap-6 text-xs text-gray-500">
               <span>Ingresos: ${formatCurrency(s.total_ingresos)}</span>
               <span>Egresos: ${formatCurrency(s.total_egresos)}</span>
             </div>
@@ -168,28 +151,28 @@ export interface Props {
     const el = document.getElementById('tab-flujo-caja')!;
     const now = new Date();
     el.innerHTML = `
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Mes</label>
-          <select id="flujo-mes">
+      <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Mes</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-mes">
             ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
           </select>
         </div>
-        <div class="filter-group">
-          <label>Año</label>
-          <select id="flujo-anio">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Año</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-anio">
             ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
           </select>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-buscar-flujo">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-flujo">Buscar</button>
       </div>
       <div id="flujo-content">
-        ${!state.flujo ? '<div class="empty-state"><p>Selecciona mes y año para ver el flujo de caja.</p></div>' : `
-          <div class="stats-grid">
-            <div class="stat-card"><div class="stat-label">Ofrendas</div><div class="stat-value positive">${formatCurrency(state.flujo.total_ofrendas)}</div></div>
-            <div class="stat-card"><div class="stat-label">Ingresos Caja</div><div class="stat-value positive">${formatCurrency(state.flujo.total_ingresos_caja)}</div></div>
-            <div class="stat-card"><div class="stat-label">Egresos</div><div class="stat-value negative">${formatCurrency(state.flujo.total_egresos)}</div></div>
-            <div class="stat-card"><div class="stat-label">Saldo Neto</div><div class="stat-value ${state.flujo.saldo_neto >= 0 ? 'positive' : 'negative'}">${formatCurrency(state.flujo.saldo_neto)}</div></div>
+        ${!state.flujo ? '<div class="text-center py-12 text-gray-500"><p class="text-sm text-gray-700 mb-1">Selecciona mes y año para ver el flujo de caja.</p></div>' : `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Ofrendas</div><div class="text-2xl font-bold text-green-700">${formatCurrency(state.flujo.total_ofrendas)}</div></div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Ingresos Caja</div><div class="text-2xl font-bold text-green-700">${formatCurrency(state.flujo.total_ingresos_caja)}</div></div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Egresos</div><div class="text-2xl font-bold text-red-600">${formatCurrency(state.flujo.total_egresos)}</div></div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><div class="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Saldo Neto</div><div class="text-2xl font-bold ${state.flujo.saldo_neto >= 0 ? 'text-green-700' : 'text-red-600'}">${formatCurrency(state.flujo.saldo_neto)}</div></div>
           </div>
         `}
       </div>`;
@@ -206,27 +189,27 @@ export interface Props {
   function renderBoletas(state: any) {
     const el = document.getElementById('tab-boletas')!;
     el.innerHTML = `
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Desde</label>
-          <input type="date" id="boleta-inicio" class="input" />
+      <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Desde</label>
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" id="boleta-inicio" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <div class="filter-group">
-          <label>Hasta</label>
-          <input type="date" id="boleta-fin" class="input" />
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Hasta</label>
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" id="boleta-fin" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-buscar-boletas">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-boletas">Buscar</button>
       </div>
-      <div class="table-container">
-        <table class="data-table" id="boletas-table">
-          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th><th>Boleta</th></tr></thead>
+      <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+        <table class="w-full text-sm" id="boletas-table">
+          <thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Ministerio</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th>Descripción</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Registrado por</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Boleta</th></tr></thead>
           <tbody>
             ${state.boletas.results && state.boletas.results.length > 0
               ? state.boletas.results.map((b: any) => `
-                <tr class="clickable-row" data-boleta-id="${b.id}">
-                  <td>${new Date(b.fecha).toLocaleDateString('es-PY')}</td>
-                  <td><span class="badge" style="background:${b.ministry_color || '#6b7280'}20;color:${b.ministry_color || '#6b7280'}">${b.ministry_nombre}</span></td>
-                  <td class="negative">${formatCurrency(b.monto)}</td>
+                <tr class="clickable-row border-b border-gray-100 hover:bg-gray-50" data-boleta-id="${b.id}">
+                  <td class="px-4 py-2">${new Date(b.fecha).toLocaleDateString('es-PY')}</td>
+                  <td><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background:${b.ministry_color || '#6b7280'}20;color:${b.ministry_color || '#6b7280'}">${b.ministry_nombre}</span></td>
+                  <td class="text-red-600 font-medium">${formatCurrency(b.monto)}</td>
                   <td>${b.descripcion}</td>
                   <td>${b.registrado_por_nombre || '-'}</td>
                   <td>${b.imagen ? '<span class="badge badge-info">Ver</span>' : '-'}</td>
@@ -257,35 +240,35 @@ export interface Props {
       `<option value="${s.ministry_slug}">${s.ministry_nombre}</option>`
     ).join('');
     el.innerHTML = `
-      <h3 class="section-title">Nuevo Traspaso</h3>
+      <h3 class="font-semibold text-gray-900 mb-4">Nuevo Traspaso</h3>
       <form id="traspaso-form" class="traspaso-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Ministerio</label>
-            <select name="ministry_slug" class="input" required>${ministryOptions}</select>
+        <div class="flex gap-3 items-end flex-wrap">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Ministerio</label>
+            <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" name="ministry_slug" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" required>${ministryOptions}</select>
           </div>
-          <div class="form-group">
-            <label>Monto</label>
-            <input type="number" name="monto" class="input" step="1000" min="1" required />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Monto</label>
+            <input type="number" name="monto" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" step="1000" min="1" required />
           </div>
-          <div class="form-group">
-            <label>Descripción</label>
-            <input type="text" name="descripcion" class="input" placeholder="Traspaso mensual" />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">Descripción</label>
+            <input type="text" name="descripcion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" placeholder="Traspaso mensual" />
           </div>
-          <button type="submit" class="btn btn-primary" style="align-self:flex-end">Registrar Traspaso</button>
+          <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer" style="align-self:flex-end">Registrar Traspaso</button>
         </div>
       </form>
-      <h3 class="section-title" style="margin-top:1.5rem">Historial de Traspasos</h3>
-      <div class="table-container">
-        <table class="data-table">
-          <thead><tr><th>Fecha</th><th>Ministerio</th><th>Monto</th><th>Descripción</th><th>Registrado por</th></tr></thead>
+      <h3 class="font-semibold text-gray-900 mb-4" style="margin-top:1.5rem">Historial de Traspasos</h3>
+      <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Ministerio</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th>Descripción</th><th>Registrado por</th></tr></thead>
           <tbody>
             ${state.traspasos.results && state.traspasos.results.length > 0
               ? state.traspasos.results.map((t: any) => `
                 <tr>
-                  <td>${new Date(t.fecha).toLocaleDateString('es-PY')}</td>
-                  <td><span class="badge" style="background:${t.ministry_color || '#6b7280'}20;color:${t.ministry_color || '#6b7280'}">${t.ministry_nombre}</span></td>
-                  <td class="positive">${formatCurrency(t.monto)}</td>
+                  <td class="px-4 py-2">${new Date(t.fecha).toLocaleDateString('es-PY')}</td>
+                  <td><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background:${t.ministry_color || '#6b7280'}20;color:${t.ministry_color || '#6b7280'}">${t.ministry_nombre}</span></td>
+                  <td class="text-green-700 font-medium">${formatCurrency(t.monto)}</td>
                   <td>${t.descripcion}</td>
                   <td>${t.registrado_por_nombre || '-'}</td>
                 </tr>`).join('')
@@ -312,26 +295,26 @@ export interface Props {
     const el = document.getElementById('tab-informe')!;
     const now = new Date();
     el.innerHTML = `
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Mes</label>
-          <select id="informe-mes">
+      <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Mes</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-mes">
             ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
           </select>
         </div>
-        <div class="filter-group">
-          <label>Año</label>
-          <select id="informe-anio">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Año</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-anio">
             ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
           </select>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-generar-informe">Generar</button>
-        <button class="btn btn-outline btn-sm" id="btn-exportar-informe">Exportar JSON</button>
-        <button class="btn btn-outline btn-sm" id="btn-exportar-pdf">Exportar PDF</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-generar-informe">Generar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-informe">Exportar JSON</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-pdf">Exportar PDF</button>
       </div>
       <div id="informe-content">
         ${!state.informe
-          ? '<div class="empty-state"><p>Genera un informe para ver los detalles.</p></div>'
+          ? '<div class="text-center py-12 text-gray-500"><p class="text-sm text-gray-700 mb-1">Genera un informe para ver los detalles.</p></div>'
           : renderInformeDetalle(state.informe)
         }
       </div>`;
@@ -357,36 +340,36 @@ export interface Props {
   function renderInformeDetalle(informe: any) {
     const d = informe.datos;
     return `
-      <div class="informe-detalle">
-        <section>
-          <h3>INGRESOS</h3>
-          <h4>Saldo del Mes Pasado</h4>
-          <p>Otros Ministerios: ${formatCurrency(d.ingresos.saldo_mes_pasado.otros_ministerios)}</p>
-          <p>MNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.mni)} | DNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.dni)} | JNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.jni)}</p>
-          <h4>Ofrendas Totales</h4>
-          <p>Total: ${formatCurrency(d.ingresos.ofrendas_totales)}</p>
-          <h4>Ministerios Principales</h4>
-          <p>MNI: ${formatCurrency(d.ingresos.principales.mni)} | DNI: ${formatCurrency(d.ingresos.principales.dni)} | JNI: ${formatCurrency(d.ingresos.principales.jni)}</p>
+      <div class="space-y-4">
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-5 mb-4">
+          <h3 class="font-semibold text-gray-900 text-lg">INGRESOS</h3>
+          <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Saldo del Mes Pasado</h4>
+          <p class="text-sm text-gray-700 mb-1">Otros Ministerios: ${formatCurrency(d.ingresos.saldo_mes_pasado.otros_ministerios)}</p>
+          <p class="text-sm text-gray-700 mb-1">MNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.mni)} | DNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.dni)} | JNI: ${formatCurrency(d.ingresos.saldo_mes_pasado.jni)}</p>
+          <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Ofrendas Totales</h4>
+          <p class="text-sm text-gray-700 mb-1">Total: ${formatCurrency(d.ingresos.ofrendas_totales)}</p>
+          <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Ministerios Principales</h4>
+          <p class="text-sm text-gray-700 mb-1">MNI: ${formatCurrency(d.ingresos.principales.mni)} | DNI: ${formatCurrency(d.ingresos.principales.dni)} | JNI: ${formatCurrency(d.ingresos.principales.jni)}</p>
           ${d.ingresos.ministerios_secundarios && d.ingresos.ministerios_secundarios.length > 0 ? `
-            <h4>Ministerios Secundarios</h4>
-            ${d.ingresos.ministerios_secundarios.map((ms: any) => `<p>${ms.nombre}: ${formatCurrency(ms.ingresos)}</p>`).join('')}
+            <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Ministerios Secundarios</h4>
+            ${d.ingresos.ministerios_secundarios.map((ms: any) => `<p class="text-sm text-gray-700 mb-1">${ms.nombre}: ${formatCurrency(ms.ingresos)}</p>`).join('')}
           ` : ''}
         </section>
-        <section>
-          <h3>EGRESOS</h3>
-          <h4>Iglesia Local</h4>
-          <p>PRES.DISTRITAL (${d.configuracion.pres_distrital_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_distrital)}</p>
-          <p>PRES EDUCACIONAL (${d.configuracion.pres_educacional_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_educacional)}</p>
-          <p>PRES.EVANGELISMO (${d.configuracion.pres_evangelismo_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_evangelismo)}</p>
-          <p>Jubilación: ${formatCurrency(d.egresos.iglesia_local.jubilacion)}</p>
-          <h4>Ministerios Principales</h4>
-          <p>MNI: ${formatCurrency(d.egresos.principales.mni)} | DNI: ${formatCurrency(d.egresos.principales.dni)} | JNI: ${formatCurrency(d.egresos.principales.jni)}</p>
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-5 mb-4">
+          <h3 class="font-semibold text-gray-900 text-lg mt-6">EGRESOS</h3>
+          <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Iglesia Local</h4>
+          <p class="text-sm text-gray-700 mb-1">PRES.DISTRITAL (${d.configuracion.pres_distrital_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_distrital)}</p>
+          <p class="text-sm text-gray-700 mb-1">PRES EDUCACIONAL (${d.configuracion.pres_educacional_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_educacional)}</p>
+          <p class="text-sm text-gray-700 mb-1">PRES.EVANGELISMO (${d.configuracion.pres_evangelismo_pct}%): ${formatCurrency(d.egresos.iglesia_local.pres_evangelismo)}</p>
+          <p class="text-sm text-gray-700 mb-1">Jubilación: ${formatCurrency(d.egresos.iglesia_local.jubilacion)}</p>
+          <h4 class="text-sm font-semibold text-gray-500 mt-3 mb-1">Ministerios Principales</h4>
+          <p class="text-sm text-gray-700 mb-1">MNI: ${formatCurrency(d.egresos.principales.mni)} | DNI: ${formatCurrency(d.egresos.principales.dni)} | JNI: ${formatCurrency(d.egresos.principales.jni)}</p>
         </section>
-        <section>
-          <h3>TOTALES</h3>
-          <p>Total Ingresos: ${formatCurrency(d.totales.total_ingresos)}</p>
-          <p>Total Egresos: ${formatCurrency(d.totales.total_egresos)}</p>
-          <p class="saldo-final ${d.totales.saldo_final >= 0 ? 'positive' : 'negative'}">Saldo Final: ${formatCurrency(d.totales.saldo_final)}</p>
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-5 mb-4">
+          <h3 class="font-semibold text-gray-900 text-lg mt-6">TOTALES</h3>
+          <p class="text-sm text-gray-700 mb-1">Total Ingresos: ${formatCurrency(d.totales.total_ingresos)}</p>
+          <p class="text-sm text-gray-700 mb-1">Total Egresos: ${formatCurrency(d.totales.total_egresos)}</p>
+          <p class="font-bold text-lg mt-2 ${d.totales.saldo_final >= 0 ? 'text-green-700' : 'text-red-600'}">Saldo Final: ${formatCurrency(d.totales.saldo_final)}</p>
         </section>
       </div>`;
   }
@@ -396,31 +379,31 @@ export interface Props {
     const el = document.getElementById('tab-configuracion')!;
     const c = state.config;
     if (!c) {
-      el.innerHTML = '<div class="empty-state"><p>Cargando configuración...</p></div>';
+      el.innerHTML = '<div class="text-center py-12 text-gray-500"><p class="text-sm text-gray-700 mb-1">Cargando configuración...</p></div>';
       return;
     }
     el.innerHTML = `
-      <h3 class="section-title">Parámetros de Finanzas</h3>
-      <form id="config-form" class="config-form">
-        <div class="form-group">
-          <label>PRES.DISTRITAL (%)</label>
-          <input type="number" name="pres_distrital_pct" value="${c.pres_distrital_pct}" step="0.01" min="0" max="100" class="input" />
+      <h3 class="font-semibold text-gray-900 mb-4">Parámetros de Finanzas</h3>
+      <form id="config-form" class="flex flex-col gap-4 max-w-md">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700">PRES.DISTRITAL (%)</label>
+          <input type="number" name="pres_distrital_pct" value="${c.pres_distrital_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <div class="form-group">
-          <label>PRES EDUCACIONAL (%)</label>
-          <input type="number" name="pres_educacional_pct" value="${c.pres_educacional_pct}" step="0.01" min="0" max="100" class="input" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700">PRES EDUCACIONAL (%)</label>
+          <input type="number" name="pres_educacional_pct" value="${c.pres_educacional_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <div class="form-group">
-          <label>PRES.EVANGELISMO (%)</label>
-          <input type="number" name="pres_evangelismo_pct" value="${c.pres_evangelismo_pct}" step="0.01" min="0" max="100" class="input" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700">PRES.EVANGELISMO (%)</label>
+          <input type="number" name="pres_evangelismo_pct" value="${c.pres_evangelismo_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <div class="form-group">
-          <label>Jubilación (Monto Fijo)</label>
-          <input type="number" name="jubilacion_monto" value="${parseFloat(c.jubilacion_monto)}" step="1000" min="0" class="input" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700">Jubilación (Monto Fijo)</label>
+          <input type="number" name="jubilacion_monto" value="${parseFloat(c.jubilacion_monto)}" step="1000" min="0" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+        <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar Configuración</button>
       </form>
-      <p class="text-muted" style="margin-top:8px">Última actualización: ${new Date(c.updated_at).toLocaleString('es-PY')}</p>`;
+      <p class="text-xs text-gray-500" style="margin-top:8px">Última actualización: ${new Date(c.updated_at).toLocaleString('es-PY')}</p>`;
     setTimeout(() => {
       document.getElementById('config-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -443,13 +426,13 @@ export interface Props {
     if (!detalle) return;
     const body = document.getElementById('modal-body')!;
     body.innerHTML = `
-      <div class="boleta-detalle">
-        <p><strong>Ministerio:</strong> <span class="badge" style="background:${detalle.ministry_color || '#6b7280'}20;color:${detalle.ministry_color || '#6b7280'}">${detalle.ministry_nombre}</span></p>
-        <p><strong>Monto:</strong> ${formatCurrency(detalle.monto)}</p>
-        <p><strong>Fecha:</strong> ${new Date(detalle.fecha).toLocaleDateString('es-PY')}</p>
-        <p><strong>Descripcion:</strong> ${detalle.descripcion}</p>
-        <p><strong>Registrado por:</strong> ${detalle.registrado_por_nombre || '-'}</p>
-        ${detalle.imagen ? `<p><strong>Boleta:</strong><br/><img src="${detalle.imagen}" alt="Boleta" class="boleta-img" /></p>` : ''}
+      <div class="space-y-2 text-sm">
+        <p class="text-sm text-gray-700 mb-1"><strong>Ministerio:</strong> <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background:${detalle.ministry_color || '#6b7280'}20;color:${detalle.ministry_color || '#6b7280'}">${detalle.ministry_nombre}</span></p>
+        <p class="text-sm text-gray-700 mb-1"><strong>Monto:</strong> ${formatCurrency(detalle.monto)}</p>
+        <p class="text-sm text-gray-700 mb-1"><strong>Fecha:</strong> ${new Date(detalle.fecha).toLocaleDateString('es-PY')}</p>
+        <p class="text-sm text-gray-700 mb-1"><strong>Descripcion:</strong> ${detalle.descripcion}</p>
+        <p class="text-sm text-gray-700 mb-1"><strong>Registrado por:</strong> ${detalle.registrado_por_nombre || '-'}</p>
+        ${detalle.imagen ? `<p class="text-sm text-gray-700 mb-1"><strong>Boleta:</strong><br/><img src="${detalle.imagen}" alt="Boleta" class="max-w-full rounded-md mt-2 border border-gray-200" /></p>` : ''}
       </div>`;
     document.getElementById('boleta-modal')!.style.display = 'flex';
   }
@@ -464,7 +447,7 @@ export interface Props {
   });
 
   // --- Init ---
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.mp-tab').forEach(btn => {
     btn.addEventListener('click', () => switchTab((btn as HTMLElement).dataset.tab!));
   });
 
@@ -473,375 +456,6 @@ export interface Props {
 </script>
 
 <style>
-  .treasury-page {
-    padding: 0;
-    max-width: 1100px;
-  }
-
-  .page-header {
-    margin-bottom: 1.5rem;
-  }
-
-  .page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 0.25rem;
-  }
-
-  .page-subtitle {
-    color: var(--color-text-secondary);
-    font-size: 0.9375rem;
-  }
-
-  .tabs-nav {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--color-border);
-    flex-wrap: nowrap;
-  }
-
-  .tab-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-bg);
-    color: var(--color-text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition);
-    white-space: nowrap;
-  }
-
-  .tab-btn:hover {
-    background: var(--color-bg-secondary);
-    color: var(--color-text);
-  }
-
-  .tab-btn.active {
-    background: var(--color-primary);
-    color: white;
-    border-color: var(--color-primary);
-  }
-
-  .loading-bar {
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-primary), #93c5fd);
-    animation: loading-slide 1.5s infinite;
-    border-radius: 3px;
-    margin-bottom: 1rem;
-  }
-
-  @keyframes loading-slide {
-    0% { width: 0; margin-left: 0; }
-    50% { width: 60%; margin-left: 20%; }
-    100% { width: 0; margin-left: 100%; }
-  }
-
-  .error-banner {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-md);
-    margin-bottom: 1rem;
-  }
-
-  .success-banner {
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-    color: #166534;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-md);
-    margin-bottom: 1rem;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .stat-card {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.8125rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-
-  .positive { color: #059669; }
-  .negative { color: #dc2626; }
-
-  .section-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: 1rem;
-  }
-
-  .ministry-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .ministry-card {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .ministry-name {
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  .ministry-balance {
-    font-weight: 700;
-    font-size: 1.125rem;
-  }
-
-  .card-details {
-    display: flex;
-    gap: 1.5rem;
-    font-size: 0.8125rem;
-    color: var(--color-text-secondary);
-  }
-
-  .filters-bar {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-    padding: 1rem;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .filter-group label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-  }
-
-  .filter-group select,
-  .filter-group .input {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-size: 0.875rem;
-  }
-
-  .table-container {
-    overflow-x: auto;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .data-table th {
-    text-align: left;
-    padding: 0.75rem 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg-secondary);
-  }
-
-  .data-table td {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    color: var(--color-text);
-    border-bottom: 1px solid var(--color-border-light);
-  }
-
-  .data-table tr:last-child td { border-bottom: none; }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--color-text-secondary);
-  }
-
-  .empty-state p {
-    margin-bottom: 1rem;
-  }
-
-  .empty-cell {
-    text-align: center;
-    color: var(--color-text-secondary);
-    padding: 2rem 1rem !important;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 0.125rem 0.625rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .badge-success { background: #dcfce7; color: #166534; }
-  .badge-warning { background: #fef9c3; color: #854d0e; }
-
-  .btn {
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: var(--transition);
-  }
-
-  .btn-primary { background: var(--color-primary); color: white; }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-outline { background: transparent; border-color: var(--color-border); color: var(--color-text); }
-  .btn-outline:hover { background: var(--color-bg-secondary); }
-  .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
-
-  .config-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 400px;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .form-group label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-  }
-
-  .form-group .input {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-size: 0.875rem;
-  }
-
-  .informe-detalle section {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .informe-detalle h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--color-border-light);
-  }
-
-  .informe-detalle h4 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .informe-detalle p {
-    font-size: 0.875rem;
-    color: var(--color-text);
-    margin-bottom: 0.25rem;
-  }
-
-  .saldo-final {
-    font-weight: 700;
-    font-size: 1.125rem !important;
-    margin-top: 0.5rem;
-  }
-
-  .text-muted { color: var(--color-text-secondary); font-size: 0.8125rem; }
-
-  .traspaso-form { margin-bottom: 1rem; }
-  .form-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
-
-  .clickable-row { cursor: pointer; transition: background 0.15s; }
-  .clickable-row:hover { background: var(--color-bg-secondary); }
-
-  .badge-info { background: #dbeafe; color: #1e40af; }
-
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: center; z-index: 100;
-  }
-  .modal-box {
-    background: var(--color-bg); border-radius: var(--radius-lg);
-    max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
-  }
-  .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
-  }
-  .modal-header h3 { font-size: 1rem; font-weight: 600; }
-  .modal-close {
-    background: none; border: none; font-size: 1.5rem; cursor: pointer;
-    color: var(--color-text-secondary); line-height: 1;
-  }
-  .modal-close:hover { color: var(--color-text); }
-  #modal-body { padding: 1.25rem; }
-  .boleta-detalle p { margin-bottom: 0.5rem; font-size: 0.875rem; }
-  .boleta-img { max-width: 100%; border-radius: var(--radius-md); margin-top: 0.5rem; border: 1px solid var(--color-border); }
+  /* Styling handled by Tailwind utility classes */
+</style>
 </style>
