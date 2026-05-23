@@ -210,10 +210,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(MiembroSerializer(miembros, many=True).data)
 
         serializer = MiembroSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ministry=ministry)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get', 'post'])
     def caja(self, request, slug=None):
@@ -225,10 +224,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(CajaMinisterioSerializer(caja).data)
 
         serializer = MovimientoCajaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(caja=caja, registrado_por=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(caja=caja, registrado_por=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get', 'post'])
     def inventario(self, request, slug=None):
@@ -238,10 +236,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(InventarioSerializer(items, many=True).data)
 
         serializer = InventarioSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ministry=ministry)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get', 'post'])
     def ofrendas(self, request, slug=None):
@@ -254,10 +251,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(OfrendaSerializer(ofrendas, many=True).data)
 
         serializer = OfrendaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ministry=ministry)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get', 'post'])
     def asistencia(self, request, slug=None):
@@ -274,10 +270,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(AsistenciaSerializer(asistencias, many=True).data)
 
         serializer = AsistenciaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ministry=ministry)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], url_path='asistencia/resumen')
     def asistencia_resumen(self, request, slug=None):
@@ -320,27 +315,26 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         data['ministry'] = ministry.id
         serializer = EventoSerializer(data=data)
-        if serializer.is_valid():
-            forzar = request.data.get('forzar', False)
-            try:
-                data = dict(serializer.validated_data)
-                ministerios_relacionados = data.pop('ministerios_relacionados', None)
-                data.pop('ministry', None)
-                data.pop('creado_por', None)
-                evento = eventos_services.crear_evento(
-                    ministry=ministry,
-                    creado_por=request.user,
-                    ministerios_relacionados=ministerios_relacionados,
-                    forzar=forzar,
-                    **data
-                )
-                return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
-            except ConflictoHorarioException as e:
-                return Response({'error': e.data}, status=status.HTTP_400_BAD_REQUEST)
-            except ValidationError as e:
-                error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
-                return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        forzar = request.data.get('forzar', False)
+        try:
+            data = dict(serializer.validated_data)
+            ministerios_relacionados = data.pop('ministerios_relacionados', None)
+            data.pop('ministry', None)
+            data.pop('creado_por', None)
+            evento = eventos_services.crear_evento(
+                ministry=ministry,
+                creado_por=request.user,
+                ministerios_relacionados=ministerios_relacionados,
+                forzar=forzar,
+                **data
+            )
+            return Response(EventoSerializer(evento).data, status=status.HTTP_201_CREATED)
+        except ConflictoHorarioException as e:
+            return Response({'error': e.data}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            error_data = e.message_dict if hasattr(e, 'message_dict') else str(e)
+            return Response({'error': error_data}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get', 'post'])
     def planificaciones(self, request, slug=None):
@@ -353,10 +347,9 @@ class MinisterioViewSet(viewsets.ModelViewSet):
             return Response(PlanificacionActividadSerializer(planes, many=True).data)
 
         serializer = PlanificacionActividadSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ministry=ministry, responsable=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry, responsable=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CancionViewSet(viewsets.ModelViewSet):
@@ -550,8 +543,7 @@ class UsuarioViewSet(viewsets.ViewSet):
         if not self._es_admin(request):
             return Response({'error': 'No tienes permiso'}, status=status.HTTP_403_FORBIDDEN)
         serializer = UsuarioCreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         usuario = usuarios_services.crear_usuario(
             creado_por=request.user,
@@ -576,8 +568,7 @@ class UsuarioViewSet(viewsets.ViewSet):
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UsuarioUpdateSerializer(data=request.data, context={'user': usuario})
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         update_data = {k: v for k, v in serializer.validated_data.items()
                        if k not in ('password_confirm', 'password_nueva', 'ministerios_lidera')}
