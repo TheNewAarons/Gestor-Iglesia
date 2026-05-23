@@ -68,17 +68,13 @@ export interface Props {
     setTimeout(() => { el.style.display = 'none'; }, 3000);
   }
 
-  let _subscribed = false;
-  if (!_subscribed) {
-    _subscribed = true;
-    store.subscribe(() => {
-      const state = store.getState();
-      if (state.loading) showLoading(); else hideLoading();
-      if (state.error) showError(state.error);
-      if (state.successMessage) showSuccess(state.successMessage);
-      renderCurrentTab();
-    });
-  }
+  store.subscribe(() => {
+    const state = store.getState();
+    if (state.loading) showLoading(); else hideLoading();
+    if (state.error) showError(state.error);
+    if (state.successMessage) showSuccess(state.successMessage);
+    renderCurrentTab();
+  });
 
   function switchTab(tabName: string) {
     currentTab = tabName;
@@ -444,22 +440,21 @@ export interface Props {
     document.getElementById('boleta-modal')!.style.display = 'flex';
   }
 
-  document.getElementById('modal-close')?.addEventListener('click', () => {
-    document.getElementById('boleta-modal')!.style.display = 'none';
-  });
-  document.getElementById('boleta-modal')?.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).id === 'boleta-modal') {
-      document.getElementById('boleta-modal')!.style.display = 'none';
-    }
-  });
-
-  // --- Init ---
-  document.querySelectorAll('.mp-tab').forEach(btn => {
-    btn.addEventListener('click', () => switchTab((btn as HTMLElement).dataset.tab!));
-  });
-
   function initTreasury() {
     if (!document.getElementById('tab-dashboard')) return;
+
+    document.querySelectorAll('.mp-tab').forEach(btn => {
+      btn.addEventListener('click', () => switchTab((btn as HTMLElement).dataset.tab!));
+    });
+    document.getElementById('modal-close')?.addEventListener('click', () => {
+      document.getElementById('boleta-modal')!.style.display = 'none';
+    });
+    document.getElementById('boleta-modal')?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).id === 'boleta-modal') {
+        document.getElementById('boleta-modal')!.style.display = 'none';
+      }
+    });
+
     store.fetchDashboard();
     switchTab('dashboard');
   }
