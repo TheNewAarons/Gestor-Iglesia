@@ -127,7 +127,11 @@ class TesoreriaStore {
   }
 
   public clearMessages(): void {
-    this.setState({ error: null, successMessage: null });
+    if (this.state.error !== null || this.state.successMessage !== null) {
+      this.state.error = null;
+      this.state.successMessage = null;
+      this.notify();
+    }
   }
 
   async fetchDashboard(): Promise<void> {

@@ -106,7 +106,6 @@ export interface Props {
   }
 
   function renderCurrentTab() {
-    store.clearMessages();
     const state = store.getState();
     switch (currentTab) {
       case 'dashboard': renderDashboard(state); break;
