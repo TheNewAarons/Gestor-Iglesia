@@ -49,18 +49,20 @@ export interface Props {
     return new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }).format(n);
   }
 
-  function showLoading() { document.getElementById('loading-indicator')!.style.display = 'block'; }
-  function hideLoading() { document.getElementById('loading-indicator')!.style.display = 'none'; }
+  function showLoading() { const el = document.getElementById('loading-indicator'); if (el) el.style.display = 'block'; }
+  function hideLoading() { const el = document.getElementById('loading-indicator'); if (el) el.style.display = 'none'; }
 
   function showError(msg: string) {
-    const el = document.getElementById('error-banner')!;
+    const el = document.getElementById('error-banner');
+    if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 5000);
   }
 
   function showSuccess(msg: string) {
-    const el = document.getElementById('success-banner')!;
+    const el = document.getElementById('success-banner');
+    if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 3000);
@@ -88,7 +90,8 @@ export interface Props {
       activeBtn.className = 'mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-colors whitespace-nowrap';
     }
     document.querySelectorAll('.tab-content').forEach((el: any) => el.style.display = 'none');
-    document.getElementById(`tab-${tabName}`)!.style.display = 'block';
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) targetTab.style.display = 'block';
     renderCurrentTab();
   }
 
@@ -456,6 +459,7 @@ export interface Props {
   });
 
   function initTreasury() {
+    if (!document.getElementById('tab-dashboard')) return;
     store.fetchDashboard();
     switchTab('dashboard');
   }
