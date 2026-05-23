@@ -7,7 +7,8 @@ class ConfiguracionFinanzasSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfiguracionFinanzas
         fields = [
-            'id', 'pres_distrital_pct', 'pres_educacional_pct',
+            'id', 'nombre_iglesia', 'nombre_distrito', 'ciudad',
+            'pres_distrital_pct', 'pres_educacional_pct',
             'pres_evangelismo_pct', 'jubilacion_monto',
             'actualizado_por', 'updated_at'
         ]

@@ -257,6 +257,15 @@ class TesoreriaStore {
     window.open(`${API_BASE}/tesoreria/exportar-pdf/${qs ? '?' + qs : ''}`, '_blank');
   }
 
+  exportarInformeExcel(mes?: number, anio?: number): void {
+    const params = new URLSearchParams();
+    if (mes) params.set('mes', String(mes));
+    if (anio) params.set('anio', String(anio));
+    const qs = params.toString();
+    const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    window.open(`${API_BASE}/tesoreria/exportar-excel/${qs ? '?' + qs : ''}`, '_blank');
+  }
+
   async fetchMovimientos(tipo?: string): Promise<void> {
     this.setState({ loading: true, error: null });
     const params = new URLSearchParams();

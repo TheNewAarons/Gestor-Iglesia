@@ -16,6 +16,7 @@ from .permissions import IsTesoreraOrAdmin
 from .selectors import flujo as flujo_selectors
 from .services import informe as informe_services
 from .services import traspasos as traspasos_services
+from .services import exportar_excel as exportar_excel_services
 from apps.ministerios.serializers import MovimientoCajaSerializer
 
 
@@ -303,6 +304,18 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         buf.close()
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="informe_{anio}_{mes:02d}.pdf"'
+        return response
+
+    @action(detail=False, methods=['get'], url_path='exportar-excel')
+    def exportar_excel(self, request):
+        mes = int(request.query_params.get('mes', now().month))
+        anio = int(request.query_params.get('anio', now().year))
+        buf = exportar_excel_services.exportar_informe_excel(anio, mes, request.user)
+        response = HttpResponse(
+            buf.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="informe_{anio}_{mes:02d}.xlsx"'
         return response
 
     # ---- Configuracion ----

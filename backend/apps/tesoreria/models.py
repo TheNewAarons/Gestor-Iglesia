@@ -5,6 +5,18 @@ from apps.ministerios.models import Ministerio
 
 class ConfiguracionFinanzas(models.Model):
     """Configuracion de finanzas de la iglesia (singleton)."""
+    nombre_iglesia = models.CharField(
+        max_length=200, default='Iglesia del Nazareno "Juan Noe"',
+        help_text='Nombre de la iglesia para los informes'
+    )
+    nombre_distrito = models.CharField(
+        max_length=200, default='Distrito Norte de Chile',
+        help_text='Nombre del distrito para los informes'
+    )
+    ciudad = models.CharField(
+        max_length=100, default='ARICA',
+        help_text='Ciudad de la iglesia'
+    )
     pres_distrital_pct = models.DecimalField(
         max_digits=5, decimal_places=2, default=10.00,
         help_text='Porcentaje de PRES.DISTRITAL (ej: 10.00 = 10%)'

@@ -157,7 +157,7 @@ class MovimientoCajaSerializer(serializers.ModelSerializer):
             'id', 'caja', 'tipo', 'monto', 'descripcion', 'fecha', 'imagen',
             'registrado_por', 'registrado_por_nombre', 'enviado_tesoreria', 'created_at'
         ]
-        read_only_fields = ['id', 'fecha', 'created_at']
+        read_only_fields = ['id', 'caja', 'registrado_por', 'fecha', 'created_at']
 
 
 class CajaMinisterioSerializer(serializers.ModelSerializer):

@@ -314,6 +314,7 @@ export interface Props {
         <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-generar-informe">Generar</button>
         <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-informe">Exportar JSON</button>
         <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-pdf">Exportar PDF</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-excel">Exportar Excel</button>
       </div>
       <div id="informe-content">
         ${!state.informe
@@ -336,6 +337,11 @@ export interface Props {
         const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
         const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
         store.exportarInformePdf(mes, anio);
+      });
+      document.getElementById('btn-exportar-excel')?.addEventListener('click', () => {
+        const mes = parseInt((document.getElementById('informe-mes') as HTMLSelectElement).value);
+        const anio = parseInt((document.getElementById('informe-anio') as HTMLSelectElement).value);
+        store.exportarInformeExcel(mes, anio);
       });
     }, 0);
   }

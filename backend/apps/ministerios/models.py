@@ -234,7 +234,7 @@ class MovimientoCaja(models.Model):
     caja = models.ForeignKey(CajaMinisterio, on_delete=models.CASCADE, related_name='movimientos')
     tipo = models.CharField(max_length=10, choices=TIPOS)
     monto = models.DecimalField(max_digits=12, decimal_places=2)
-    descripcion = models.TextField()
+    descripcion = models.TextField(blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
     imagen = models.ImageField(upload_to='cajas/boletas/', blank=True, null=True)
     registrado_por = models.ForeignKey(
