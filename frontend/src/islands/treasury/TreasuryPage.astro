@@ -66,13 +66,17 @@ export interface Props {
     setTimeout(() => { el.style.display = 'none'; }, 3000);
   }
 
-  store.subscribe(() => {
-    const state = store.getState();
-    if (state.loading) showLoading(); else hideLoading();
-    if (state.error) showError(state.error);
-    if (state.successMessage) showSuccess(state.successMessage);
-    renderCurrentTab();
-  });
+  let _subscribed = false;
+  if (!_subscribed) {
+    _subscribed = true;
+    store.subscribe(() => {
+      const state = store.getState();
+      if (state.loading) showLoading(); else hideLoading();
+      if (state.error) showError(state.error);
+      if (state.successMessage) showSuccess(state.successMessage);
+      renderCurrentTab();
+    });
+  }
 
   function switchTab(tabName: string) {
     currentTab = tabName;
@@ -451,11 +455,18 @@ export interface Props {
     btn.addEventListener('click', () => switchTab((btn as HTMLElement).dataset.tab!));
   });
 
-  store.fetchDashboard();
-  switchTab('dashboard');
+  function initTreasury() {
+    store.fetchDashboard();
+    switchTab('dashboard');
+  }
+
+  initTreasury();
+
+  document.addEventListener('astro:page-load', () => {
+    initTreasury();
+  });
 </script>
 
 <style>
   /* Styling handled by Tailwind utility classes */
-</style>
 </style>
