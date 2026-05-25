@@ -9,7 +9,7 @@ MINISTERIOS = [
     {'nombre': 'MAM', 'slug': 'mam', 'descripcion': 'Ministerio de Mujeres', 'color': '#EC4899', 'icono': 'heart', 'logo': '/logos/ministerios/mam.png'},
     {'nombre': 'VID', 'slug': 'vid', 'descripcion': 'Ministerio de Varones', 'color': '#F59E0B', 'icono': 'home', 'logo': '/logos/ministerios/vid.png'},
     {'nombre': 'EXPLO', 'slug': 'explo', 'descripcion': 'Exploradores del Rey', 'color': '#EF4444', 'icono': 'graduation-cap', 'logo': '/logos/ministerios/explo.png'},
-    {'nombre': 'Danza', 'slug': 'danza', 'descripcion': 'Ministerio de Danza', 'color': '#14B8A6', 'icono': 'music'},
+    {'nombre': 'Danza', 'slug': 'danza', 'descripcion': 'Ministerio de Danza', 'color': '#14B8A6', 'icono': 'music', 'logo': '/logos/ministerios/danza.png'},
     {'nombre': 'Teatro', 'slug': 'teatro', 'descripcion': 'Ministerio de Teatro', 'color': '#6366F1', 'icono': 'theater-masks'},
     {'nombre': 'Alabanza', 'slug': 'alabanza', 'descripcion': 'Ministerio de Alabanza', 'color': '#F97316', 'icono': 'microphone'},
     {'nombre': 'Comunicaciones', 'slug': 'comunicaciones', 'descripcion': 'Ministerio de Comunicaciones', 'color': '#06B6D4', 'icono': 'broadcast', 'logo': '/logos/ministerios/comunicaciones.png'},
