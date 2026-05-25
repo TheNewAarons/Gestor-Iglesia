@@ -14,7 +14,7 @@ MINISTERIOS = [
     {'nombre': 'Alabanza', 'slug': 'alabanza', 'descripcion': 'Ministerio de Alabanza', 'color': '#F97316', 'icono': 'microphone'},
     {'nombre': 'Comunicaciones', 'slug': 'comunicaciones', 'descripcion': 'Ministerio de Comunicaciones', 'color': '#06B6D4', 'icono': 'broadcast', 'logo': '/logos/ministerios/comunicaciones.png'},
     {'nombre': 'Compasión', 'slug': 'compasion', 'descripcion': 'Ministerio de Compasión', 'color': '#84CC16', 'icono': 'hand-holding-heart', 'logo': '/logos/ministerios/compasion.png'},
-    {'nombre': 'NazaKids', 'slug': 'nazakids', 'descripcion': 'Ministerio de Niños', 'color': '#FBBF24', 'icono': 'child'},
+    {'nombre': 'NazaKids', 'slug': 'nazakids', 'descripcion': 'Ministerio de Niños', 'color': '#FBBF24', 'icono': 'child', 'logo': '/logos/ministerios/nazakids.png'},
     {'nombre': 'Adulto Mayor', 'slug': 'adulto-mayor', 'descripcion': 'Ministerio de Adulto Mayor', 'color': '#78716C', 'icono': 'users'},
 ]
 
