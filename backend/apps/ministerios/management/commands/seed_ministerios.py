@@ -10,12 +10,12 @@ MINISTERIOS = [
     {'nombre': 'VID', 'slug': 'vid', 'descripcion': 'Ministerio de Varones', 'color': '#F59E0B', 'icono': 'home', 'logo': '/logos/ministerios/vid.png'},
     {'nombre': 'EXPLO', 'slug': 'explo', 'descripcion': 'Exploradores del Rey', 'color': '#EF4444', 'icono': 'graduation-cap', 'logo': '/logos/ministerios/explo.png'},
     {'nombre': 'Danza', 'slug': 'danza', 'descripcion': 'Ministerio de Danza', 'color': '#14B8A6', 'icono': 'music', 'logo': '/logos/ministerios/danza.png'},
-    {'nombre': 'Teatro', 'slug': 'teatro', 'descripcion': 'Ministerio de Teatro', 'color': '#6366F1', 'icono': 'theater-masks'},
-    {'nombre': 'Alabanza', 'slug': 'alabanza', 'descripcion': 'Ministerio de Alabanza', 'color': '#F97316', 'icono': 'microphone'},
+    {'nombre': 'Teatro', 'slug': 'teatro', 'descripcion': 'Ministerio de Teatro', 'color': '#6366F1', 'icono': 'theater-masks', 'logo': '/logos/ministerios/teatro.png'},
+    {'nombre': 'Alabanza', 'slug': 'alabanza', 'descripcion': 'Ministerio de Alabanza', 'color': '#F97316', 'icono': 'microphone', 'logo': '/logos/ministerios/alabanza.png'},
     {'nombre': 'Comunicaciones', 'slug': 'comunicaciones', 'descripcion': 'Ministerio de Comunicaciones', 'color': '#06B6D4', 'icono': 'broadcast', 'logo': '/logos/ministerios/comunicaciones.png'},
     {'nombre': 'Compasión', 'slug': 'compasion', 'descripcion': 'Ministerio de Compasión', 'color': '#84CC16', 'icono': 'hand-holding-heart', 'logo': '/logos/ministerios/compasion.png'},
     {'nombre': 'NazaKids', 'slug': 'nazakids', 'descripcion': 'Ministerio de Niños', 'color': '#FBBF24', 'icono': 'child', 'logo': '/logos/ministerios/nazakids.png'},
-    {'nombre': 'Adulto Mayor', 'slug': 'adulto-mayor', 'descripcion': 'Ministerio de Adulto Mayor', 'color': '#78716C', 'icono': 'users'},
+    {'nombre': 'Adulto Mayor', 'slug': 'adulto-mayor', 'descripcion': 'Ministerio de Adulto Mayor', 'color': '#78716C', 'icono': 'users', 'logo': '/logos/ministerios/adulto-mayor.png'},
 ]
 
 

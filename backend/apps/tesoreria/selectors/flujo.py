@@ -69,7 +69,7 @@ def obtener_informe(anio, mes):
 
 def listar_boletas_egresos(fecha_inicio=None, fecha_fin=None):
     qs = MovimientoCaja.objects.filter(
-        tipo='egreso', imagen__isnull=False
+        imagen__isnull=False
     ).exclude(imagen='').select_related('caja__ministry', 'registrado_por')
 
     if fecha_inicio:

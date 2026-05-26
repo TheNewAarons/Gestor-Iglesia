@@ -159,6 +159,14 @@ class MovimientoCajaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'caja', 'registrado_por', 'fecha', 'created_at']
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.imagen:
+            request = self.context.get('request')
+            if request:
+                data['imagen'] = request.build_absolute_uri(instance.imagen.url)
+        return data
+
 
 class CajaMinisterioSerializer(serializers.ModelSerializer):
     movimientos = MovimientoCajaSerializer(many=True, read_only=True)

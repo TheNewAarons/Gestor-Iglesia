@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -214,16 +214,16 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         serializer.save(ministry=ministry)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'], parser_classes=[parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser])
     def caja(self, request, slug=None):
         ministry = self.get_object()
         caja = finanzas_services.obtener_o_crear_caja(ministry)
 
         if request.method == 'GET':
             caja = finanzas_selectors.obtener_caja(ministry) or caja
-            return Response(CajaMinisterioSerializer(caja).data)
+            return Response(CajaMinisterioSerializer(caja, context={'request': request}).data)
 
-        serializer = MovimientoCajaSerializer(data=request.data)
+        serializer = MovimientoCajaSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save(caja=caja, registrado_por=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

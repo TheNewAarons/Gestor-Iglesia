@@ -48,6 +48,7 @@ export interface BoletaDetalle {
   monto: number;
   descripcion: string;
   fecha: string;
+  tipo: string;
   imagen: string | null;
   ministry_nombre: string;
   ministry_color: string;

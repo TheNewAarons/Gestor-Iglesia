@@ -1,76 +1,347 @@
 ---
-import MinistryIcon from '../components/MinistryIcon.astro';
-
-const STATS = [
-  { label: 'Ministerios', value: '13', color: 'primary' as const },
-  { label: 'Finanzas', value: 'PYG', color: 'success' as const },
-  { label: 'Calendario', value: 'Próximo', color: 'accent' as const },
-  { label: 'Secretaría', value: 'Miembros', color: 'warning' as const },
-];
-
-const QUICK_LINKS = [
-  { slug: 'mni', name: 'MNI', icon: 'user-plus' },
-  { slug: 'dni', name: 'DNI', icon: 'book-open' },
-  { slug: 'alabanza', name: 'Alabanza', icon: 'microphone' },
-  { slug: 'comunicaciones', name: 'Comunicaciones', icon: 'broadcast' },
-];
+const SKELETON_CARDS = Array.from({ length: 4 });
+const SKELETON_MINISTRIES = Array.from({ length: 10 });
+const SKELETON_EVENTS = Array.from({ length: 3 });
+const SKELETON_BIRTHDAYS = Array.from({ length: 3 });
 ---
 
 <div id="dashboard-home">
   <!-- Loading skeleton -->
-  <div id="dashboard-skeleton" class="space-y-6 animate-pulse">
-    <div class="h-8 bg-gray-200 rounded w-48" />
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {[1, 2, 3, 4].map((i) => <div class="h-28 bg-gray-100 rounded-lg" />)}
+  <div id="dashboard-skeleton" class="space-y-6">
+    <div class="animate-pulse">
+      <div class="h-7 bg-gray-200 rounded w-64 mb-1"></div>
+      <div class="h-4 bg-gray-100 rounded w-48"></div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {SKELETON_CARDS.map(() => <div class="h-24 bg-gray-100 rounded-lg"></div>)}
+    </div>
+    <div>
+      <div class="h-5 bg-gray-200 rounded w-28 mb-3"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {SKELETON_MINISTRIES.map(() => <div class="h-20 bg-gray-100 rounded-lg"></div>)}
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
+        <div class="h-5 bg-gray-200 rounded w-36 mb-3"></div>
+        {SKELETON_EVENTS.map(() => <div class="h-16 bg-gray-100 rounded-lg mb-3"></div>)}
+      </div>
+      <div>
+        <div class="h-5 bg-gray-200 rounded w-44 mb-3"></div>
+        {SKELETON_BIRTHDAYS.map(() => <div class="h-12 bg-gray-100 rounded-lg mb-3"></div>)}
+      </div>
     </div>
   </div>
 
   <!-- Dashboard content (hidden initially) -->
   <div id="dashboard-content" class="space-y-6 hidden">
     <div>
-      <h2 class="text-lg font-semibold text-gray-900" id="dashboard-greeting">Bienvenido</h2>
-      <p class="text-sm text-gray-500">Panel de control de la iglesia</p>
+      <h2 id="dashboard-greeting" class="text-xl font-bold text-gray-900"></h2>
+      <p id="dashboard-subtitle" class="text-sm text-gray-500"></p>
     </div>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {STATS.map((stat) => (
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-          <p class="text-sm text-gray-500">{stat.label}</p>
-          <p class="text-xl font-bold text-gray-900 mt-1">{stat.value}</p>
-        </div>
-      ))}
+    <div id="stats-row" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <div>
+      <h3 class="text-base font-semibold text-gray-800 mb-3">Ministerios</h3>
+      <div id="ministries-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
     </div>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {QUICK_LINKS.map((m) => (
-        <a
-          href={`/ministerios/${m.slug}`}
-          class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-accent/30 hover:bg-accent/5 transition-colors"
-        >
-          <MinistryIcon name={m.icon} class="w-8 h-8 text-accent" />
-          <span class="text-sm font-medium text-gray-700">{m.name}</span>
-        </a>
-      ))}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
+        <h3 class="text-base font-semibold text-gray-800 mb-3">Próximos Eventos</h3>
+        <div id="events-list" class="space-y-2"></div>
+        <p id="events-empty" class="text-sm text-gray-400 hidden">No hay eventos próximos</p>
+      </div>
+      <div>
+        <h3 class="text-base font-semibold text-gray-800 mb-3">
+          Cumpleañeros del Mes
+          <span id="birthdays-month" class="text-sm font-normal text-gray-400"></span>
+        </h3>
+        <div id="birthdays-list" class="space-y-2"></div>
+        <p id="birthdays-empty" class="text-sm text-gray-400 hidden">No hay cumpleañeros este mes</p>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   import { authStore } from '../stores/auth';
+  import { api } from '../utils/api';
+
+  const MINISTRY_ICONS = {
+    mni: 'user-plus',
+    dni: 'book-open',
+    jni: 'users',
+    mam: 'heart',
+    vid: 'hand-holding-heart',
+    explo: 'graduation-cap',
+    danza: 'music',
+    teatro: 'theater-masks',
+    alabanza: 'microphone',
+    comunicaciones: 'broadcast',
+    compasion: 'hand-holding-heart',
+    nazakids: 'child',
+    'adulto-mayor': 'users',
+  };
+
+  const MINISTRY_COLORS = {
+    mni: '#6366f1',
+    dni: '#0ea5e9',
+    jni: '#f59e0b',
+    mam: '#ec4899',
+    vid: '#10b981',
+    explo: '#8b5cf6',
+    danza: '#f43f5e',
+    teatro: '#a855f7',
+    alabanza: '#14b8a6',
+    comunicaciones: '#f97316',
+    compasion: '#e11d48',
+    nazakids: '#f59e0b',
+    'adulto-mayor': '#64748b',
+  };
+
+  const ICONS = {
+    church: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 4v4H4V6l8-4z"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><line x1="12" y1="6" x2="12" y2="10"/></svg>`,
+    users: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    calendar: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>`,
+    dollar: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+  };
+
+  const MINISTRY_SVG = {
+    'user-plus': `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>`,
+    'book-open': `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    users: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    heart: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    'graduation-cap': `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,
+    music: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+    'theater-masks': `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+    microphone: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+    broadcast: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l4 4 4-4"/><line x1="12" y1="8" x2="12" y2="16"/></svg>`,
+    'hand-holding-heart': `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+    child: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+  };
+
+  function fmtCurrency(amount) {
+    if (amount == null) return '---';
+    return '$' + Math.abs(amount).toLocaleString('es-CL');
+  }
+
+  function fmtDate(dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('es-PY', { day: 'numeric', month: 'short' });
+  }
+
+  function fmtDateFull(dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('es-PY', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function fmtTime(timeStr) {
+    if (!timeStr) return '';
+    var parts = timeStr.split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parts[1];
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12 || 12;
+    return h12 + ':' + m + ' ' + ampm;
+  }
+
+  function monthName(month) {
+    var names = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return names[month];
+  }
+
+  function greetingByTime() {
+    var h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
+  function statCardHtml(label, value, iconSvg, color) {
+    var colors = {
+      primary: { bg: 'bg-primary/5', text: 'text-primary', icon: 'text-primary/70' },
+      accent: { bg: 'bg-accent/5', text: 'text-accent', icon: 'text-accent/70' },
+      success: { bg: 'bg-green-50', text: 'text-green-700', icon: 'text-green-600' },
+      warning: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-600' },
+      danger: { bg: 'bg-red-50', text: 'text-red-700', icon: 'text-red-600' },
+    };
+    var c = colors[color] || colors.primary;
+    return '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">' +
+      '<div class="flex items-start justify-between">' +
+        '<div>' +
+          '<p class="text-sm text-gray-500 mb-1">' + label + '</p>' +
+          '<p class="text-2xl font-bold ' + c.text + '">' + value + '</p>' +
+        '</div>' +
+        '<div class="p-2.5 rounded-lg ' + c.bg + ' ' + c.icon + '">' + iconSvg + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function ministryCardHtml(m) {
+    var color = MINISTRY_COLORS[m.slug] || '#64748b';
+    var iconName = MINISTRY_ICONS[m.slug] || 'church';
+    var iconSvg = MINISTRY_SVG[iconName] || '';
+    var avatarHtml = '';
+    if (m.logo) {
+      avatarHtml = '<div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden bg-white border border-gray-100">' +
+        '<img class="w-full h-full object-contain" src="' + m.logo + '" alt="' + m.nombre + '" />' +
+        '</div>';
+    } else {
+      avatarHtml = '<div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background:' + color + '15;color:' + color + '">' + iconSvg + '</div>';
+    }
+    return '<a href="/ministerios/' + m.slug + '" class="block bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">' +
+      '<div style="height:3px;background:' + color + '"></div>' +
+      '<div class="p-3 flex items-center gap-3">' +
+        avatarHtml +
+        '<div class="min-w-0">' +
+          '<p class="text-sm font-semibold text-gray-800 truncate">' + m.nombre + '</p>' +
+          '<p class="text-xs text-gray-500">' + (m.miembros_count || 0) + ' miembros</p>' +
+        '</div>' +
+      '</div>' +
+    '</a>';
+  }
+
+  function eventItemHtml(e) {
+    var color = e.ministry_color || '#64748b';
+    return '<div class="flex items-start gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100">' +
+      '<div class="flex-shrink-0 w-10 h-10 rounded-lg flex flex-col items-center justify-center text-center" style="background:' + color + '12">' +
+        '<span class="text-xs font-bold" style="color:' + color + '">' + fmtDate(e.fecha_inicio).split(' ')[0] + '</span>' +
+        '<span class="text-2xs font-medium" style="color:' + color + '">' + fmtDate(e.fecha_inicio).split(' ')[1] + '</span>' +
+      '</div>' +
+      '<div class="min-w-0 flex-1">' +
+        '<p class="text-sm font-medium text-gray-800 truncate">' + e.titulo + '</p>' +
+        '<p class="text-xs text-gray-500">' +
+          (e.hora_inicio ? fmtTime(e.hora_inicio) + ' &middot; ' : '') +
+          e.ministry_nombre +
+          (e.ubicacion ? ' &middot; ' + e.ubicacion : '') +
+        '</p>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function birthdayItemHtml(p) {
+    var daysText = '';
+    if (p.dias_faltantes === 0) {
+      daysText = '<span class="text-xs font-medium text-green-600">Hoy</span>';
+    } else if (p.dias_faltantes === 1) {
+      daysText = '<span class="text-xs font-medium text-accent">Mañana</span>';
+    } else if (p.dias_faltantes <= 7) {
+      daysText = '<span class="text-xs text-gray-500">en ' + p.dias_faltantes + ' días</span>';
+    } else {
+      daysText = '<span class="text-xs text-gray-400">' + fmtDate(p.fecha_nacimiento) + '</span>';
+    }
+    return '<div class="flex items-center gap-3 p-2.5 bg-white rounded-lg shadow-sm border border-gray-100">' +
+      '<div class="flex-shrink-0 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-sm">🎂</div>' +
+      '<div class="min-w-0 flex-1 flex items-center justify-between">' +
+        '<p class="text-sm font-medium text-gray-800 truncate">' + p.nombre_completo + '</p>' +
+        daysText +
+      '</div>' +
+    '</div>';
+  }
 
   var unsub = null;
 
+  async function loadData() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth() + 1;
+    var monthStart = year + '-' + String(month).padStart(2, '0') + '-01';
+    var lastDay = new Date(year, month, 0).getDate();
+    var monthEnd = year + '-' + String(month).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+
+    var results = { ministerios: null, treasury: null, eventos: null, cumpleanos: null };
+
+    try {
+      var resp = await api.get('/ministerios/?limit=50');
+      results.ministerios = resp.results || [];
+    } catch (e) { console.warn('Error fetching ministerios:', e); }
+
+    try {
+      var tresp = await api.get('/tesoreria/dashboard/');
+      results.treasury = tresp;
+    } catch (e) { console.warn('Error fetching treasury:', e); }
+
+    try {
+      var eresp = await api.get('/eventos/?fecha_inicio=' + monthStart + '&fecha_fin=' + monthEnd + '&limit=20');
+      results.eventos = eresp.results || [];
+    } catch (e) { console.warn('Error fetching eventos:', e); }
+
+    try {
+      results.cumpleanos = await api.get('/miembros/cumpleanos/');
+    } catch (e) { console.warn('Error fetching cumpleanos:', e); }
+
+    return results;
+  }
+
+  function renderDashboard(data) {
+    var ministries = data.ministerios || [];
+    var totalMembers = 0;
+    ministries.forEach(function(m) { totalMembers += m.miembros_count || 0; });
+
+    var eventos = data.eventos || [];
+    var cumpleanos = data.cumpleanos || [];
+
+    var totalSaldo = null;
+    if (data.treasury && data.treasury.saldos) {
+      totalSaldo = 0;
+      data.treasury.saldos.forEach(function(s) { totalSaldo += s.saldo || 0; });
+    }
+
+    var now = new Date();
+    var month = now.getMonth();
+
+    // Stats
+    var statsHtml = '';
+    statsHtml += statCardHtml('Ministerios', ministries.length, ICONS.church, 'primary');
+    statsHtml += statCardHtml('Miembros', totalMembers, ICONS.users, 'accent');
+    statsHtml += statCardHtml('Eventos del mes', eventos.length, ICONS.calendar, 'success');
+    if (totalSaldo !== null) {
+      statsHtml += statCardHtml('Saldo Total', fmtCurrency(totalSaldo), ICONS.dollar, totalSaldo >= 0 ? 'success' : 'danger');
+    } else {
+      statsHtml += statCardHtml('Saldo Total', '---', ICONS.dollar, 'warning');
+    }
+    document.getElementById('stats-row').innerHTML = statsHtml;
+
+    // Ministries grid
+    var ministriesHtml = '';
+    ministries.forEach(function(m) { ministriesHtml += ministryCardHtml(m); });
+    document.getElementById('ministries-grid').innerHTML = ministriesHtml;
+
+    // Events
+    var eventsHtml = '';
+    if (eventos.length > 0) {
+      eventos.forEach(function(e) { eventsHtml += eventItemHtml(e); });
+      document.getElementById('events-list').innerHTML = eventsHtml;
+      document.getElementById('events-empty').classList.add('hidden');
+    } else {
+      document.getElementById('events-list').innerHTML = '';
+      document.getElementById('events-empty').classList.remove('hidden');
+    }
+
+    // Birthdays
+    document.getElementById('birthdays-month').textContent = monthName(month);
+    var birthdaysHtml = '';
+    if (cumpleanos.length > 0) {
+      cumpleanos.forEach(function(p) { birthdaysHtml += birthdayItemHtml(p); });
+      document.getElementById('birthdays-list').innerHTML = birthdaysHtml;
+      document.getElementById('birthdays-empty').classList.add('hidden');
+    } else {
+      document.getElementById('birthdays-list').innerHTML = '';
+      document.getElementById('birthdays-empty').classList.remove('hidden');
+    }
+  }
+
   async function init() {
-    // Clean up previous subscription
     if (unsub) { unsub(); unsub = null; }
 
     var skeleton = document.getElementById('dashboard-skeleton');
     var content = document.getElementById('dashboard-content');
     var greeting = document.getElementById('dashboard-greeting');
+    var subtitle = document.getElementById('dashboard-subtitle');
 
     if (!skeleton || !content || !greeting) return;
 
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise(function(r) { setTimeout(r, 0); });
 
     unsub = authStore.subscribe(function(state) {
       if (!state.isLoading) {
@@ -78,12 +349,34 @@ const QUICK_LINKS = [
           window.location.href = '/login';
           return;
         }
+
         var user = state.user;
-        greeting.textContent = user && user.first_name
-          ? 'Bienvenido, ' + user.first_name
-          : 'Bienvenido';
+        var firstName = (user && user.first_name) ? user.first_name : '';
+        greeting.textContent = firstName
+          ? greetingByTime() + ', ' + firstName
+          : greetingByTime();
+
+        var roleName = '';
+        if (user && user.rol) {
+          var roleMap = {
+            admin: 'Administrador',
+            pastora: 'Pastora',
+            secretaria: 'Secretaria',
+            tesorera: 'Tesorera',
+            lider_ministerio: 'Líder de Ministerio',
+            concilio: 'Concilio'
+          };
+          roleName = roleMap[user.rol] || user.rol;
+        }
+
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        subtitle.textContent = roleName ? roleName + ' &middot; ' + dateStr : dateStr;
+
         skeleton.classList.add('hidden');
         content.classList.remove('hidden');
+
+        loadData().then(renderDashboard);
       }
     });
 

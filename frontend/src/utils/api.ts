@@ -118,6 +118,61 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
+  async postForm<T>(endpoint: string, formData: FormData): Promise<T> {
+    const headers: HeadersInit = {};
+
+    if (this.token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    let response = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (response.status === 401) {
+      const refreshed = await this.refreshAccessToken();
+      if (refreshed) {
+        if (this.token) {
+          (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+        }
+        response = await fetch(`${API_BASE}${endpoint}`, {
+          method: 'POST',
+          headers,
+          body: formData,
+          credentials: 'include',
+        });
+      }
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+      let message;
+      if (body.errors && typeof body.errors === 'object') {
+        const details = Object.entries(body.errors)
+          .map(([k, v]) => k + ': ' + (Array.isArray(v) ? v.join(', ') : v))
+          .join('; ');
+        message = (body.message || 'Error de validación') + ' (' + details + ')';
+      } else if (typeof body.error === 'object' && body.error !== null) {
+        message = body.error.mensaje || JSON.stringify(body.error);
+      } else {
+        message = body.message || body.detail || body.error || 'Error en la solicitud';
+      }
+      const err = new Error(message);
+      (err as any).body = body;
+      (err as any).status = response.status;
+      throw err;
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
+  }
+
   async login(username: string, password: string) {
     const response = await fetch(`${API_BASE}/auth/login/`, {
       method: 'POST',

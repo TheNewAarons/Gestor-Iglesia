@@ -48,6 +48,14 @@ class MovimientoTesoreriaSerializer(serializers.ModelSerializer):
             return obj.registrado_por.get_full_name() or obj.registrado_por.username
         return None
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.imagen:
+            request = self.context.get('request')
+            if request:
+                data['imagen'] = request.build_absolute_uri(instance.imagen.url)
+        return data
+
 
 class CuotaFijaSerializer(serializers.ModelSerializer):
     ministry_nombre = serializers.SerializerMethodField()

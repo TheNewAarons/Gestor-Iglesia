@@ -355,9 +355,13 @@ class MinisteriosStore {
     }
   }
 
-  async addMovimiento(slug: string, data: Partial<MovimientoCaja>) {
+  async addMovimiento(slug: string, data: Partial<MovimientoCaja> | FormData) {
     try {
-      await api.post(`/ministerios/${slug}/caja/`, data);
+      if (data instanceof FormData) {
+        await api.postForm(`/ministerios/${slug}/caja/`, data);
+      } else {
+        await api.post(`/ministerios/${slug}/caja/`, data);
+      }
       await this.fetchCaja(slug);
     } catch (error) {
       throw error;

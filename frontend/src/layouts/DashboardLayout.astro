@@ -26,7 +26,7 @@ const { title, showBack = false } = Astro.props;
         )}
         <h1 class="page-title">{title}</h1>
         <div class="user-menu">
-          <span class="user-name">Usuario</span>
+          <span id="topbar-user-name" class="user-name">Usuario</span>
         </div>
       </header>
       <div class="content">
@@ -114,3 +114,22 @@ const { title, showBack = false } = Astro.props;
     }
   }
 </style>
+
+<script>
+  import { authStore } from '../stores/auth';
+
+  function updateUserName() {
+    var el = document.getElementById('topbar-user-name');
+    if (!el) return;
+    var state = authStore.getState();
+    if (state.user && state.user.first_name) {
+      el.textContent = state.user.first_name + (state.user.last_name ? ' ' + state.user.last_name : '');
+    }
+  }
+
+  var unsub = authStore.subscribe(function(state) {
+    if (!state.isLoading) updateUserName();
+  });
+
+  document.addEventListener('astro:page-load', updateUserName);
+</script>

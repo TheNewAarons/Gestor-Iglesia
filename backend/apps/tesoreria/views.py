@@ -60,9 +60,9 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         qs = flujo_selectors.listar_boletas_egresos(fecha_inicio, fecha_fin)
         page = self.paginate_queryset(qs)
         if page is not None:
-            serializer = MovimientoCajaSerializer(page, many=True)
+            serializer = MovimientoCajaSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
-        serializer = MovimientoCajaSerializer(qs, many=True)
+        serializer = MovimientoCajaSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='boleta-detalle')
@@ -74,7 +74,7 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         try:
             boleta = MovimientoCaja.objects.select_related(
                 'caja__ministry', 'registrado_por'
-            ).get(pk=boleta_id, tipo='egreso')
+            ).get(pk=boleta_id)
         except MovimientoCaja.DoesNotExist:
             return Response({'error': 'Boleta no encontrada'}, status=404)
         return Response({
@@ -82,7 +82,8 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
             'monto': float(boleta.monto),
             'descripcion': boleta.descripcion,
             'fecha': boleta.fecha.isoformat(),
-            'imagen': boleta.imagen.url if boleta.imagen else None,
+            'tipo': boleta.tipo,
+            'imagen': request.build_absolute_uri(boleta.imagen.url) if boleta.imagen else None,
             'ministry_nombre': boleta.caja.ministry.nombre,
             'ministry_color': boleta.caja.ministry.color,
             'registrado_por_nombre': boleta.registrado_por.get_full_name() if boleta.registrado_por else None,
@@ -94,9 +95,9 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         qs = flujo_selectors.listar_traspasos()
         page = self.paginate_queryset(qs)
         if page is not None:
-            serializer = MovimientoCajaSerializer(page, many=True)
+            serializer = MovimientoCajaSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
-        serializer = MovimientoCajaSerializer(qs, many=True)
+        serializer = MovimientoCajaSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
 
     @traspasos.mapping.post
@@ -130,7 +131,7 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = MovimientoCajaSerializer(movimiento)
+        serializer = MovimientoCajaSerializer(movimiento, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     # ---- Informe ----
@@ -189,7 +190,7 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         style_h2 = ParagraphStyle('H2', parent=styles['Heading2'], fontSize=12, spaceBefore=10, spaceAfter=4)
         style_title = ParagraphStyle('Title', parent=styles['Title'], fontSize=16, spaceAfter=12)
 
-        fmt = lambda v: f'{v:,.0f} Gs'
+        fmt = lambda v: f'${v:,.0f}'
         ing = d['ingresos']
         egr = d['egresos']
         tot = d['totales']
@@ -357,13 +358,13 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
             qs = flujo_selectors.listar_movimientos_tesoreria(tipo)
             page = self.paginate_queryset(qs)
             if page is not None:
-                serializer = MovimientoTesoreriaSerializer(page, many=True)
+                serializer = MovimientoTesoreriaSerializer(page, many=True, context={'request': request})
                 return self.get_paginated_response(serializer.data)
-            serializer = MovimientoTesoreriaSerializer(qs, many=True)
+            serializer = MovimientoTesoreriaSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
 
         if request.method == 'POST':
-            serializer = MovimientoTesoreriaSerializer(data=request.data)
+            serializer = MovimientoTesoreriaSerializer(data=request.data, context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save(registrado_por=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
