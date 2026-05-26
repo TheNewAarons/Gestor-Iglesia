@@ -424,9 +424,20 @@ class MinisteriosStore {
     }
   }
 
-  async fetchCaja(slug: string) {
+  async fetchCaja(slug: string, params?: { tipo?: string; fecha_inicio?: string; fecha_fin?: string; page?: number; page_size?: number }) {
     try {
-      const caja = await api.get<CajaMinisterio>(`/ministerios/${slug}/caja/`);
+      let url = `/ministerios/${slug}/caja/`;
+      const queryParams = new URLSearchParams();
+      if (params) {
+        if (params.tipo) queryParams.append('tipo', params.tipo);
+        if (params.fecha_inicio) queryParams.append('fecha_inicio', params.fecha_inicio);
+        if (params.fecha_fin) queryParams.append('fecha_fin', params.fecha_fin);
+        if (params.page) queryParams.append('page', params.page.toString());
+        if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+      }
+      const queryString = queryParams.toString();
+      if (queryString) url += '?' + queryString;
+      const caja = await api.get<CajaMinisterio>(url);
       this.setState({ caja });
     } catch (error) {
       console.error('Error fetching caja:', error);
@@ -593,14 +604,20 @@ class MinisteriosStore {
     }
   }
 
-  async fetchAsistenciaAcumulativa(slug: string, mes?: number, anio?: number, clase?: string) {
+  async fetchAsistenciaAcumulativa(slug: string, params?: { mes?: number; anio?: number; clase?: string; nombre?: string; fecha_inicio?: string; fecha_fin?: string; presente?: boolean }) {
     try {
       let url = `/ministerios/${slug}/asistencia/acumulativa/`;
-      const params = new URLSearchParams();
-      if (mes) params.append('mes', mes.toString());
-      if (anio) params.append('anio', anio.toString());
-      if (clase) params.append('clase', clase);
-      const queryString = params.toString();
+      const queryParams = new URLSearchParams();
+      if (params) {
+        if (params.mes) queryParams.append('mes', params.mes.toString());
+        if (params.anio) queryParams.append('anio', params.anio.toString());
+        if (params.clase) queryParams.append('clase', params.clase);
+        if (params.nombre) queryParams.append('nombre', params.nombre);
+        if (params.fecha_inicio) queryParams.append('fecha_inicio', params.fecha_inicio);
+        if (params.fecha_fin) queryParams.append('fecha_fin', params.fecha_fin);
+        if (params.presente !== undefined) queryParams.append('presente', params.presente.toString());
+      }
+      const queryString = queryParams.toString();
       if (queryString) url += '?' + queryString;
       const acumulativa = await api.get<AsistenciaAcumulativa>(url);
       this.setState({ asistencia_acumulativa: acumulativa });

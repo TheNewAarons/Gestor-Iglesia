@@ -59,16 +59,23 @@ def resumen_asistencia(ministry: Ministerio, mes: int = None, anio: int = None):
 
 
 def asistencia_acumulativa(ministry: Ministerio, mes: int = None, anio: int = None,
-                           clase: str = None):
-    """Asistencia acumulativa por persona en un mes"""
-    if not mes:
-        mes = date.today().month
-    if not anio:
-        anio = date.today().year
+                           clase: str = None, nombre: str = None,
+                           fecha_inicio: str = None, fecha_fin: str = None,
+                           presente: bool = None):
+    """Asistencia acumulativa por persona con filtros"""
+    queryset = ministry.asistencias.all()
 
-    queryset = ministry.asistencias.filter(
-        fecha__month=mes, fecha__year=anio, presente=True
-    )
+    if fecha_inicio and fecha_fin:
+        queryset = queryset.filter(fecha__gte=fecha_inicio, fecha__lte=fecha_fin)
+    else:
+        if not mes:
+            mes = date.today().month
+        if not anio:
+            anio = date.today().year
+        queryset = queryset.filter(fecha__month=mes, fecha__year=anio)
+
+    if presente is not None:
+        queryset = queryset.filter(presente=presente)
 
     if clase:
         queryset = queryset.filter(clase=clase)
@@ -81,6 +88,8 @@ def asistencia_acumulativa(ministry: Ministerio, mes: int = None, anio: int = No
             continue
         try:
             miembro = Miembro.objects.get(id=miembro_id)
+            if nombre and nombre.lower() not in miembro.nombre_completo.lower():
+                continue
             count = queryset.filter(miembro=miembro_id).count()
             resultados.append({
                 'miembro_id': miembro.id,
@@ -143,3 +152,32 @@ def biblias_por_clase(ministry: Ministerio, mes: int = None, anio: int = None):
         resultados.append({'clase': clase_val, 'biblias': count})
 
     return {'por_clase': resultados, 'total_general': total}
+
+
+def visitas_por_periodo(ministry: Ministerio, fecha_inicio: str = None, fecha_fin: str = None):
+    """Visitas totales por período"""
+    queryset = ministry.asistencias.filter(es_visita=True)
+    if fecha_inicio:
+        queryset = queryset.filter(fecha__gte=fecha_inicio)
+    if fecha_fin:
+        queryset = queryset.filter(fecha__lte=fecha_fin)
+    visitas = queryset.values('nombre_visita', 'clase', 'fecha').distinct().order_by('-fecha')
+    return {
+        'total': queryset.values('nombre_visita').distinct().count(),
+        'visitas': list(visitas)
+    }
+
+
+def visitas_acumuladas_por_mes(ministry: Ministerio, anio: int = None):
+    """Visitas acumuladas cada mes del año"""
+    if not anio:
+        anio = date.today().year
+    from django.db.models import Count
+    queryset = ministry.asistencias.filter(es_visita=True, fecha__year=anio)
+    acumulados = queryset.values('fecha__month').annotate(
+        total=Count('nombre_visita', distinct=True)
+    ).order_by('fecha__month')
+    resultado = {m: 0 for m in range(1, 13)}
+    for item in acumulados:
+        resultado[item['fecha__month']] = item['total']
+    return {'anio': anio, 'acumulado_por_mes': [{'mes': k, 'visitas': v} for k, v in resultado.items()]}

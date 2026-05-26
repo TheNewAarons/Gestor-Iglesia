@@ -20,5 +20,6 @@ def actualizar_item_inventario(item: Inventario, **kwargs) -> Inventario:
 
 @transaction.atomic
 def eliminar_item_inventario(item: Inventario):
-    """Elimina un item de inventario"""
-    item.delete()
+    """Marca un item de inventario como inactivo (soft delete)"""
+    item.activo = False
+    item.save()

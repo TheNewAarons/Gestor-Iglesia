@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('apps.ministerios.urls')),
     path('api/v1/tesoreria/', include('apps.tesoreria.urls')),
+    path('api/v1/secretaria/', include('apps.secretaria.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

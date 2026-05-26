@@ -274,6 +274,8 @@ const SKELETON_BIRTHDAYS = Array.from({ length: 3 });
   }
 
   function renderDashboard(data) {
+    var statsRow = document.getElementById('stats-row');
+    if (!statsRow) return;
     var ministries = data.ministerios || [];
     var totalMembers = 0;
     ministries.forEach(function(m) { totalMembers += m.miembros_count || 0; });
@@ -300,7 +302,7 @@ const SKELETON_BIRTHDAYS = Array.from({ length: 3 });
     } else {
       statsHtml += statCardHtml('Saldo Total', '---', ICONS.dollar, 'warning');
     }
-    document.getElementById('stats-row').innerHTML = statsHtml;
+    statsRow.innerHTML = statsHtml;
 
     // Ministries grid
     var ministriesHtml = '';

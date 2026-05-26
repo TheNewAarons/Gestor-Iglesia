@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from .services.eventos import ConflictoHorarioException
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -223,7 +224,28 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
         if request.method == 'GET':
             caja = finanzas_selectors.obtener_caja(ministry) or caja
-            return Response(CajaMinisterioSerializer(caja, context={'request': request}).data)
+            movimientos = caja.movimientos.all()
+
+            if tipo := request.query_params.get('tipo'):
+                movimientos = movimientos.filter(tipo=tipo)
+            if fecha_inicio := request.query_params.get('fecha_inicio'):
+                movimientos = movimientos.filter(fecha__gte=fecha_inicio)
+            if fecha_fin := request.query_params.get('fecha_fin'):
+                movimientos = movimientos.filter(fecha__lte=fecha_fin)
+
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 20))
+            from django.core.paginator import Paginator
+            paginator = Paginator(movimientos.order_by('-fecha', '-created_at'), page_size)
+            page_obj = paginator.get_page(page)
+
+            data = CajaMinisterioSerializer(caja, context={'request': request}).data
+            data['movimientos'] = MovimientoCajaSerializer(page_obj.object_list, many=True, context={'request': request}).data
+            data['total_movimientos'] = paginator.count
+            data['page'] = page
+            data['page_size'] = page_size
+            data['total_pages'] = paginator.num_pages
+            return Response(data)
 
         serializer = MovimientoCajaSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -234,7 +256,15 @@ class MinisterioViewSet(viewsets.ModelViewSet):
     def inventario(self, request, slug=None):
         ministry = self.get_object()
         if request.method == 'GET':
-            items = inventario_selectors.listar_inventario(ministry)
+            filters = {}
+            if categoria := request.query_params.get('categoria'):
+                filters['categoria'] = categoria
+            if estado := request.query_params.get('estado'):
+                filters['estado'] = estado
+            items = inventario_selectors.listar_inventario(ministry, filters if filters else None)
+            page = self.paginate_queryset(items)
+            if page is not None:
+                return self.get_paginated_response(InventarioSerializer(page, many=True, context={'request': request}).data)
             return Response(InventarioSerializer(items, many=True, context={'request': request}).data)
 
         serializer = InventarioSerializer(data=request.data, context={'request': request})
@@ -308,6 +338,19 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         finanzas_services.actualizar_ofrenda(ofrenda, **serializer.validated_data)
         return Response(OfrendaSerializer(ofrenda).data)
 
+    @action(detail=True, methods=['post'], url_path='ofrendas/(?P<ofrenda_id>[0-9]+)/enviar-tesoreria')
+    def ofrendas_enviar_tesoreria(self, request, slug=None, ofrenda_id=None):
+        ministry = self.get_object()
+        ofrenda_id = int(ofrenda_id)
+        try:
+            ofrenda = ministry.ofrendas.get(id=ofrenda_id)
+        except Ofrenda.DoesNotExist:
+            return Response({'error': 'Ofrenda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        ofrenda.enviada_tesoreria = True
+        ofrenda.fecha_envio = timezone.now()
+        ofrenda.save(update_fields=['enviada_tesoreria', 'fecha_envio'])
+        return Response(OfrendaSerializer(ofrenda).data)
+
     @action(detail=True, methods=['get', 'post'])
     def asistencia(self, request, slug=None):
         ministry = self.get_object()
@@ -343,8 +386,21 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         mes = request.query_params.get('mes')
         anio = request.query_params.get('anio')
         clase = request.query_params.get('clase')
+        nombre = request.query_params.get('nombre')
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        presente = request.query_params.get('presente')
+        if presente is not None:
+            presente = presente.lower() == 'true'
         resultado = asistencia_selectors.asistencia_acumulativa(
-            ministry, int(mes) if mes else None, int(anio) if anio else None, clase
+            ministry,
+            int(mes) if mes else None,
+            int(anio) if anio else None,
+            clase,
+            nombre,
+            fecha_inicio,
+            fecha_fin,
+            presente
         )
         return Response(resultado)
 
@@ -355,6 +411,23 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         anio = request.query_params.get('anio')
         resultado = asistencia_selectors.estadisticas_asistencia(
             ministry, int(mes) if mes else None, int(anio) if anio else None
+        )
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='asistencia/visitas')
+    def asistencia_visitas(self, request, slug=None):
+        ministry = self.get_object()
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        resultado = asistencia_selectors.visitas_por_periodo(ministry, fecha_inicio, fecha_fin)
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='asistencia/visitas/acumuladas')
+    def asistencia_visitas_acumuladas(self, request, slug=None):
+        ministry = self.get_object()
+        anio = request.query_params.get('anio')
+        resultado = asistencia_selectors.visitas_acumuladas_por_mes(
+            ministry, int(anio) if anio else None
         )
         return Response(resultado)
 
@@ -462,13 +535,26 @@ class MinisterioViewSet(viewsets.ModelViewSet):
     def enfoques(self, request, slug=None):
         enfoques = EnfoqueMNI.objects.all()
         mes_actual = date.today().month
-        data = {
-            'mes_actual': mes_actual,
-            'enfoque_actual': EnfoqueMNISerializer(
-                enfoques.filter(mes=mes_actual).first()
-            ).data if enfoques.filter(mes=mes_actual).exists() else None,
-            'enfoques': EnfoqueMNISerializer(enfoques, many=True).data,
-        }
+        mes_filtro = request.query_params.get('mes')
+        if mes_filtro:
+            mes_filtro = int(mes_filtro)
+            data = {
+                'mes_actual': mes_actual,
+                'enfoque_actual': EnfoqueMNISerializer(
+                    enfoques.filter(mes=mes_filtro).first()
+                ).data if enfoques.filter(mes=mes_filtro).exists() else None,
+                'enfoques': EnfoqueMNISerializer(
+                    enfoques.filter(mes=mes_filtro), many=True
+                ).data,
+            }
+        else:
+            data = {
+                'mes_actual': mes_actual,
+                'enfoque_actual': EnfoqueMNISerializer(
+                    enfoques.filter(mes=mes_actual).first()
+                ).data if enfoques.filter(mes=mes_actual).exists() else None,
+                'enfoques': EnfoqueMNISerializer(enfoques, many=True).data,
+            }
         return Response(data)
 
     @action(detail=True, methods=['get', 'post'], url_path='programas-domingo')

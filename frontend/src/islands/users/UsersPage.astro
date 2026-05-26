@@ -35,10 +35,10 @@ const BADGE_CLASSES: Record<string, string> = {
           id="users-search"
           type="text"
           placeholder="Buscar usuarios..."
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white placeholder:text-gray-400"
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white placeholder:text-gray-400"
         />
       </div>
-      <button id="users-create-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">+ Nuevo Usuario</button>
+      <button id="users-create-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Nuevo Usuario</button>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
@@ -75,48 +75,48 @@ const BADGE_CLASSES: Record<string, string> = {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Usuario</label>
-            <input id="um-username" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-username" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Email</label>
-            <input id="um-email" type="email" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-email" type="email" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Nombre</label>
-            <input id="um-first-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-first-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Apellido</label>
-            <input id="um-last-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-last-name" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Teléfono</label>
-            <input id="um-phone" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-phone" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Rol</label>
-            <select id="um-rol" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white">
+            <select id="um-rol" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white">
               {Object.entries(ROLE_DISPLAY).map(([k, v]) => <option value={k}>{v}</option>)}
             </select>
           </div>
           <div id="um-ministerios-container" class="md:col-span-2 hidden">
             <label class="text-sm font-medium text-gray-700">Ministerios</label>
-            <div id="um-ministerios-list" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto rounded-md border border-gray-200 p-3">
+            <div id="um-ministerios-list" class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto rounded-sm border border-gray-200 p-3">
             </div>
             <p id="um-ministerios-hint" class="text-xs text-gray-500 mt-1"></p>
           </div>
           <div id="um-password-fields" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Contraseña</label>
-            <input id="um-password" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-password" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
           <div id="um-password-confirm-fields" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Confirmar contraseña</label>
-            <input id="um-password-confirm" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
+            <input id="um-password-confirm" type="password" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" />
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-6">
-          <button id="um-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button>
-          <button id="um-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Crear</button>
+          <button id="um-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer">Cancelar</button>
+          <button id="um-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">Crear</button>
         </div>
       </div>
     </div>

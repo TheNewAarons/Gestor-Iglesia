@@ -283,6 +283,7 @@ class Inventario(models.Model):
     descripcion = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default='bueno')
     imagen = models.ImageField(upload_to='inventario/fotos/', blank=True, null=True)
+    activo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

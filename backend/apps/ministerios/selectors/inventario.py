@@ -3,7 +3,7 @@ from ..models import Inventario, Ministerio
 
 def listar_inventario(ministry: Ministerio, filters: dict = None):
     """Lista el inventario de un ministerio con filtros"""
-    queryset = ministry.inventario.all()
+    queryset = ministry.inventario.filter(activo=True)
     if filters:
         if categoria := filters.get('categoria'):
             queryset = queryset.filter(categoria=categoria)

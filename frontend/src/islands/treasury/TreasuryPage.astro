@@ -121,7 +121,7 @@ export interface Props {
       el.innerHTML = `
         <div class="text-center py-12 text-gray-500">
           <p class="text-sm text-gray-700 mb-1">No hay ministerios con cajas activas.</p>
-          <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" onclick="location.reload()">Recargar</button>
+          <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" onclick="location.reload()">Recargar</button>
         </div>`;
       return;
     }
@@ -168,17 +168,17 @@ export interface Props {
       <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Mes</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-mes">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-mes">
             ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
           </select>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Año</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-anio">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="flujo-anio">
             ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
           </select>
         </div>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-flujo">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" id="btn-buscar-flujo">Buscar</button>
       </div>
       <div id="flujo-content">
         ${!state.flujo ? '<div class="text-center py-12 text-gray-500"><p class="text-sm text-gray-700 mb-1">Selecciona mes y año para ver el flujo de caja.</p></div>' : `
@@ -206,13 +206,13 @@ export interface Props {
       <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Desde</label>
-          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" id="boleta-inicio" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm bg-white" id="boleta-inicio" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Hasta</label>
-          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" id="boleta-fin" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm bg-white" id="boleta-fin" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-boletas">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" id="btn-buscar-boletas">Buscar</button>
       </div>
       <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
         <table class="w-full text-sm" id="boletas-table">
@@ -260,17 +260,17 @@ export interface Props {
         <div class="flex gap-3 items-end flex-wrap">
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Ministerio</label>
-            <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" name="ministry_slug" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" required>${ministryOptions}</select>
+            <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" name="ministry_slug" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" required>${ministryOptions}</select>
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Monto</label>
-            <input type="number" name="monto" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" step="1000" min="1" required />
+            <input type="number" name="monto" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" step="1000" min="1" required />
           </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700">Descripción</label>
-            <input type="text" name="descripcion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" placeholder="Traspaso mensual" />
+            <input type="text" name="descripcion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm bg-white" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" placeholder="Traspaso mensual" />
           </div>
-          <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer" style="align-self:flex-end">Registrar Traspaso</button>
+          <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" style="align-self:flex-end">Registrar Traspaso</button>
         </div>
       </form>
       <h3 class="font-semibold text-gray-900 mb-4" style="margin-top:1.5rem">Historial de Traspasos</h3>
@@ -317,20 +317,20 @@ export interface Props {
       <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Mes</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-mes">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-mes">
             ${Array.from({length:12}, (_, i) => `<option value="${i+1}" ${i+1 === now.getMonth()+1 ? 'selected' : ''}>${new Date(2024,i,1).toLocaleString('es',{month:'long'})}</option>`).join('')}
           </select>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Año</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-anio">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="informe-anio">
             ${Array.from({length:5}, (_, i) => `<option value="${now.getFullYear()-2+i}" ${now.getFullYear()-2+i === now.getFullYear() ? 'selected' : ''}>${now.getFullYear()-2+i}</option>`).join('')}
           </select>
         </div>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-generar-informe">Generar</button>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-informe">Exportar JSON</button>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-pdf">Exportar PDF</button>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-exportar-excel">Exportar Excel</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" id="btn-generar-informe">Generar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer border border-gray-300" id="btn-exportar-informe">Exportar JSON</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer border border-gray-300" id="btn-exportar-pdf">Exportar PDF</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer border border-gray-300" id="btn-exportar-excel">Exportar Excel</button>
       </div>
       <div id="informe-content">
         ${!state.informe
@@ -406,7 +406,7 @@ export interface Props {
       <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Filtrar por tipo</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="mov-tipo">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="mov-tipo">
             <option value="">Todos</option>
             <option value="ingreso_diezmo">Diezmo</option>
             <option value="ingreso_especial">Donación Especial</option>
@@ -419,7 +419,7 @@ export interface Props {
             <option value="egreso_fondo_contingencia">Fondo de Contingencia</option>
           </select>
         </div>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-movs">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" id="btn-buscar-movs">Buscar</button>
       </div>
       <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
         <table class="w-full text-sm">
@@ -466,28 +466,28 @@ export interface Props {
       <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Desde</label>
-          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-inicio" />
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-inicio" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Hasta</label>
-          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-fin" />
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-fin" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Ministerio</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-ministry">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-ministry">
             <option value="">Todos</option>
             ${minOptions}
           </select>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-gray-700">Tipo</label>
-          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-tipo">
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-tipo">
             <option value="">Todos</option>
             <option value="ingreso">Ingresos</option>
             <option value="egreso">Egresos</option>
           </select>
         </div>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-historial">Buscar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer" id="btn-buscar-historial">Buscar</button>
       </div>
       <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
         <table class="w-full text-sm">
@@ -584,7 +584,7 @@ export interface Props {
         <div><p class="text-xs text-gray-500 uppercase">Descripción</p><p>${entry.descripcion || '—'}</p></div>
         <div><p class="text-xs text-gray-500 uppercase">Fuente</p><p><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isAuditoria ? 'bg-slate-100 text-slate-700' : (entry.fuente === 'tesoreria_central' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800')}">${entry.fuente_label}</span></p></div>
         <div><p class="text-xs text-gray-500 uppercase">Registrado por</p><p>${entry.registrado_por_nombre || '—'}</p></div>
-        ${entry.imagen_url ? '<div><p class="text-xs text-gray-500 uppercase">Comprobante</p><img src="' + entry.imagen_url + '" alt="Comprobante" class="max-w-full rounded-md mt-2 border border-gray-200" /></div>' : ''}
+        ${entry.imagen_url ? '<div><p class="text-xs text-gray-500 uppercase">Comprobante</p><img src="' + entry.imagen_url + '" alt="Comprobante" class="max-w-full rounded-sm mt-2 border border-gray-200" /></div>' : ''}
       </div>`;
     document.getElementById('hist-modal')!.style.display = 'flex';
   }
@@ -608,7 +608,7 @@ export interface Props {
     el.innerHTML = `
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-gray-900">Pendientes de aprobación (${pendientes.length})</h3>
-        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-recargar-pendientes">Recargar</button>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer border border-gray-300" id="btn-recargar-pendientes">Recargar</button>
       </div>
       ${pendientes.length === 0
         ? '<div class="text-center py-12 text-gray-500 bg-white rounded-lg shadow-sm border border-gray-100"><svg class="w-12 h-12 mx-auto mb-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-sm font-medium text-gray-700">No hay movimientos pendientes</p><p class="text-xs text-gray-400 mt-1">Todos los movimientos han sido aprobados</p></div>'
@@ -630,7 +630,7 @@ export interface Props {
                 + '">' + (isOfrenda ? 'Ofrenda' : (isIngreso ? 'Caja · Ingreso' : 'Caja · Egreso')) + '</span></td>'
                 + '<td class="font-medium ' + (isIngreso ? 'text-green-700' : 'text-red-600') + '">' + formatCurrency(p.monto) + '</td>'
                 + '<td class="text-gray-500 text-xs max-w-[200px] truncate" title="' + detalle + '">' + detalle + '</td>'
-                + '<td><button data-aprobar="' + p.tipo + '_' + p.id + '" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md cursor-pointer transition-colors">Aprobar</button></td>'
+                + '<td><button data-aprobar="' + p.tipo + '_' + p.id + '" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-white bg-green-600 hover:bg-green-700 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">Aprobar</button></td>'
                 + '</tr>';
             }).join('')}
           </tbody>
@@ -665,21 +665,21 @@ export interface Props {
       <form id="config-form" class="flex flex-col gap-4 max-w-md">
         <div class="flex flex-col gap-1.5">
           <label class="text-sm font-medium text-gray-700">PRES.DISTRITAL (%)</label>
-          <input type="number" name="pres_distrital_pct" value="${c.pres_distrital_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="number" name="pres_distrital_pct" value="${c.pres_distrital_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-sm font-medium text-gray-700">PRES EDUCACIONAL (%)</label>
-          <input type="number" name="pres_educacional_pct" value="${c.pres_educacional_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="number" name="pres_educacional_pct" value="${c.pres_educacional_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-sm font-medium text-gray-700">PRES.EVANGELISMO (%)</label>
-          <input type="number" name="pres_evangelismo_pct" value="${c.pres_evangelismo_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="number" name="pres_evangelismo_pct" value="${c.pres_evangelismo_pct}" step="0.01" min="0" max="100" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-sm font-medium text-gray-700">Jubilación (Monto Fijo)</label>
-          <input type="number" name="jubilacion_monto" value="${parseFloat(c.jubilacion_monto)}" step="1000" min="0" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
+          <input type="number" name="jubilacion_monto" value="${parseFloat(c.jubilacion_monto)}" step="1000" min="0" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" />
         </div>
-        <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar Configuración</button>
+        <button type="submit" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">Guardar Configuración</button>
       </form>
       <p class="text-xs text-gray-500" style="margin-top:8px">Última actualización: ${new Date(c.updated_at).toLocaleString('es-PY')}</p>`;
     setTimeout(() => {
@@ -711,7 +711,7 @@ export interface Props {
         <p class="text-sm text-gray-700 mb-1"><strong>Fecha:</strong> ${new Date(detalle.fecha).toLocaleDateString('es-PY')}</p>
         <p class="text-sm text-gray-700 mb-1"><strong>Descripcion:</strong> ${detalle.descripcion}</p>
         <p class="text-sm text-gray-700 mb-1"><strong>Registrado por:</strong> ${detalle.registrado_por_nombre || '-'}</p>
-        ${detalle.imagen ? `<p class="text-sm text-gray-700 mb-1"><strong>Boleta:</strong><br/><img src="${detalle.imagen}" alt="Boleta" class="max-w-full rounded-md mt-2 border border-gray-200" /></p>` : ''}
+        ${detalle.imagen ? `<p class="text-sm text-gray-700 mb-1"><strong>Boleta:</strong><br/><img src="${detalle.imagen}" alt="Boleta" class="max-w-full rounded-sm mt-2 border border-gray-200" /></p>` : ''}
       </div>`;
     document.getElementById('boleta-modal')!.style.display = 'flex';
   }

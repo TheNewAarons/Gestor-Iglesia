@@ -19,6 +19,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'apps.ministerios',
     'apps.tesoreria',
+    'apps.secretaria',
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [
