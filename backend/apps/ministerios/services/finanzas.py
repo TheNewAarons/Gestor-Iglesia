@@ -40,6 +40,7 @@ def crear_ofrenda(ministry, usuario, **kwargs) -> Ofrenda:
         ministry=ministry,
         usuario=usuario,
     )
+    _sincronizar_ofrenda_caja_dni(ofrenda, usuario)
     return ofrenda
 
 
@@ -73,7 +74,29 @@ def actualizar_ofrenda(ofrenda: Ofrenda, **kwargs) -> Ofrenda:
         mt.descripcion = f'Ofrenda {ofrenda.get_categoria_display() or ""} - {ofrenda.ministry.nombre}'.strip(' -')
         mt.save()
 
+    _sincronizar_ofrenda_caja_dni(ofrenda)
+
     return ofrenda
+
+
+def _sincronizar_ofrenda_caja_dni(ofrenda: Ofrenda, usuario=None):
+    if ofrenda.ministry.slug != 'dni':
+        return
+    caja = obtener_o_crear_caja(ofrenda.ministry)
+    mov, created = MovimientoCaja.objects.update_or_create(
+        ofrenda_origen=ofrenda,
+        defaults={
+            'caja': caja,
+            'tipo': 'ingreso',
+            'monto': ofrenda.monto,
+            'descripcion': f'Ofrenda DNI clase {ofrenda.clase or "general"}',
+            'fecha': ofrenda.fecha,
+            'aprobado': True,
+        },
+    )
+    if usuario and created:
+        mov.registrado_por = usuario
+        mov.save(update_fields=['registrado_por'])
 
 
 @transaction.atomic

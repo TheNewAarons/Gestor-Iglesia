@@ -14,11 +14,12 @@ export function getStaticPaths() {
 const { slug } = Astro.params;
 
 const ministryTabs: Record<string, string[]> = {
-  dni: ['dashboard', 'miembros', 'asistencia', 'caja', 'inventario', 'ofrendas', 'eventos'],
-  explo: ['dashboard', 'miembros', 'lecciones', 'planificacion', 'caja', 'inventario', 'eventos'],
-  alabanza: ['dashboard', 'miembros', 'canciones', 'programas', 'planificacion', 'caja', 'eventos'],
-  comunicaciones: ['dashboard', 'miembros', 'recursos', 'ideas', 'planificacion', 'caja', 'eventos'],
-  default: ['dashboard', 'miembros', 'planificacion', 'caja', 'inventario', 'ofrendas', 'eventos']
+  mni: ['dashboard', 'miembros', 'enfoques', 'programa', 'ofrendas', 'caja', 'inventario', 'planificacion', 'notas', 'eventos'],
+  dni: ['dashboard', 'miembros', 'asistencia', 'caja', 'inventario', 'ofrendas', 'cumpleanos', 'biblias', 'notas', 'eventos'],
+  explo: ['dashboard', 'miembros', 'lecciones', 'planificacion', 'caja', 'inventario', 'notas', 'eventos'],
+  alabanza: ['dashboard', 'miembros', 'canciones', 'programas', 'planificacion', 'caja', 'notas', 'eventos'],
+  comunicaciones: ['dashboard', 'miembros', 'recursos', 'ideas', 'planificacion', 'caja', 'notas', 'eventos'],
+  default: ['dashboard', 'miembros', 'planificacion', 'caja', 'inventario', 'ofrendas', 'notas', 'eventos']
 };
 
 const tabs = ministryTabs[slug || ''] || ministryTabs.default;

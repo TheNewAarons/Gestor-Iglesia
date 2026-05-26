@@ -594,7 +594,7 @@ export interface Props {
     const el = document.getElementById('tab-pendientes')!;
     const pendientes = state.pendientes || [];
     var catLabels = { ofrenda_general: 'Ofrenda General', caja_alabastro: 'Caja de Alabastro', accion_gracias: 'Acción de Gracias', dip: 'DIP', oracion_ayuno: 'Oración y Ayuno', fem: 'FEM', otros: 'Otros' };
-    var claseLabels = { ninos: 'Niños (0-12)', jovenes: 'Jóvenes (13-17)', adultos_jovenes: 'Adultos Jóvenes (18-35)', adultos: 'Adultos (36-60)', adultos_mayores: 'Adultos Mayores (60+)' };
+    var claseLabels = { parvulos: 'Párvulos (1-5)', principiantes: 'Principiantes (6-10)', primarios: 'Primarios (11-15)', jovenes: 'Jóvenes (16-35)', adultos: 'Adultos (35+)' };
     var countEl = document.getElementById('pendientes-count');
     if (countEl) {
       if (pendientes.length > 0) {

@@ -1,4 +1,4 @@
-import { api } from '../utils/api';
+import { api, API_BASE } from '../utils/api';
 
 export interface Ministerio {
   id: number;
@@ -118,6 +118,30 @@ export interface Cumpleanero {
   dias_faltantes: number;
 }
 
+export interface OfrendaPorClase {
+  clase: string;
+  total: number;
+  count: number;
+}
+
+export interface BibliasPorClaseResponse {
+  por_clase: { clase: string; biblias: number }[];
+  total_general: number;
+}
+
+export interface OfrendaTotalesPorCategoria {
+  categoria: string;
+  total: number;
+  count: number;
+}
+
+export interface ReporteOfrendas {
+  fecha_inicio: string;
+  fecha_fin: string;
+  total_general: number;
+  por_categoria: OfrendaTotalesPorCategoria[];
+}
+
 export interface Cancion {
   id: number;
   titulo: string;
@@ -209,6 +233,24 @@ export interface Evento {
   creado_por_nombre: string;
 }
 
+export interface EnfoqueMNI {
+  id: number;
+  mes: number;
+  titulo: string;
+  descripcion: string;
+}
+
+export interface ProgramaDomingo {
+  id: number;
+  ministry: number;
+  titulo: string;
+  fecha: string;
+  secciones: Record<string, string>;
+  creado_por_nombre: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -236,6 +278,14 @@ interface MinisteriosState {
   ideas: IdeaComunicacion[];
   planificaciones: PlanificacionActividad[];
   notas: Nota[];
+  enfoques: EnfoqueMNI[];
+  enfoque_actual: EnfoqueMNI | null;
+  mes_actual: number;
+  programas_domingo: ProgramaDomingo[];
+  ofrendas_por_clase: OfrendaPorClase[];
+  biblias_por_clase: BibliasPorClaseResponse | null;
+  ofrendas_totales: OfrendaTotalesPorCategoria[];
+  reporte_ofrendas: ReporteOfrendas | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -261,6 +311,14 @@ class MinisteriosStore {
     ideas: [],
     planificaciones: [],
     notas: [],
+    enfoques: [],
+    enfoque_actual: null,
+    mes_actual: 0,
+    programas_domingo: [],
+    ofrendas_por_clase: [],
+    biblias_por_clase: null,
+    ofrendas_totales: [],
+    reporte_ofrendas: null,
     isLoading: false,
     error: null,
   };
@@ -551,9 +609,11 @@ class MinisteriosStore {
     }
   }
 
-  async fetchCumpleanos() {
+  async fetchCumpleanos(ministrySlug?: string) {
     try {
-      const cumpleaneros = await api.get<Cumpleanero[]>('/miembros/cumpleanos/');
+      let url = '/miembros/cumpleanos/';
+      if (ministrySlug) url += `?ministerio=${ministrySlug}`;
+      const cumpleaneros = await api.get<Cumpleanero[]>(url);
       this.setState({ cumpleaneros });
     } catch (error) {
       console.error('Error fetching cumpleaños:', error);
@@ -574,6 +634,25 @@ class MinisteriosStore {
       const nueva = await api.post<Cancion>('/canciones/', data);
       this.setState({ canciones: [...this.state.canciones, nueva] });
       return nueva;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateCancion(id: number, data: Partial<Cancion>) {
+    try {
+      const actualizada = await api.put<Cancion>(`/canciones/${id}/`, data);
+      this.setState({ canciones: this.state.canciones.map(c => c.id === id ? actualizada : c) });
+      return actualizada;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteCancion(id: number) {
+    try {
+      await api.delete(`/canciones/${id}/`);
+      this.setState({ canciones: this.state.canciones.filter(c => c.id !== id) });
     } catch (error) {
       throw error;
     }
@@ -701,6 +780,91 @@ class MinisteriosStore {
     }
   }
 
+  async updatePlanificacion(slug: string, id: number, data: Partial<PlanificacionActividad>) {
+    try {
+      const actualizada = await api.put<PlanificacionActividad>(`/ministerios/${slug}/planificaciones/${id}/`, data);
+      this.setState({ planificaciones: this.state.planificaciones.map(p => p.id === id ? actualizada : p) });
+      return actualizada;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deletePlanificacion(slug: string, id: number) {
+    try {
+      await api.delete(`/ministerios/${slug}/planificaciones/${id}/`);
+      this.setState({ planificaciones: this.state.planificaciones.filter(p => p.id !== id) });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async fetchOfrendasPorClase(slug: string, mes?: number, anio?: number) {
+    try {
+      let url = `/ministerios/${slug}/ofrendas/por-clase/`;
+      const params = new URLSearchParams();
+      if (mes) params.append('mes', mes.toString());
+      if (anio) params.append('anio', anio.toString());
+      const queryString = params.toString();
+      if (queryString) url += '?' + queryString;
+      const data = await api.get<OfrendaPorClase[]>(url);
+      this.setState({ ofrendas_por_clase: data });
+    } catch (error) {
+      console.error('Error fetching ofrendas por clase:', error);
+    }
+  }
+
+  async fetchBibliasPorClase(slug: string, mes?: number, anio?: number) {
+    try {
+      let url = `/ministerios/${slug}/biblias/por-clase/`;
+      const params = new URLSearchParams();
+      if (mes) params.append('mes', mes.toString());
+      if (anio) params.append('anio', anio.toString());
+      const queryString = params.toString();
+      if (queryString) url += '?' + queryString;
+      const data = await api.get<BibliasPorClaseResponse>(url);
+      this.setState({ biblias_por_clase: data });
+    } catch (error) {
+      console.error('Error fetching biblias por clase:', error);
+    }
+  }
+
+  async fetchOfrendasTotales(slug: string, mes?: number, anio?: number) {
+    try {
+      let url = `/ministerios/${slug}/ofrendas/totales/`;
+      const params = new URLSearchParams();
+      if (mes) params.append('mes', mes.toString());
+      if (anio) params.append('anio', anio.toString());
+      const queryString = params.toString();
+      if (queryString) url += '?' + queryString;
+      const data = await api.get<OfrendaTotalesPorCategoria[]>(url);
+      this.setState({ ofrendas_totales: data });
+    } catch (error) {
+      console.error('Error fetching ofrendas totales:', error);
+    }
+  }
+
+  async fetchReporteOfrendas(slug: string, fechaInicio: string, fechaFin: string) {
+    try {
+      const url = `/ministerios/${slug}/ofrendas/reporte/?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`;
+      const data = await api.get<ReporteOfrendas>(url);
+      this.setState({ reporte_ofrendas: data });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  descargarReporteCSV(slug: string, fechaInicio: string, fechaFin: string) {
+    window.open(`${API_BASE}/ministerios/${slug}/ofrendas/reporte/?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&formato=csv`, '_blank');
+  }
+
+  descargarCajaCSV(slug: string, tipo?: string) {
+    let url = `${API_BASE}/ministerios/${slug}/caja/exportar-csv/`;
+    if (tipo) url += `?tipo=${tipo}`;
+    window.open(url, '_blank');
+  }
+
   async fetchNotas(slug: string) {
     try {
       const notas = await api.get<Nota[]>(`/ministerios/${slug}/notas/`);
@@ -739,6 +903,53 @@ class MinisteriosStore {
     }
   }
 
+  async fetchEnfoques(slug: string) {
+    try {
+      const data = await api.get<{ mes_actual: number; enfoque_actual: EnfoqueMNI | null; enfoques: EnfoqueMNI[] }>(`/ministerios/${slug}/enfoques/`);
+      this.setState({ enfoques: data.enfoques, enfoque_actual: data.enfoque_actual, mes_actual: data.mes_actual });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async fetchProgramasDomingo(slug: string) {
+    try {
+      const data = await api.get<ProgramaDomingo[]>(`/ministerios/${slug}/programas-domingo/`);
+      this.setState({ programas_domingo: data });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addProgramaDomingo(slug: string, data: { titulo: string; fecha: string; secciones: Record<string, string> }) {
+    try {
+      const creado = await api.post<ProgramaDomingo>(`/ministerios/${slug}/programas-domingo/`, data);
+      this.setState({ programas_domingo: [creado, ...this.state.programas_domingo] });
+      return creado;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateProgramaDomingo(slug: string, id: number, data: Partial<ProgramaDomingo>) {
+    try {
+      const actualizado = await api.put<ProgramaDomingo>(`/ministerios/${slug}/programas-domingo/${id}/`, data);
+      this.setState({ programas_domingo: this.state.programas_domingo.map(p => p.id === id ? actualizado : p) });
+      return actualizado;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteProgramaDomingo(slug: string, id: number) {
+    try {
+      await api.delete(`/ministerios/${slug}/programas-domingo/${id}/`);
+      this.setState({ programas_domingo: this.state.programas_domingo.filter(p => p.id !== id) });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   clearSelected() {
     this.setState({
       selectedMinisterio: null,
@@ -759,6 +970,14 @@ class MinisteriosStore {
       ideas: [],
       planificaciones: [],
       notas: [],
+      enfoques: [],
+      enfoque_actual: null,
+      mes_actual: 0,
+      programas_domingo: [],
+      ofrendas_por_clase: [],
+      biblias_por_clase: null,
+      ofrendas_totales: [],
+      reporte_ofrendas: null,
     });
   }
 }

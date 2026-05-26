@@ -68,7 +68,7 @@ def obtener_miembro(pk: int):
         return None
 
 
-def listar_cumpleanos_del_mes():
+def listar_cumpleanos_del_mes(ministry_slug: str = None):
     """Lista miembros con cumpleaños este mes"""
     today = date.today()
     mes_actual = today.month
@@ -76,7 +76,12 @@ def listar_cumpleanos_del_mes():
     miembros = Miembro.objects.filter(
         activo=True,
         fecha_nacimiento__month=mes_actual
-    ).order_by('fecha_nacimiento__day')
+    )
+
+    if ministry_slug:
+        miembros = miembros.filter(ministry__slug=ministry_slug)
+
+    miembros = miembros.order_by('fecha_nacimiento__day')
 
     resultado = []
     for m in miembros:

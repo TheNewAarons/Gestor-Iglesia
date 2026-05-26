@@ -41,3 +41,67 @@ def total_ofrendas_mes(ministry: Ministerio, mes: int, anio: int):
         fecha__year=anio,
         aprobado=True
     ).aggregate(total=Sum('monto'))['total'] or 0
+
+
+def resumen_ofrendas_por_clase(ministry: Ministerio, mes: int = None, anio: int = None):
+    queryset = ministry.ofrendas.filter(aprobado=True)
+    if mes:
+        queryset = queryset.filter(fecha__month=mes)
+    if anio:
+        queryset = queryset.filter(fecha__year=anio)
+    resultados = queryset.values('clase').annotate(
+        total=Sum('monto')
+    )
+    return [
+        {
+            'clase': r['clase'] or 'sin_clase',
+            'total': float(r['total']),
+            'count': queryset.filter(clase=r['clase']).count(),
+        }
+        for r in resultados if r['clase']
+    ]
+
+
+def resumen_ofrendas_por_categoria(ministry: Ministerio, mes: int = None, anio: int = None):
+    queryset = ministry.ofrendas.filter(aprobado=True)
+    if mes:
+        queryset = queryset.filter(fecha__month=mes)
+    if anio:
+        queryset = queryset.filter(fecha__year=anio)
+    resultados = queryset.values('categoria').annotate(
+        total=Sum('monto')
+    )
+    return [
+        {
+            'categoria': r['categoria'] or 'sin_categoria',
+            'total': float(r['total'] or 0),
+            'count': queryset.filter(categoria=r['categoria']).count(),
+        }
+        for r in resultados if r['categoria']
+    ]
+
+
+def reporte_ofrendas_por_periodo(ministry: Ministerio, fecha_inicio, fecha_fin):
+    queryset = ministry.ofrendas.filter(
+        fecha__gte=fecha_inicio,
+        fecha__lte=fecha_fin,
+        aprobado=True
+    )
+    resultados = queryset.values('categoria').annotate(
+        total=Sum('monto')
+    )
+    detalle = []
+    for r in resultados:
+        if r['categoria']:
+            detalle.append({
+                'categoria': r['categoria'],
+                'total': float(r['total'] or 0),
+                'count': queryset.filter(categoria=r['categoria']).count(),
+            })
+    total_general = float(queryset.aggregate(total=Sum('monto'))['total'] or 0)
+    return {
+        'fecha_inicio': str(fecha_inicio),
+        'fecha_fin': str(fecha_fin),
+        'total_general': total_general,
+        'por_categoria': detalle,
+    }

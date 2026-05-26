@@ -24,6 +24,11 @@ const TAB_LABELS: Record<string, string> = {
   recursos: 'Recursos',
   ideas: 'Ideas',
   planificacion: 'Planificación',
+  notas: 'Notas',
+  enfoques: 'Enfoques',
+  programa: 'Programa',
+  cumpleanos: 'Cumpleaños',
+  biblias: 'Biblias',
 };
 ---
 
@@ -155,8 +160,15 @@ const TAB_LABELS: Record<string, string> = {
           break;
         case 'ofrendas':
           await ministeriosStore.fetchOfrendas(slug);
+          var mSlug = ministryData && ministryData.slug || slug;
+          if (mSlug === 'dni') {
+            await ministeriosStore.fetchOfrendasPorClase(slug);
+          }
+          if (mSlug === 'mni') {
+            await ministeriosStore.fetchOfrendasTotales(slug);
+          }
           st = ministeriosStore.getState();
-          contentArea.innerHTML = renderOfferingTab(st.ofrendas || []);
+          contentArea.innerHTML = renderOfferingTab(st.ofrendas || [], st.ofrendas_por_clase || [], st.ofrendas_totales || []);
           bindOfferingForm();
           break;
         case 'eventos':
@@ -168,8 +180,10 @@ const TAB_LABELS: Record<string, string> = {
           break;
         case 'asistencia':
           await ministeriosStore.fetchAsistencia(slug);
+          await ministeriosStore.fetchAsistenciaResumen(slug);
           st = ministeriosStore.getState();
-          contentArea.innerHTML = renderAttendanceTab(st.asistencia || []);
+          contentArea.innerHTML = renderAttendanceTab(st.asistencia || [], st.asistencia_resumen || []);
+          bindAttendanceForm();
           break;
         case 'lecciones':
           await ministeriosStore.fetchLecciones();
@@ -180,11 +194,13 @@ const TAB_LABELS: Record<string, string> = {
           await ministeriosStore.fetchCanciones();
           st = ministeriosStore.getState();
           contentArea.innerHTML = renderSongsTab(st.canciones || []);
+          bindSongsForm();
           break;
         case 'programas':
           await ministeriosStore.fetchProgramas(slug);
           st = ministeriosStore.getState();
           contentArea.innerHTML = renderProgramsTab(st.programas || []);
+          bindProgramsActions();
           break;
         case 'recursos':
           await ministeriosStore.fetchRecursos(slug);
@@ -198,10 +214,33 @@ const TAB_LABELS: Record<string, string> = {
           bindIdeasToggle();
           break;
         case 'planificacion':
+          await ministeriosStore.fetchPlanificaciones(slug);
+          st = ministeriosStore.getState();
+          contentArea.innerHTML = renderPlanificacionTab(st.planificaciones || []);
+          bindPlanificacionForm();
+          break;
+        case 'notas':
           await ministeriosStore.fetchNotas(slug);
           st = ministeriosStore.getState();
           contentArea.innerHTML = renderNotasTab(st.notas || []);
           bindNotasForm();
+          break;
+        case 'enfoques':
+          await ministeriosStore.fetchEnfoques(slug);
+          contentArea.innerHTML = renderEnfoquesTab();
+          break;
+        case 'programa':
+          await ministeriosStore.fetchProgramasDomingo(slug);
+          contentArea.innerHTML = renderProgramaTab();
+          bindProgramaForm();
+          break;
+        case 'cumpleanos':
+          await ministeriosStore.fetchCumpleanos(slug);
+          contentArea.innerHTML = renderCumpleanosTab();
+          break;
+        case 'biblias':
+          await ministeriosStore.fetchBibliasPorClase(slug);
+          contentArea.innerHTML = renderBibliasTab();
           break;
       }
     } catch (e) {
@@ -235,7 +274,7 @@ const TAB_LABELS: Record<string, string> = {
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Primer Apellido</label><input id="mf-apellido" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Teléfono</label><input id="mf-telefono" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Email</label><input id="mf-email" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
-    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Clase</label><select id="mf-clase" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin clase</option><option value="ninos">Niños (0-12)</option><option value="jovenes">Jóvenes (13-17)</option><option value="adultos_jovenes">Adultos Jóvenes (18-35)</option><option value="adultos">Adultos (36-60)</option><option value="adultos_mayores">Adultos Mayores (60+)</option></select></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Clase</label><select id="mf-clase" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin clase</option><option value="parvulos">Párvulos (1-5)</option><option value="principiantes">Principiantes (6-10)</option><option value="primarios">Primarios (11-15)</option><option value="jovenes">Jóvenes (16-35)</option><option value="adultos">Adultos (35+)</option></select></div>';
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Rol</label><select id="mf-rol" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="miembro">Miembro</option><option value="lider">Líder</option><option value="sublider">Sublíder</option><option value="tesorero">Tesorero</option><option value="secretario">Secretario</option></select></div>';
     h += '</div><div class="flex gap-2 mt-4"><button id="members-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="members-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
     h += '<div id="members-vincular-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="space-y-4">';
@@ -302,32 +341,34 @@ const TAB_LABELS: Record<string, string> = {
       } catch (err: any) { toastError(err.message); }
     });
 
-    var vincularBtn = document.getElementById('members-vincular-btn');
-    var vincularForm = document.getElementById('members-vincular-form');
-    var vincularResults = document.getElementById('mv-results');
-    var vincularSelected = document.getElementById('mv-selected');
-    var vincularSelName = document.getElementById('mv-sel-name');
-    var vincularSelInfo = document.getElementById('mv-sel-info');
-    var vincularClear = document.getElementById('mv-clear');
-    var vincularSave = document.getElementById('mv-save');
-    var vincularCancel = document.getElementById('mv-cancel');
-    var selectedUsuario = null;
-
-    if (!vincularBtn || !vincularForm) return;
-
-    vincularBtn.onclick = async function() {
-      vincularForm.classList.toggle('hidden');
-      if (!vincularForm.classList.contains('hidden')) {
-        vincularResults.innerHTML = '<p class="p-3 text-sm text-gray-400">Cargando usuarios...</p>';
-        vincularSelected.classList.add('hidden');
-        selectedUsuario = null;
+    var reportBtn = document.getElementById('of-reporte-btn');
+    var reportCsvBtn = document.getElementById('of-reporte-csv');
+    var reportResult = document.getElementById('of-reporte-result');
+    if (reportBtn) {
+      var catLabelsRpt = { ofrenda_general: 'Ofrenda General', caja_alabastro: 'Caja de Alabastro', accion_gracias: 'Acción de Gracias', dip: 'DIP', oracion_ayuno: 'Oración y Ayuno', fem: 'FEM', otros: 'Otros' };
+      reportBtn.addEventListener('click', async function() {
+        var inicio = document.getElementById('of-reporte-inicio').value;
+        var fin = document.getElementById('of-reporte-fin').value;
+        if (!inicio || !fin) { toastError('Seleccioná ambas fechas'); return; }
         try {
-          var users = await api.get('/usuarios/simples/');
-          vincularResults.innerHTML = '';
-          if (!users || users.length === 0) {
-            vincularResults.innerHTML = '<p class="p-3 text-sm text-gray-500">No hay usuarios disponibles</p>';
-            return;
+          var data = await ministeriosStore.fetchReporteOfrendas(slug, inicio, fin);
+          var h = '<div class="bg-gray-50 rounded p-4"><h5 class="font-medium text-gray-900 mb-2">Resultados: ' + inicio + ' a ' + fin + '</h5>';
+          h += '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">';
+          var cats = data.por_categoria || [];
+          for (var ri = 0; ri < cats.length; ri++) {
+            var c = cats[ri];
+            var cl = catLabelsRpt[c.categoria] || c.categoria;
+            h += '<div class="text-center p-3 bg-white rounded border"><p class="text-lg font-bold text-gray-800">' + formatCurrency(c.total) + '</p><p class="text-xs text-gray-500">' + cl + ' (' + c.count + ')</p></div>';
           }
+          h += '</div>';
+          h += '<div class="mt-2 text-right"><p class="text-sm font-semibold text-gray-700">Total general: ' + formatCurrency(data.total_general) + '</p></div></div>';
+          reportResult.innerHTML = h;
+          reportCsvBtn.classList.remove('hidden');
+          reportCsvBtn.onclick = function() { ministeriosStore.descargarReporteCSV(slug, inicio, fin); };
+        } catch (err) { toastError(err.message); }
+      });
+    }
+  }
           for (var i = 0; i < users.length; i++) {
             (function(u) {
               var div = document.createElement('div');
@@ -406,7 +447,7 @@ const TAB_LABELS: Record<string, string> = {
   // Finance tab
   function renderFinanceTab(caja) {
     var h = '';
-    h += '<div class="space-y-4"><div class="flex justify-between items-center"><div><p class="text-sm text-gray-500">Saldo actual</p><p class="text-2xl font-bold text-gray-900">' + formatCurrency(caja?.saldo_calculado ?? 0) + '</p></div><button id="finance-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Movimiento</button></div>';
+    h += '<div class="space-y-4"><div class="flex justify-between items-center"><div><p class="text-sm text-gray-500">Saldo actual</p><p class="text-2xl font-bold text-gray-900">' + formatCurrency(caja?.saldo_calculado ?? 0) + '</p></div><div class="flex gap-2"><button id="finance-export-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-sm cursor-pointer border border-gray-300">Exportar CSV</button><button id="finance-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Movimiento</button></div></div>';
     h += '<div id="finance-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">';
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Tipo</label><select id="ff-tipo" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>';
     h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Monto</label><input id="ff-monto" type="number" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
@@ -425,11 +466,13 @@ const TAB_LABELS: Record<string, string> = {
 
   function bindFinanceForm() {
     var addBtn = document.getElementById('finance-add-btn');
+    var exportBtn = document.getElementById('finance-export-btn');
     var form = document.getElementById('finance-form');
     var saveBtn = document.getElementById('finance-save');
     var cancelBtn = document.getElementById('finance-cancel');
     if (!addBtn || !form) return;
     addBtn.onclick = function() { form.classList.toggle('hidden'); };
+    if (exportBtn) exportBtn.addEventListener('click', function() { ministeriosStore.descargarCajaCSV(slug); });
     if (cancelBtn) cancelBtn.addEventListener('click', function() { form.classList.add('hidden'); });
     if (saveBtn) saveBtn.addEventListener('click', async function() {
       var tipo = document.getElementById('ff-tipo').value;
@@ -631,12 +674,14 @@ const TAB_LABELS: Record<string, string> = {
   }
 
   // Other simple render functions
-  function renderOfferingTab(ofrendas) {
+  function renderOfferingTab(ofrendas, ofrendasClase, ofrendasTotales) {
+    ofrendasClase = ofrendasClase || [];
+    ofrendasTotales = ofrendasTotales || [];
     var mSlug = ministryData && ministryData.slug || slug;
     var isMNI = mSlug === 'mni';
     var isDNI = mSlug === 'dni';
     var catLabels = { ofrenda_general: 'Ofrenda General', caja_alabastro: 'Caja de Alabastro', accion_gracias: 'Acción de Gracias', dip: 'DIP', oracion_ayuno: 'Oración y Ayuno', fem: 'FEM', otros: 'Otros' };
-    var claseLabels = { ninos: 'Niños (0-12)', jovenes: 'Jóvenes (13-17)', adultos_jovenes: 'Adultos Jóvenes (18-35)', adultos: 'Adultos (36-60)', adultos_mayores: 'Adultos Mayores (60+)' };
+    var claseLabels = { parvulos: 'Párvulos (1-5)', principiantes: 'Principiantes (6-10)', primarios: 'Primarios (11-15)', jovenes: 'Jóvenes (16-35)', adultos: 'Adultos (35+)' };
 
     var h = '';
     h += '<div class="space-y-4"><div class="flex justify-between items-center"><h3 class="font-semibold text-gray-900">Ofrendas (' + ofrendas.length + ')</h3><button id="offering-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Agregar</button></div>';
@@ -649,7 +694,7 @@ const TAB_LABELS: Record<string, string> = {
       h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Categoría</label><select id="of-categoria" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin categoría</option><option value="ofrenda_general">Ofrenda General</option><option value="caja_alabastro">Caja de Alabastro</option><option value="accion_gracias">Acción de Gracias</option><option value="dip">DIP</option><option value="oracion_ayuno">Oración y Ayuno</option><option value="fem">FEM</option><option value="otros">Otros</option></select></div>';
     }
     if (isDNI) {
-      h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Clase</label><select id="of-clase" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin clase</option><option value="ninos">Niños (0-12)</option><option value="jovenes">Jóvenes (13-17)</option><option value="adultos_jovenes">Adultos Jóvenes (18-35)</option><option value="adultos">Adultos (36-60)</option><option value="adultos_mayores">Adultos Mayores (60+)</option></select></div>';
+      h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Clase</label><select id="of-clase" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="">Sin clase</option><option value="parvulos">Párvulos (1-5)</option><option value="principiantes">Principiantes (6-10)</option><option value="primarios">Primarios (11-15)</option><option value="jovenes">Jóvenes (16-35)</option><option value="adultos">Adultos (35+)</option></select></div>';
     }
     h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Observaciones</label><input id="of-obs" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white" /></div>';
     h += '</div><div class="flex gap-2 mt-4"><button id="offering-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="offering-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
@@ -679,7 +724,42 @@ const TAB_LABELS: Record<string, string> = {
       }
       h += '<td class="px-4 py-2 font-medium">' + formatCurrency(o.monto) + '</td><td class="px-4 py-2">' + estadoBadge + '</td><td class="px-4 py-2"><div class="flex gap-1">' + acciones + '</div></td></tr>';
     }
-    h += '</tbody></table></div></div>';
+    h += '</tbody></table></div>';
+
+    if (isDNI && ofrendasClase.length > 0) {
+      var totalDNI = 0;
+      h += '<div class="mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-4"><h4 class="font-semibold text-gray-900 mb-3">Totales por clase</h4><div class="grid grid-cols-2 md:grid-cols-3 gap-3">';
+      for (var ci = 0; ci < ofrendasClase.length; ci++) {
+        var cls = ofrendasClase[ci];
+        var clsLabel = claseLabels[cls.clase] || cls.clase;
+        totalDNI += cls.total;
+        h += '<div class="text-center p-3 bg-blue-50 rounded"><p class="text-xl font-bold text-blue-700">' + formatCurrency(cls.total) + '</p><p class="text-xs text-blue-600">' + clsLabel + '</p></div>';
+      }
+      h += '</div><div class="mt-2 text-right"><p class="text-sm font-semibold text-gray-700">Total general: ' + formatCurrency(totalDNI) + '</p></div></div>';
+    }
+
+    if (isMNI && ofrendasTotales.length > 0) {
+      var totalMNI = 0;
+      h += '<div class="mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-4"><h4 class="font-semibold text-gray-900 mb-3">Totales por categoría</h4><div class="grid grid-cols-2 md:grid-cols-3 gap-3">';
+      for (var mi = 0; mi < ofrendasTotales.length; mi++) {
+        var cat = ofrendasTotales[mi];
+        var catL = catLabels[cat.categoria] || cat.categoria;
+        totalMNI += cat.total;
+        h += '<div class="text-center p-3 bg-emerald-50 rounded"><p class="text-xl font-bold text-emerald-700">' + formatCurrency(cat.total) + '</p><p class="text-xs text-emerald-600">' + catL + '</p></div>';
+      }
+      h += '</div><div class="mt-2 text-right"><p class="text-sm font-semibold text-gray-700">Total general: ' + formatCurrency(totalMNI) + '</p></div></div>';
+    }
+
+    if (isMNI) {
+      h += '<div class="mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-4"><h4 class="font-semibold text-gray-900 mb-3">Reporte por período</h4>';
+      h += '<div class="flex flex-wrap gap-3 items-end"><div><label class="block text-xs font-medium text-gray-600 mb-1">Desde</label><input id="of-reporte-inicio" type="date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm"></div>';
+      h += '<div><label class="block text-xs font-medium text-gray-600 mb-1">Hasta</label><input id="of-reporte-fin" type="date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm"></div>';
+      h += '<button id="of-reporte-btn" class="inline-flex items-center gap-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 cursor-pointer">Generar reporte</button>';
+      h += '<button id="of-reporte-csv" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer hidden">Descargar CSV</button></div>';
+      h += '<div id="of-reporte-result" class="mt-3"></div></div>';
+    }
+
+    h += '</div>';
     return h;
   }
 
@@ -1154,14 +1234,172 @@ const TAB_LABELS: Record<string, string> = {
     checks.forEach(function(cb) { cb.checked = false; });
   }
 
-  function renderAttendanceTab(asistencias) {
-    var h = '<div class="space-y-4"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Presente</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th></tr></thead><tbody>';
-    for (var i = 0; i < asistencias.length; i++) {
-      var a = asistencias[i];
-      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + (a.miembro_nombre || a.nombre_visita || '(visita)') + '</td><td class="px-4 py-2">' + a.fecha + '</td><td class="px-4 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (a.presente ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (a.presente ? 'Sí' : 'No') + '</span></td><td class="px-4 py-2 capitalize">' + (a.clase || '-') + '</td></tr>';
+  function renderAttendanceTab(asistencias, resumen) {
+    resumen = resumen || [];
+    var h = '<div class="space-y-4">';
+
+    if (resumen.length > 0) {
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4"><h4 class="font-semibold text-gray-900 mb-3">Estadísticas del mes</h4>';
+      h += '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
+      var totalAsist = 0, totalVisitas = 0, totalBiblias = 0, totalOfrendas = 0;
+      for (var ri = 0; ri < resumen.length; ri++) {
+        totalAsist += resumen[ri].total_asistencia || 0;
+        totalVisitas += resumen[ri].total_visitas || 0;
+        totalBiblias += resumen[ri].total_biblias || 0;
+        totalOfrendas += resumen[ri].total_ofrendas || 0;
+      }
+      h += '<div class="text-center p-3 bg-green-50 rounded"><p class="text-2xl font-bold text-green-700">' + totalAsist + '</p><p class="text-xs text-green-600">Asistencia total</p></div>';
+      h += '<div class="text-center p-3 bg-blue-50 rounded"><p class="text-2xl font-bold text-blue-700">' + totalVisitas + '</p><p class="text-xs text-blue-600">Visitas</p></div>';
+      h += '<div class="text-center p-3 bg-amber-50 rounded"><p class="text-2xl font-bold text-amber-700">' + totalBiblias + '</p><p class="text-xs text-amber-600">Biblias</p></div>';
+      h += '<div class="text-center p-3 bg-purple-50 rounded"><p class="text-2xl font-bold text-purple-700">' + formatCurrency(totalOfrendas) + '</p><p class="text-xs text-purple-600">Ofrendas</p></div>';
+      h += '</div></div>';
+    }
+
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex flex-wrap gap-3 items-end">';
+    h += '<div><label class="block text-xs font-medium text-gray-600 mb-1">Fecha (domingo)</label><input id="asist-fecha" type="date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" value="' + new Date().toISOString().split('T')[0] + '"></div>';
+    h += '<button id="asist-cargar-miembros" class="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 cursor-pointer">Cargar miembros</button>';
+    h += '<button id="asist-registrar-btn" class="inline-flex items-center gap-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 cursor-pointer">Registrar Asistencia</button>';
+    h += '</div>';
+
+    h += '<div id="asist-form-area" class="hidden">';
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">';
+    h += '<table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Miembro</th><th class="px-4 py-2 text-center text-xs font-semibold text-gray-500 uppercase w-24">Presente</th><th class="px-4 py-2 text-center text-xs font-semibold text-gray-500 uppercase w-24">Biblia</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th></tr></thead><tbody id="asist-miembros-tbody"></tbody></table>';
+    h += '</div>';
+
+    h += '<div class="mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-4">';
+    h += '<p class="text-sm font-medium text-gray-700 mb-3">Agregar visita</p>';
+    h += '<div class="flex flex-wrap gap-2 items-end">';
+    h += '<div><input id="asist-visita-nombre" type="text" class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-40" placeholder="Nombre visita"></div>';
+    h += '<div><select id="asist-visita-clase" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">' + claseOptions() + '</select></div>';
+    h += '<button id="asist-add-visita" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">Agregar</button>';
+    h += '</div></div>';
+    h += '</div>';
+
+    h += '<div class="space-y-1 text-sm text-gray-500" id="asist-status"></div>';
+
+    h += '<hr class="border-gray-200 my-4"><h4 class="text-sm font-semibold text-gray-700">Registros del dia</h4>';
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Nombre</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Presente</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Biblia</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th></tr></thead><tbody>';
+    if (!asistencias || asistencias.length === 0) {
+      h += '<tr><td colspan="5" class="text-center py-8 text-gray-500">No hay registros de asistencia</td></tr>';
+    } else {
+      for (var i = 0; i < asistencias.length; i++) {
+        var a = asistencias[i];
+        h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + (a.miembro_nombre || a.nombre_visita || '(visita)') + '</td><td class="px-4 py-2">' + a.fecha + '</td><td class="px-4 py-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + (a.presente ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (a.presente ? 'Si' : 'No') + '</span></td><td class="px-4 py-2">' + (a.tiene_biblia ? 'Si' : 'No') + '</td><td class="px-4 py-2 capitalize">' + (a.clase || '-') + '</td></tr>';
+      }
     }
     h += '</tbody></table></div></div>';
     return h;
+  }
+
+  function claseOptions(selected) {
+    var clases = ['parvulos', 'principiantes', 'primarios', 'jovenes', 'adultos'];
+    var labels = { parvulos: 'Párvulos (1-5)', principiantes: 'Principiantes (6-10)', primarios: 'Primarios (11-15)', jovenes: 'Jóvenes (16-35)', adultos: 'Adultos (35+)' };
+    var opts = '<option value="">Todas las clases</option>';
+    for (var i = 0; i < clases.length; i++) {
+      var sel = clases[i] === selected ? ' selected' : '';
+      opts += '<option value="' + clases[i] + '"' + sel + '>' + (labels[clases[i]] || clases[i]) + '</option>';
+    }
+    return opts;
+  }
+
+  var asistMiembros = [];
+  var asistVisitas = [];
+
+  async function loadAttendanceMembers() {
+    var fechaInput = document.getElementById('asist-fecha');
+    var fecha = fechaInput ? fechaInput.value : '';
+    await ministeriosStore.fetchMiembros(slug);
+    var st = ministeriosStore.getState();
+    asistMiembros = st.miembros.filter(function(m) { return m.activo !== false; });
+    renderAttendanceRows();
+    var statusEl = document.getElementById('asist-status');
+    if (statusEl) statusEl.textContent = asistMiembros.length + ' miembros cargados para ' + fecha;
+  }
+
+  function renderAttendanceRows() {
+    var tbody = document.getElementById('asist-miembros-tbody');
+    if (!tbody) return;
+    var rows = '';
+    for (var i = 0; i < asistMiembros.length; i++) {
+      var m = asistMiembros[i];
+      rows += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + m.nombre_completo + '</td>';
+      rows += '<td class="px-4 py-2 text-center"><input type="checkbox" class="asist-presente w-4 h-4 rounded border-gray-300 text-primary" data-miembro="' + m.id + '" checked></td>';
+      rows += '<td class="px-4 py-2 text-center"><input type="checkbox" class="asist-biblia w-4 h-4 rounded border-gray-300" data-miembro="' + m.id + '"></td>';
+      rows += '<td class="px-4 py-2 capitalize">' + (m.clase || '-') + '</td></tr>';
+    }
+    for (var j = 0; j < asistVisitas.length; j++) {
+      var v = asistVisitas[j];
+      rows += '<tr class="border-b border-gray-100 bg-amber-50"><td class="px-4 py-2 font-medium">' + v.nombre + ' (visita)</td>';
+      rows += '<td class="px-4 py-2 text-center">Si</td>';
+      rows += '<td class="px-4 py-2 text-center">—</td>';
+      rows += '<td class="px-4 py-2 capitalize">' + v.clase + '</td></tr>';
+    }
+    tbody.innerHTML = rows;
+  }
+
+  async function registrarAttendance() {
+    var fechaInput = document.getElementById('asist-fecha');
+    var fecha = fechaInput ? fechaInput.value : '';
+    if (!fecha) { toastError('Selecciona una fecha'); return; }
+    var registros = [];
+    var presentCheckboxes = document.querySelectorAll('.asist-presente');
+    var bibliaCheckboxes = document.querySelectorAll('.asist-biblia');
+    var bibliaMap = {};
+    bibliaCheckboxes.forEach(function(cb) { bibliaMap[parseInt(cb.dataset.miembro)] = cb.checked; });
+    presentCheckboxes.forEach(function(cb) {
+      registros.push({
+        miembro: parseInt(cb.dataset.miembro),
+        presente: cb.checked,
+        tiene_biblia: bibliaMap[parseInt(cb.dataset.miembro)] || false,
+        fecha: fecha
+      });
+    });
+    for (var j = 0; j < asistVisitas.length; j++) {
+      registros.push({
+        es_visita: true,
+        nombre_visita: asistVisitas[j].nombre,
+        clase: asistVisitas[j].clase,
+        presente: true,
+        tiene_biblia: false,
+        fecha: fecha
+      });
+    }
+    var statusEl = document.getElementById('asist-status');
+    if (statusEl) statusEl.textContent = 'Registrando ' + registros.length + ' asistencias...';
+    try {
+      for (var k = 0; k < registros.length; k++) {
+        await ministeriosStore.addAsistencia(slug, registros[k]);
+      }
+      asistVisitas = [];
+      await loadTab('asistencia');
+      toastSuccess('Asistencia registrada');
+    } catch (e) {
+      toastError(e.message || 'Error al registrar asistencia');
+    }
+  }
+
+  function bindAttendanceForm() {
+    setTimeout(function() {
+      var cargarBtn = document.getElementById('asist-cargar-miembros');
+      var registrarBtn = document.getElementById('asist-registrar-btn');
+      var addVisitaBtn = document.getElementById('asist-add-visita');
+      if (cargarBtn) cargarBtn.onclick = function() {
+        var formArea = document.getElementById('asist-form-area');
+        if (formArea) formArea.classList.remove('hidden');
+        loadAttendanceMembers();
+      };
+      if (registrarBtn) registrarBtn.onclick = function() { registrarAttendance(); };
+      if (addVisitaBtn) addVisitaBtn.onclick = function() {
+        var nombreInput = document.getElementById('asist-visita-nombre');
+        var claseSelect = document.getElementById('asist-visita-clase');
+        var nombre = nombreInput ? nombreInput.value.trim() : '';
+        var clase = claseSelect ? claseSelect.value : '';
+        if (!nombre) { toastError('Escribe el nombre de la visita'); return; }
+        asistVisitas.push({ nombre: nombre, clase: clase });
+        renderAttendanceRows();
+        if (nombreInput) nombreInput.value = '';
+      };
+    }, 100);
   }
 
   function renderLessonsTab(lecciones) {
@@ -1175,10 +1413,28 @@ const TAB_LABELS: Record<string, string> = {
   }
 
   function renderSongsTab(canciones) {
-    var h = '<div class="space-y-4"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Título</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Artista</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tono</th></tr></thead><tbody>';
+    var h = '<div class="space-y-4">';
+    h += '<div class="flex justify-end mb-4">';
+    h += '<button id="cancion-toggle-form-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">Agregar cancion</button>';
+    h += '</div>';
+
+    h += '<div id="cancion-form" class="hidden bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-4">';
+    h += '<h4 class="font-medium text-gray-900 mb-4" id="cancion-form-title">Nueva cancion</h4>';
+    h += '<div class="space-y-3">';
+    h += '<div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label><input id="cancion-titulo" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Titulo"></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Artista</label><input id="cancion-artista" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Artista"></div></div>';
+    h += '<div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label><select id="cancion-categoria" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"><option value="rapida">Rapida</option><option value="media">Media</option><option value="lenta">Lenta</option></select></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Tono</label><input id="cancion-tono" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Tono"></div></div>';
+    h += '<div><label class="block text-sm font-medium text-gray-700 mb-1">Letra</label><textarea id="cancion-letra" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Letra de la cancion..."></textarea></div>';
+    h += '<div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-medium text-gray-700 mb-1">Acordes</label><textarea id="cancion-acordes" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Acordes..."></textarea></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Link YouTube</label><input id="cancion-youtube" type="url" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="https://youtube.com/..."></div></div>';
+    h += '<div class="flex gap-2 pt-2">';
+    h += '<button id="cancion-save-btn" class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 cursor-pointer">Guardar</button>';
+    h += '<button id="cancion-cancel-btn" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">Cancelar</button>';
+    h += '</div></div></div>';
+
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Titulo</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Artista</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Categoria</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tono</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-16">Acc</th></tr></thead><tbody>';
     for (var i = 0; i < canciones.length; i++) {
       var c = canciones[i];
-      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + c.titulo + '</td><td class="px-4 py-2">' + (c.artista || '-') + '</td><td class="px-4 py-2 capitalize">' + c.categoria + '</td><td class="px-4 py-2">' + (c.tono || '-') + '</td></tr>';
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2">' + c.titulo + '</td><td class="px-4 py-2">' + (c.artista || '-') + '</td><td class="px-4 py-2 capitalize">' + c.categoria + '</td><td class="px-4 py-2">' + (c.tono || '-') + '</td>';
+      h += '<td class="px-4 py-2"><div class="flex gap-1"><button data-edit-cancion="' + c.id + '" class="text-gray-400 hover:text-gray-600 cursor-pointer p-1" title="Editar"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button data-delete-cancion="' + c.id + '" class="text-gray-400 hover:text-red-500 cursor-pointer p-1" title="Eliminar"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td></tr>';
     }
     h += '</tbody></table></div></div>';
     return h;
@@ -1186,9 +1442,23 @@ const TAB_LABELS: Record<string, string> = {
 
   function renderProgramsTab(programas) {
     var h = '<div class="space-y-4">';
+    h += '<div class="flex justify-end gap-2 mb-4">';
+    h += '<button id="prog-generar-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-amber-100 text-amber-800 hover:bg-amber-200 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">Generar Programa</button>';
+    h += '<div id="prog-generar-fecha" class="hidden"><input type="date" id="prog-gen-fecha" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" value="' + new Date().toISOString().split('T')[0] + '"><button id="prog-gen-confirm" class="ml-2 rounded-lg bg-accent px-3 py-2 text-sm text-white hover:opacity-90 cursor-pointer">Confirmar</button></div>';
+    h += '</div>';
+
+    h += '<div id="prog-gen-status" class="text-sm text-gray-500"></div>';
+
     for (var i = 0; i < programas.length; i++) {
       var p = programas[i];
-      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-start"><h4 class="font-medium text-gray-900">Programa - ' + formatDate(p.fecha) + '</h4><span class="text-sm text-gray-500">' + (p.alabanzas?.length || 0) + ' canciones</span></div></div>';
+      var title = p.fecha ? 'Programa - ' + formatDate(p.fecha) : 'Programa';
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex justify-between items-center">';
+      h += '<div><h4 class="font-medium text-gray-900">' + title + '</h4><p class="text-sm text-gray-500">' + (p.alabanzas ? p.alabanzas.length : 0) + ' alabanzas</p></div>';
+      h += '</div>';
+    }
+
+    if (!programas || programas.length === 0) {
+      h += '<p class="text-gray-500 text-center py-8">No hay programas generados aun.</p>';
     }
     h += '</div>';
     return h;
@@ -1284,6 +1554,417 @@ const TAB_LABELS: Record<string, string> = {
       '</div></div>';
   }
 
+  function renderPlanificacionTab(planificaciones) {
+    var estados = { planificada: 'Planificada', en_proceso: 'En Proceso', completada: 'Completada', cancelada: 'Cancelada' };
+    var estadoColors = { planificada: 'bg-blue-100 text-blue-700', en_proceso: 'bg-amber-100 text-amber-700', completada: 'bg-green-100 text-green-700', cancelada: 'bg-red-100 text-red-700' };
+    var h = '<div class="space-y-4"><div class="flex justify-between"><h3 class="font-semibold text-gray-900">Planificaciones (' + planificaciones.length + ')</h3><button id="plan-add-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">+ Agregar</button></div>';
+
+    h += '<div id="plan-form" class="hidden"><div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Título *</label><input id="pf-titulo" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Fecha *</label><input id="pf-fecha" type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Hora</label><input id="pf-hora" type="time" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Ubicación</label><input id="pf-ubicacion" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></div>';
+    h += '<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-gray-700">Descripción</label><textarea id="pf-desc" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></textarea></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Presupuesto</label><input id="pf-presupuesto" type="number" step="0.01" value="0" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"></div>';
+    h += '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-gray-700">Estado</label><select id="pf-estado" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent bg-white"><option value="planificada">Planificada</option><option value="en_proceso">En Proceso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></div>';
+    h += '</div><div class="flex gap-2 mt-4"><button id="plan-save" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-4 py-2 text-sm rounded-md cursor-pointer">Guardar</button><button id="plan-cancel" class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-4 py-2 text-sm rounded-md cursor-pointer">Cancelar</button></div></div></div>';
+
+    h += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Título</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Responsable</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Presupuesto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Acciones</th></tr></thead><tbody>';
+    for (var i = 0; i < planificaciones.length; i++) {
+      var p = planificaciones[i];
+      h += '<tr class="border-b border-gray-100"><td class="px-4 py-2 font-medium">' + p.titulo + '</td>';
+      h += '<td class="px-4 py-2 text-xs">' + p.fecha_planificada + (p.hora ? ' ' + p.hora.substring(0, 5) : '') + '</td>';
+      h += '<td class="px-4 py-2 text-xs">' + (p.responsable_nombre || '—') + '</td>';
+      h += '<td class="px-4 py-2">' + formatCurrency(p.presupuesto || 0) + '</td>';
+      h += '<td class="px-4 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (estadoColors[p.estado] || 'bg-gray-100 text-gray-700') + '">' + (estados[p.estado] || p.estado) + '</span></td>';
+      h += '<td class="px-4 py-2"><div class="flex gap-1"><button data-plan-edit="' + p.id + '" class="p-1 text-gray-400 hover:text-accent cursor-pointer">&#9998;</button><button data-plan-delete="' + p.id + '" data-plan-name="' + p.titulo + '" class="p-1 text-gray-400 hover:text-red-500 cursor-pointer">&#10005;</button></div></td></tr>';
+    }
+    if (planificaciones.length === 0) h += '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">Sin planificaciones</td></tr>';
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function renderCumpleanosTab() {
+    var st = ministeriosStore.getState();
+    var cumpleaneros = st.cumpleaneros || [];
+    var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    var today = new Date();
+    var h = '<div class="space-y-4"><h3 class="font-semibold text-gray-900">Cumpleaños de ' + meses[today.getMonth()] + '</h3>';
+    if (cumpleaneros.length === 0) {
+      h += '<p class="text-gray-500 text-center py-8">No hay cumpleaños este mes</p>';
+    } else {
+      h += '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
+      for (var i = 0; i < cumpleaneros.length; i++) {
+        var c = cumpleaneros[i];
+        var fecha = new Date(c.fecha_nacimiento + 'T00:00:00');
+        var fechaLabel = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        var badgeColor = c.dias_faltantes === 0 ? 'bg-green-100 text-green-700' : c.dias_faltantes <= 7 ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
+        var badgeText = c.dias_faltantes === 0 ? 'Hoy!' : c.dias_faltantes === 1 ? 'Mañana' : c.dias_faltantes + ' días';
+        h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex items-center gap-3">';
+        h += '<div class="w-10 h-10 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-sm">' + c.dia + '</div>';
+        h += '<div class="flex-1"><p class="font-medium text-gray-900">' + c.nombre_completo + '</p><p class="text-xs text-gray-500">' + fechaLabel + '</p></div>';
+        h += '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + badgeColor + '">' + badgeText + '</span>';
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderBibliasTab() {
+    var st = ministeriosStore.getState();
+    var data = st.biblias_por_clase;
+    var claseLabels = { parvulos: 'Párvulos (1-5)', principiantes: 'Principiantes (6-10)', primarios: 'Primarios (11-15)', jovenes: 'Jóvenes (16-35)', adultos: 'Adultos (35+)' };
+    var h = '<div class="space-y-4"><h3 class="font-semibold text-gray-900">Biblias por clase</h3>';
+    if (!data || !data.por_clase || data.por_clase.length === 0) {
+      h += '<p class="text-gray-500 text-center py-8">No hay datos de biblias disponibles</p>';
+    } else {
+      h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Clase</th><th class="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase">Niños con Biblia</th></tr></thead><tbody>';
+      for (var i = 0; i < data.por_clase.length; i++) {
+        var item = data.por_clase[i];
+        h += '<tr class="border-b border-gray-100"><td class="px-4 py-2 font-medium">' + (claseLabels[item.clase] || item.clase) + '</td><td class="px-4 py-2 text-right">';
+        h += '<div class="flex items-center justify-end gap-2"><div class="w-full max-w-xs bg-gray-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width:' + (data.total_general > 0 ? Math.round(item.biblias / data.total_general * 100) : 0) + '%"></div></div><span class="font-bold text-gray-900">' + item.biblias + '</span></div></td></tr>';
+      }
+      h += '<tr class="bg-gray-50"><td class="px-4 py-2 font-semibold">Total general</td><td class="px-4 py-2 text-right font-bold text-gray-900">' + data.total_general + '</td></tr>';
+      h += '</tbody></table></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+    var st = ministeriosStore.getState();
+    var enfoques = st.enfoques || [];
+    var actual = st.enfoque_actual;
+    var mesActual = st.mes_actual;
+    var MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    var h = '<div class="space-y-6">';
+
+    if (actual) {
+      h += '<div class="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 p-6">';
+      h += '<div class="flex items-center gap-2 mb-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">' + (MESES[actual.mes] || actual.mes) + '</span><span class="text-xs text-gray-500">Enfoque del mes actual</span></div>';
+      h += '<h3 class="text-xl font-bold text-gray-900 mb-2">' + actual.titulo + '</h3>';
+      h += '<p class="text-gray-600">' + (actual.descripcion || '') + '</p>';
+      h += '</div>';
+    }
+
+    h += '<div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">';
+    h += '<table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mes</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Enfoque</th><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Descripcion</th></tr></thead><tbody>';
+
+    for (var i = 0; i < enfoques.length; i++) {
+      var ef = enfoques[i];
+      var isCurrent = ef.mes === mesActual;
+      var rowClass = isCurrent ? 'bg-primary/5 font-medium' : '';
+      h += '<tr class="border-b border-gray-100 hover:bg-gray-50 ' + rowClass + '">';
+      h += '<td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (isCurrent ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700') + '">' + (MESES[ef.mes] || ef.mes) + '</span></td>';
+      h += '<td class="px-4 py-3">' + ef.titulo + '</td>';
+      h += '<td class="px-4 py-3 text-gray-500">' + (ef.descripcion || '—') + '</td>';
+      h += '</tr>';
+    }
+
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function renderProgramaTab() {
+    var st = ministeriosStore.getState();
+    var programas = st.programas_domingo || [];
+    var h = '<div class="space-y-4">';
+
+    h += '<div class="flex justify-end mb-4">';
+    h += '<button id="prog-toggle-form-btn" class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-sm cursor-pointer">';
+    h += '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+    h += 'Nuevo programa</button>';
+    h += '</div>';
+
+    h += '<div id="prog-form" class="hidden bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-4">';
+    h += '<h4 class="font-medium text-gray-900 mb-4" id="prog-form-title">Nuevo programa</h4>';
+    h += '<div class="space-y-3">';
+    h += '<div><label class="block text-sm font-medium text-gray-700 mb-1">Titulo *</label><input id="prog-titulo" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Titulo del programa"></div>';
+    h += '<div><label class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label><input id="prog-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></div>';
+    h += '<div class="border-t border-gray-200 py-3"><p class="text-sm font-medium text-gray-900 mb-3">Secciones del programa</p>';
+    var seccionesLabels = { inicio: 'Inicio', especiales: 'Especiales', reflexion: 'Reflexion', ofrenda: 'Ofrenda', cierre: 'Cierre' };
+    var seccionesKeys = ['inicio', 'especiales', 'reflexion', 'ofrenda', 'cierre'];
+    for (var si = 0; si < seccionesKeys.length; si++) {
+      var sk = seccionesKeys[si];
+      h += '<div class="mb-2"><label class="block text-xs font-medium text-gray-600 mb-1">' + seccionesLabels[sk] + '</label><textarea id="prog-seccion-' + sk + '" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Descripcion..."></textarea></div>';
+    }
+    h += '</div>';
+    h += '<div class="flex gap-2 pt-2">';
+    h += '<button id="prog-save-btn" class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 cursor-pointer">Guardar</button>';
+    h += '<button id="prog-cancel-btn" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">Cancelar</button>';
+    h += '</div></div></div>';
+
+    h += '<div id="programas-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">';
+    if (!programas || programas.length === 0) {
+      h += '<p class="text-gray-500 text-center py-8 col-span-full">No hay programas creados aun.</p>';
+    }
+    for (var pi = 0; pi < programas.length; pi++) {
+      var p = programas[pi];
+      var sec = p.secciones || {};
+      var secList = '';
+      for (var ski = 0; ski < seccionesKeys.length; ski++) {
+        var key = seccionesKeys[ski];
+        var labelKey = seccionesLabels[key] || key;
+        secList += '<p class="text-xs text-gray-500"><strong>' + labelKey + ':</strong> ' + (sec[key] || '') + '</p>';
+      }
+      h += '<div class="prog-card bg-white rounded-lg shadow-sm border border-gray-100 p-5 flex flex-col gap-2">';
+      h += '<div class="flex justify-between items-start">';
+      h += '<div><h4 class="font-semibold text-gray-900 text-sm">' + p.titulo + '</h4><span class="text-xs text-gray-400">' + formatDate(p.fecha) + '</span></div>';
+      h += '<div class="flex gap-1">';
+      h += '<button data-edit-prog="' + p.id + '" class="text-gray-400 hover:text-gray-600 cursor-pointer p-1" title="Editar"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+      h += '<button data-delete-prog="' + p.id + '" class="text-gray-400 hover:text-red-500 cursor-pointer p-1" title="Eliminar"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      h += '</div></div>';
+      h += '<div class="space-y-0.5 mt-2">' + secList + '</div>';
+      if (p.creado_por_nombre) {
+        h += '<div class="text-xs text-gray-400 mt-auto pt-2">Creado por: ' + p.creado_por_nombre + '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  var editingProgId = null;
+
+  function bindProgramaForm() {
+    var form = document.getElementById('prog-form');
+    var toggleBtn = document.getElementById('prog-toggle-form-btn');
+    var saveBtn = document.getElementById('prog-save-btn');
+    var cancelBtn = document.getElementById('prog-cancel-btn');
+    var titleInput = document.getElementById('prog-titulo');
+    var dateInput = document.getElementById('prog-fecha');
+    var title = document.getElementById('prog-form-title');
+
+    if (!form || !toggleBtn) return;
+
+    toggleBtn.onclick = function() {
+      editingProgId = null;
+      title.textContent = 'Nuevo programa';
+      if (titleInput) titleInput.value = '';
+      if (dateInput) dateInput.value = '';
+      ['inicio', 'especiales', 'reflexion', 'ofrenda', 'cierre'].forEach(function(k) {
+        var el = document.getElementById('prog-seccion-' + k);
+        if (el) el.value = '';
+      });
+      form.classList.remove('hidden');
+      form.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    cancelBtn.onclick = function() {
+      form.classList.add('hidden');
+      editingProgId = null;
+    };
+
+    saveBtn.onclick = async function() {
+      var titulo = titleInput ? titleInput.value.trim() : '';
+      var fecha = dateInput ? dateInput.value : '';
+      if (!titulo || !fecha) {
+        toastError('Titulo y fecha son requeridos');
+        return;
+      }
+      var secciones = {};
+      ['inicio', 'especiales', 'reflexion', 'ofrenda', 'cierre'].forEach(function(k) {
+        var el = document.getElementById('prog-seccion-' + k);
+        if (el) secciones[k] = el.value;
+      });
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      try {
+        if (editingProgId) {
+          await ministeriosStore.updateProgramaDomingo(slug, editingProgId, { titulo: titulo, fecha: fecha, secciones: secciones });
+        } else {
+          await ministeriosStore.addProgramaDomingo(slug, { titulo: titulo, fecha: fecha, secciones: secciones });
+        }
+        editingProgId = null;
+        if (titleInput) titleInput.value = '';
+        if (dateInput) dateInput.value = '';
+        form.classList.add('hidden');
+        await loadTab('programa');
+      } catch (e) {
+        toastError(e.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = editingProgId ? 'Actualizar' : 'Guardar';
+      }
+    };
+
+    document.querySelectorAll('[data-edit-prog]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = parseInt(btn.dataset.editProg);
+        var st = ministeriosStore.getState();
+        var prog = st.programas_domingo.find(function(p) { return p.id === id; });
+        if (!prog) return;
+        editingProgId = id;
+        if (title) title.textContent = 'Editar programa';
+        if (titleInput) titleInput.value = prog.titulo;
+        if (dateInput) dateInput.value = prog.fecha;
+        ['inicio', 'especiales', 'reflexion', 'ofrenda', 'cierre'].forEach(function(k) {
+          var el = document.getElementById('prog-seccion-' + k);
+          if (el) el.value = (prog.secciones && prog.secciones[k]) || '';
+        });
+        form.classList.remove('hidden');
+        form.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    document.querySelectorAll('[data-delete-prog]').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Eliminar este programa?')) return;
+        var id = parseInt(btn.dataset.deleteProg);
+        try {
+          await ministeriosStore.deleteProgramaDomingo(slug, id);
+          await loadTab('programa');
+        } catch (e) {
+          toastError(e.message);
+        }
+      });
+    });
+  }
+
+  var editingCancionId = null;
+
+  function bindSongsForm() {
+    var form = document.getElementById('cancion-form');
+    var toggleBtn = document.getElementById('cancion-toggle-form-btn');
+    var saveBtn = document.getElementById('cancion-save-btn');
+    var cancelBtn = document.getElementById('cancion-cancel-btn');
+    var title = document.getElementById('cancion-form-title');
+
+    if (!form || !toggleBtn) return;
+
+    toggleBtn.onclick = function() {
+      editingCancionId = null;
+      if (title) title.textContent = 'Nueva cancion';
+      var t = document.getElementById('cancion-titulo');
+      var a = document.getElementById('cancion-artista');
+      var tn = document.getElementById('cancion-tono');
+      var l = document.getElementById('cancion-letra');
+      var ac = document.getElementById('cancion-acordes');
+      var yt = document.getElementById('cancion-youtube');
+      if (t) t.value = '';
+      if (a) a.value = '';
+      if (tn) tn.value = '';
+      if (l) l.value = '';
+      if (ac) ac.value = '';
+      if (yt) yt.value = '';
+      form.classList.remove('hidden');
+      form.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    cancelBtn.onclick = function() {
+      form.classList.add('hidden');
+      editingCancionId = null;
+    };
+
+    saveBtn.onclick = async function() {
+      var tituloEl = document.getElementById('cancion-titulo');
+      var titulo = tituloEl ? tituloEl.value.trim() : '';
+      if (!titulo) { toastError('Titulo requerido'); return; }
+      var artistaEl = document.getElementById('cancion-artista');
+      var categoriaEl = document.getElementById('cancion-categoria');
+      var tonoEl = document.getElementById('cancion-tono');
+      var letraEl = document.getElementById('cancion-letra');
+      var acordesEl = document.getElementById('cancion-acordes');
+      var youtubeEl = document.getElementById('cancion-youtube');
+      var data = {
+        titulo: titulo,
+        artista: artistaEl ? artistaEl.value : '',
+        categoria: categoriaEl ? categoriaEl.value : 'rapida',
+        tono: tonoEl ? tonoEl.value : '',
+        letra: letraEl ? letraEl.value : '',
+        acordes: acordesEl ? acordesEl.value : '',
+        link_youtube: youtubeEl ? youtubeEl.value : ''
+      };
+      saveBtn.disabled = true;
+      try {
+        if (editingCancionId) {
+          await ministeriosStore.updateCancion(editingCancionId, data);
+        } else {
+          await ministeriosStore.addCancion(data);
+        }
+        editingCancionId = null;
+        form.classList.add('hidden');
+        await loadTab('canciones');
+      } catch (e) {
+        toastError(e.message);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    };
+
+    document.querySelectorAll('[data-edit-cancion]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = parseInt(btn.dataset.editCancion);
+        var st = ministeriosStore.getState();
+        var cancion = st.canciones.find(function(c) { return c.id === id; });
+        if (!cancion) return;
+        editingCancionId = id;
+        if (title) title.textContent = 'Editar cancion';
+        var t = document.getElementById('cancion-titulo');
+        var a = document.getElementById('cancion-artista');
+        var cat = document.getElementById('cancion-categoria');
+        var tn = document.getElementById('cancion-tono');
+        var l = document.getElementById('cancion-letra');
+        var ac = document.getElementById('cancion-acordes');
+        var yt = document.getElementById('cancion-youtube');
+        if (t) t.value = cancion.titulo || '';
+        if (a) a.value = cancion.artista || '';
+        if (cat) cat.value = cancion.categoria || 'rapida';
+        if (tn) tn.value = cancion.tono || '';
+        if (l) l.value = cancion.letra || '';
+        if (ac) ac.value = cancion.acordes || '';
+        if (yt) yt.value = cancion.link_youtube || '';
+        form.classList.remove('hidden');
+        form.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    document.querySelectorAll('[data-delete-cancion]').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Eliminar esta cancion?')) return;
+        var id = parseInt(btn.dataset.deleteCancion);
+        try {
+          await ministeriosStore.deleteCancion(id);
+          await loadTab('canciones');
+        } catch (e) {
+          toastError(e.message);
+        }
+      });
+    });
+  }
+
+  function bindProgramsActions() {
+    setTimeout(function() {
+      var generarBtn = document.getElementById('prog-generar-btn');
+      var fechaDiv = document.getElementById('prog-generar-fecha');
+      var confirmBtn = document.getElementById('prog-gen-confirm');
+      if (!generarBtn) return;
+      generarBtn.onclick = function() {
+        if (fechaDiv) {
+          if (fechaDiv.classList.contains('hidden')) {
+            fechaDiv.classList.remove('hidden');
+          } else {
+            fechaDiv.classList.add('hidden');
+          }
+        }
+      };
+      if (confirmBtn) confirmBtn.onclick = async function() {
+        var fechaInput = document.getElementById('prog-gen-fecha');
+        var fecha = fechaInput ? fechaInput.value : '';
+        if (!fecha) { toastError('Selecciona una fecha'); return; }
+        var statusEl = document.getElementById('prog-gen-status');
+        if (statusEl) statusEl.textContent = 'Generando programa...';
+        try {
+          await ministeriosStore.generarPrograma(fecha, slug);
+          await loadTab('programas');
+          toastSuccess('Programa generado');
+        } catch (e) {
+          toastError(e.message || 'Error al generar programa');
+        }
+      };
+    }, 100);
+  }
+
   var editingNotaId = null;
 
   async function loadEventOptions() {
@@ -1321,6 +2002,90 @@ const TAB_LABELS: Record<string, string> = {
     var colorBtns = document.querySelectorAll('#nota-color-picker button');
     colorBtns.forEach(function(b, idx) {
       b.style.borderColor = idx === 0 ? '#6366f1' : 'transparent';
+    });
+  }
+
+  function bindPlanificacionForm() {
+    var addBtn = document.getElementById('plan-add-btn');
+    var form = document.getElementById('plan-form');
+    var saveBtn = document.getElementById('plan-save');
+    var cancelBtn = document.getElementById('plan-cancel');
+    if (!addBtn || !form) return;
+    var editingId = null;
+
+    addBtn.onclick = function() {
+      editingId = null;
+      document.getElementById('pf-titulo').value = '';
+      document.getElementById('pf-fecha').value = '';
+      document.getElementById('pf-hora').value = '';
+      document.getElementById('pf-ubicacion').value = '';
+      document.getElementById('pf-desc').value = '';
+      document.getElementById('pf-presupuesto').value = '0';
+      document.getElementById('pf-estado').value = 'planificada';
+      saveBtn.textContent = 'Guardar';
+      form.classList.toggle('hidden');
+    };
+
+    if (cancelBtn) cancelBtn.addEventListener('click', function() { form.classList.add('hidden'); });
+
+    var container = form.closest('.space-y-4');
+    if (container) {
+      container.addEventListener('click', function(e) {
+        var editBtn = e.target.closest('[data-plan-edit]');
+        if (editBtn) {
+          var id = parseInt(editBtn.getAttribute('data-plan-edit'));
+          var plan = ministeriosStore.getState().planificaciones.find(function(p) { return p.id === id; });
+          if (plan) {
+            editingId = id;
+            document.getElementById('pf-titulo').value = plan.titulo || '';
+            document.getElementById('pf-fecha').value = plan.fecha_planificada || '';
+            document.getElementById('pf-hora').value = plan.hora ? plan.hora.substring(0, 5) : '';
+            document.getElementById('pf-ubicacion').value = plan.ubicacion || '';
+            document.getElementById('pf-desc').value = plan.descripcion || '';
+            document.getElementById('pf-presupuesto').value = plan.presupuesto || 0;
+            document.getElementById('pf-estado').value = plan.estado || 'planificada';
+            saveBtn.textContent = 'Actualizar';
+            form.classList.remove('hidden');
+          }
+        }
+        var delBtn = e.target.closest('[data-plan-delete]');
+        if (delBtn) {
+          var pid = parseInt(delBtn.getAttribute('data-plan-delete'));
+          var pname = delBtn.getAttribute('data-plan-name');
+          if (confirm('¿Eliminar planificación "' + pname + '"?')) {
+            ministeriosStore.deletePlanificacion(slug, pid).then(function() {
+              toastSuccess('Planificación eliminada');
+              loadTab('planificacion');
+            }).catch(function(err) { toastError(err.message); });
+          }
+        }
+      });
+    }
+
+    if (saveBtn) saveBtn.addEventListener('click', async function() {
+      var titulo = document.getElementById('pf-titulo').value;
+      var fecha = document.getElementById('pf-fecha').value;
+      if (!titulo || !fecha) { toastError('Título y Fecha son obligatorios'); return; }
+      var data = {
+        titulo: titulo,
+        fecha_planificada: fecha,
+        hora: document.getElementById('pf-hora').value || null,
+        ubicacion: document.getElementById('pf-ubicacion').value,
+        descripcion: document.getElementById('pf-desc').value,
+        presupuesto: parseFloat(document.getElementById('pf-presupuesto').value) || 0,
+        estado: document.getElementById('pf-estado').value,
+      };
+      try {
+        if (editingId) {
+          await ministeriosStore.updatePlanificacion(slug, editingId, data);
+          toastSuccess('Planificación actualizada');
+        } else {
+          await ministeriosStore.addPlanificacion(slug, data);
+          toastSuccess('Planificación creada');
+        }
+        form.classList.add('hidden');
+        loadTab('planificacion');
+      } catch (err) { toastError(err.message); }
     });
   }
 

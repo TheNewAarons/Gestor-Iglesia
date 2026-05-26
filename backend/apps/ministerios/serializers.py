@@ -6,7 +6,8 @@ from .models import (
     Rol, Permiso, Ministerio, Miembro, CajaMinisterio,
     MovimientoCaja, Inventario, Ofrenda, Asistencia, Evento,
     Cancion, ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion,
-    IdeaComunicacion, PlanificacionActividad, Nota
+    IdeaComunicacion, PlanificacionActividad, Nota,
+    EnfoqueMNI, ProgramaUltimoDomingo,
 )
 
 User = get_user_model()
@@ -349,6 +350,24 @@ class NotaSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'ministry', 'titulo', 'contenido', 'evento', 'evento_titulo',
             'color', 'creado_por', 'creado_por_nombre', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'ministry', 'creado_por', 'created_at', 'updated_at']
+
+
+class EnfoqueMNISerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnfoqueMNI
+        fields = ['id', 'mes', 'titulo', 'descripcion']
+
+
+class ProgramaUltimoDomingoSerializer(serializers.ModelSerializer):
+    creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True, default=None)
+
+    class Meta:
+        model = ProgramaUltimoDomingo
+        fields = [
+            'id', 'ministry', 'titulo', 'fecha', 'secciones',
+            'creado_por', 'creado_por_nombre', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'ministry', 'creado_por', 'created_at', 'updated_at']
 

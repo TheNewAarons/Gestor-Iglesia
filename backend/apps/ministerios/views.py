@@ -15,7 +15,8 @@ from datetime import date
 from .models import (
     Ministerio, Miembro, CajaMinisterio, MovimientoCaja,
     Cancion, ProgramaAlabanza, LeccionEXPLO, Permiso,
-    Evento, RecursoComunicacion, IdeaComunicacion, Nota, Ofrenda
+    Evento, RecursoComunicacion, IdeaComunicacion, Nota, Ofrenda,
+    EnfoqueMNI, ProgramaUltimoDomingo, PlanificacionActividad,
 )
 from .serializers import (
     MinisterioSerializer, MiembroSerializer, CajaMinisterioSerializer,
@@ -24,6 +25,7 @@ from .serializers import (
     ProgramaAlabanzaSerializer, LeccionEXPLOSerializer,
     RecursoComunicacionSerializer, IdeaComunicacionSerializer,
     PlanificacionActividadSerializer, NotaSerializer,
+    EnfoqueMNISerializer, ProgramaUltimoDomingoSerializer,
     UserSerializer, LoginSerializer, UsuarioCompletoSerializer,
     UsuarioCreateSerializer, UsuarioUpdateSerializer, PermisoSerializer
 )
@@ -402,6 +404,27 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         serializer.save(ministry=ministry, responsable=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], url_path='planificaciones/(?P<plan_id>[0-9]+)')
+    def planificaciones_detalle(self, request, slug=None, plan_id=None):
+        ministry = self.get_object()
+        plan_id = int(plan_id)
+        try:
+            plan = ministry.planificaciones.get(id=plan_id)
+        except PlanificacionActividad.DoesNotExist:
+            return Response({'error': 'Planificación no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'GET':
+            return Response(PlanificacionActividadSerializer(plan).data)
+
+        if request.method == 'DELETE':
+            plan.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = PlanificacionActividadSerializer(plan, data=request.data, partial=(request.method == 'PATCH'))
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
     @action(detail=True, methods=['get', 'post'])
     def notas(self, request, slug=None):
         ministry = self.get_object()
@@ -434,6 +457,142 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='enfoques')
+    def enfoques(self, request, slug=None):
+        enfoques = EnfoqueMNI.objects.all()
+        mes_actual = date.today().month
+        data = {
+            'mes_actual': mes_actual,
+            'enfoque_actual': EnfoqueMNISerializer(
+                enfoques.filter(mes=mes_actual).first()
+            ).data if enfoques.filter(mes=mes_actual).exists() else None,
+            'enfoques': EnfoqueMNISerializer(enfoques, many=True).data,
+        }
+        return Response(data)
+
+    @action(detail=True, methods=['get', 'post'], url_path='programas-domingo')
+    def programas_domingo(self, request, slug=None):
+        ministry = self.get_object()
+        if request.method == 'GET':
+            queryset = ministry.programas_domingo.select_related('creado_por').all()
+            return Response(ProgramaUltimoDomingoSerializer(queryset, many=True).data)
+
+        serializer = ProgramaUltimoDomingoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obj = serializer.save(ministry=ministry, creado_por=request.user)
+        return Response(ProgramaUltimoDomingoSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], url_path='programas-domingo/(?P<programa_id>[0-9]+)')
+    def programa_domingo_detalle(self, request, slug=None, programa_id=None):
+        ministry = self.get_object()
+        programa_id = int(programa_id)
+        try:
+            prog = ministry.programas_domingo.get(id=programa_id)
+        except ProgramaUltimoDomingo.DoesNotExist:
+            return Response({'error': 'Programa no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'GET':
+            return Response(ProgramaUltimoDomingoSerializer(prog).data)
+
+        if request.method == 'DELETE':
+            prog.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = ProgramaUltimoDomingoSerializer(prog, data=request.data, partial=(request.method == 'PATCH'))
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='ofrendas/por-clase')
+    def ofrendas_por_clase(self, request, slug=None):
+        ministry = self.get_object()
+        mes = request.query_params.get('mes')
+        anio = request.query_params.get('anio')
+        resultado = finanzas_selectors.resumen_ofrendas_por_clase(
+            ministry, int(mes) if mes else None, int(anio) if anio else None
+        )
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='biblias/por-clase')
+    def biblias_por_clase(self, request, slug=None):
+        ministry = self.get_object()
+        mes = request.query_params.get('mes')
+        anio = request.query_params.get('anio')
+        resultado = asistencia_selectors.biblias_por_clase(
+            ministry, int(mes) if mes else None, int(anio) if anio else None
+        )
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='ofrendas/totales')
+    def ofrendas_totales(self, request, slug=None):
+        ministry = self.get_object()
+        mes = request.query_params.get('mes')
+        anio = request.query_params.get('anio')
+        resultado = finanzas_selectors.resumen_ofrendas_por_categoria(
+            ministry, int(mes) if mes else None, int(anio) if anio else None
+        )
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='ofrendas/reporte')
+    def ofrendas_reporte(self, request, slug=None):
+        ministry = self.get_object()
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        formato = request.query_params.get('formato', 'json')
+
+        if not fecha_inicio or not fecha_fin:
+            return Response({'error': 'fecha_inicio y fecha_fin requeridos'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from django.http import HttpResponse
+        import csv
+
+        resultado = finanzas_selectors.reporte_ofrendas_por_periodo(ministry, fecha_inicio, fecha_fin)
+
+        if formato == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="reporte_ofrendas_{ministry.slug}_{fecha_inicio}_{fecha_fin}.csv"'
+            response.write('\ufeff')
+            writer = csv.writer(response)
+            writer.writerow(['Categoría', 'Cantidad', 'Total'])
+            for item in resultado['por_categoria']:
+                writer.writerow([item['categoria'], item['count'], item['total']])
+            writer.writerow([])
+            writer.writerow(['Total General', '', resultado['total_general']])
+            return response
+
+        return Response(resultado)
+
+    @action(detail=True, methods=['get'], url_path='caja/exportar-csv')
+    def caja_exportar_csv(self, request, slug=None):
+        ministry = self.get_object()
+        caja = finanzas_services.obtener_o_crear_caja(ministry)
+
+        from django.http import HttpResponse
+        import csv
+
+        tipo = request.query_params.get('tipo')
+
+        movimientos = caja.movimientos.select_related('registrado_por').order_by('-fecha')
+        if tipo:
+            movimientos = movimientos.filter(tipo=tipo)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="caja_{ministry.slug}.csv"'
+        response.write('\ufeff')
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Tipo', 'Monto', 'Descripción', 'Registrado por', 'Aprobado'])
+        for m in movimientos:
+            writer.writerow([
+                m.fecha.strftime('%Y-%m-%d %H:%M'),
+                m.get_tipo_display(),
+                float(m.monto),
+                m.descripcion,
+                m.registrado_por.get_full_name() if m.registrado_por else '',
+                'Sí' if m.aprobado else 'No',
+            ])
+        return response
+
 
 
 class CancionViewSet(viewsets.ModelViewSet):
@@ -518,7 +677,8 @@ class MiembroViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def cumpleanos(self, request):
-        return Response(miembro_selectors.listar_cumpleanos_del_mes())
+        ministerio_slug = request.query_params.get('ministerio')
+        return Response(miembro_selectors.listar_cumpleanos_del_mes(ministerio_slug))
 
 
 class EventoViewSet(viewsets.ModelViewSet):

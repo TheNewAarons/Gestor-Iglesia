@@ -39,7 +39,7 @@ def resumen_asistencia(ministry: Ministerio, mes: int = None, anio: int = None):
         registros = queryset.filter(fecha=fecha)
 
         por_clase = {}
-        for clase_val in ['ninos', 'jovenes', 'adultos_jovenes', 'adultos', 'adultos_mayores']:
+        for clase_val in ['parvulos', 'principiantes', 'primarios', 'jovenes', 'adultos']:
             count = registros.filter(clase=clase_val).count()
             if count > 0:
                 por_clase[clase_val] = count
@@ -109,7 +109,7 @@ def estadisticas_asistencia(ministry: Ministerio, mes: int = None, anio: int = N
 
     queryset = ministry.asistencias.filter(fecha__month=mes, fecha__year=anio)
     miembros = ministry.miembros.filter(activo=True)
-    clases = ['ninos', 'jovenes', 'adultos_jovenes', 'adultos', 'adultos_mayores']
+    clases = ['parvulos', 'principiantes', 'primarios', 'jovenes', 'adultos']
 
     estadisticas = {}
     for clase_val in clases:
@@ -122,3 +122,24 @@ def estadisticas_asistencia(ministry: Ministerio, mes: int = None, anio: int = N
         }
 
     return estadisticas
+
+
+def biblias_por_clase(ministry: Ministerio, mes: int = None, anio: int = None):
+    if not mes:
+        mes = date.today().month
+    if not anio:
+        anio = date.today().year
+
+    queryset = ministry.asistencias.filter(
+        fecha__month=mes, fecha__year=anio, tiene_biblia=True
+    )
+    clases = ['parvulos', 'principiantes', 'primarios', 'jovenes', 'adultos']
+
+    resultados = []
+    total = 0
+    for clase_val in clases:
+        count = queryset.filter(clase=clase_val).count()
+        total += count
+        resultados.append({'clase': clase_val, 'biblias': count})
+
+    return {'por_clase': resultados, 'total_general': total}

@@ -147,11 +147,11 @@ class Miembro(models.Model):
     ]
 
     CLASES_DNI = [
-        ('ninos', 'Niños (0-12)'),
-        ('jovenes', 'Jóvenes (13-17)'),
-        ('adultos_jovenes', 'Adultos Jóvenes (18-35)'),
-        ('adultos', 'Adultos (36-60)'),
-        ('adultos_mayores', 'Adultos Mayores (60+)'),
+        ('parvulos', 'Párvulos (1-5 años)'),
+        ('principiantes', 'Principiantes (6-10 años)'),
+        ('primarios', 'Primarios (11-15 años)'),
+        ('jovenes', 'Jóvenes (16-35 años)'),
+        ('adultos', 'Adultos (35+ años)'),
     ]
 
     ROLES_MINISTERIO = [
@@ -242,6 +242,10 @@ class MovimientoCaja(models.Model):
     )
     enviado_tesoreria = models.BooleanField(default=False)
     aprobado = models.BooleanField(default=False)
+    ofrenda_origen = models.ForeignKey(
+        'Ofrenda', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='movimientos_caja'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -536,6 +540,47 @@ class PlanificacionActividad(models.Model):
 
     def __str__(self):
         return f"{self.titulo} - {self.fecha_planificada}"
+
+
+class EnfoqueMNI(models.Model):
+    mes = models.PositiveSmallIntegerField(unique=True)
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'Enfoque MNI'
+        verbose_name_plural = 'Enfoques MNI'
+        ordering = ['mes']
+
+    def __str__(self):
+        MESES = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+        }
+        return f"{MESES.get(self.mes, self.mes)} — {self.titulo}"
+
+
+class ProgramaUltimoDomingo(models.Model):
+    ministry = models.ForeignKey(
+        Ministerio, on_delete=models.CASCADE, related_name='programas_domingo'
+    )
+    titulo = models.CharField(max_length=200)
+    fecha = models.DateField()
+    secciones = models.JSONField(default=dict)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Programa Último Domingo'
+        verbose_name_plural = 'Programas Último Domingo'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.titulo} — {self.fecha}"
 
 
 class Nota(models.Model):
