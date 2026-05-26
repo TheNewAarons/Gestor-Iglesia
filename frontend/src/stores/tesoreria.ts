@@ -69,6 +69,9 @@ export interface InformeMensual {
 export interface MovimientoTesorería {
   id: number;
   tipo: string;
+  ministry: number | null;
+  ministry_nombre: string | null;
+  ministry_slug: string | null;
   monto: string;
   descripcion: string;
   fecha: string;
@@ -76,6 +79,40 @@ export interface MovimientoTesorería {
   registrado_por: number | null;
   registrado_por_nombre: string | null;
   created_at: string;
+}
+
+export interface HistorialEntry {
+  id: string;
+  fuente: 'caja_ministerio' | 'tesoreria_central' | 'auditoria';
+  fuente_label: string;
+  fecha: string;
+  tipo: 'ingreso' | 'egreso' | 'neutral';
+  tipo_label: string;
+  tipo_tesoreria?: string;
+  accion?: string;
+  entidad_tipo?: string;
+  entidad_id?: number;
+  ministry_nombre: string | null;
+  ministry_slug: string | null;
+  ministry_color: string | null;
+  monto: number;
+  descripcion: string;
+  imagen: string | null;
+  imagen_url: string | null;
+  registrado_por_nombre: string | null;
+}
+
+export interface PendienteEntry {
+  tipo: 'caja' | 'ofrenda';
+  id: number;
+  fecha: string;
+  ministry_nombre: string;
+  ministry_slug: string;
+  monto: number;
+  descripcion: string;
+  categoria?: string;
+  clase?: string;
+  tipo_movimiento?: string;
 }
 
 export interface CuotaFija {
@@ -103,6 +140,8 @@ class TesoreriaStore {
     informe: null as InformeMensual | null,
     informes: [] as InformeMensual[],
     movimientos: { count: 0, next: null as string | null, previous: null as string | null, results: [] as MovimientoTesorería[] },
+    historial: [] as HistorialEntry[],
+    pendientes: [] as PendienteEntry[],
     cuotas: [] as CuotaFija[],
     loading: false,
     error: null as string | null,
@@ -275,6 +314,46 @@ class TesoreriaStore {
     try {
       const data = await api.get<any>(`/tesoreria/movimientos/${qs ? '?' + qs : ''}`);
       this.setState({ movimientos: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async fetchHistorial(filters?: { fechaInicio?: string; fechaFin?: string; ministry?: string; tipo?: string }): Promise<void> {
+    this.setState({ loading: true, error: null });
+    const params = new URLSearchParams();
+    if (filters?.fechaInicio) params.set('fecha_inicio', filters.fechaInicio);
+    if (filters?.fechaFin) params.set('fecha_fin', filters.fechaFin);
+    if (filters?.ministry) params.set('ministry', filters.ministry);
+    if (filters?.tipo) params.set('tipo', filters.tipo);
+    const qs = params.toString();
+    try {
+      const data = await api.get<HistorialEntry[]>(`/tesoreria/historial/${qs ? '?' + qs : ''}`);
+      this.setState({ historial: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async fetchPendientes(): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      const data = await api.get<PendienteEntry[]>('/tesoreria/pendientes/');
+      this.setState({ pendientes: data, loading: false });
+    } catch (err: any) {
+      this.setState({ loading: false, error: err.message });
+    }
+  }
+
+  async aprobarPendiente(tipo: string, id: number): Promise<void> {
+    this.setState({ loading: true, error: null });
+    try {
+      await api.post('/tesoreria/pendientes/aprobar/', { tipo, id });
+      this.setState({
+        loading: false,
+        pendientes: this.state.pendientes.filter(p => !(p.tipo === tipo && p.id === id)),
+        successMessage: 'Movimiento aprobado exitosamente',
+      });
     } catch (err: any) {
       this.setState({ loading: false, error: err.message });
     }

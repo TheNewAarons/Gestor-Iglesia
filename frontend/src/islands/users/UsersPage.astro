@@ -126,6 +126,7 @@ const BADGE_CLASSES: Record<string, string> = {
 <script>
   import { authStore } from '../../stores/auth';
   import { usuariosStore } from '../../stores/usuarios';
+  import { showError, showSuccess } from '../../utils/toast';
 
   var skeleton, content, tbody, searchInput, modal, modalTitle, modalClose, pwFields, pwConfirmFields;
   var ministeriosContainer, ministeriosList, ministeriosHint, rolSelect;
@@ -236,15 +237,23 @@ const BADGE_CLASSES: Record<string, string> = {
         data.password = (document.getElementById('um-password') || {}).value;
         data.password_confirm = (document.getElementById('um-password-confirm') || {}).value;
       }
+
+      if (!data.username) { showError('El campo Usuario es obligatorio'); return; }
+      if (!data.email) { showError('El campo Email es obligatorio'); return; }
+      if (!data.first_name) { showError('El campo Nombre es obligatorio'); return; }
+      if (!editingUserId && !data.password) { showError('El campo Contraseña es obligatorio'); return; }
+
       try {
         if (editingUserId) {
           await usuariosStore.updateUsuario(editingUserId, data);
+          showSuccess('Usuario actualizado exitosamente');
         } else {
           await usuariosStore.createUsuario(data);
+          showSuccess('Usuario creado exitosamente');
         }
         closeModal();
         renderUsers();
-      } catch (err) { console.error(err); }
+      } catch (err: any) { showError(err.message); }
     };
 
     searchInput.oninput = renderUsers;
@@ -275,8 +284,8 @@ const BADGE_CLASSES: Record<string, string> = {
 
   async function handleDelete(id) {
     if (!confirm('¿Desactivar este usuario?')) return;
-    try { await usuariosStore.deleteUsuario(id); renderUsers(); }
-    catch (err) { console.error(err); }
+    try { await usuariosStore.deleteUsuario(id); showSuccess('Usuario desactivado'); renderUsers(); }
+    catch (err: any) { showError(err.message); }
   }
 
   function renderUsers() {

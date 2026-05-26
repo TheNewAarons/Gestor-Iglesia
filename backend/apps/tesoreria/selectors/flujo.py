@@ -8,8 +8,8 @@ def saldos_ministerios():
     cajas = CajaMinisterio.objects.select_related('ministry').filter(
         ministry__activo=True
     ).annotate(
-        total_ingresos=Sum('movimientos__monto', filter=Q(movimientos__tipo='ingreso')),
-        total_egresos=Sum('movimientos__monto', filter=Q(movimientos__tipo='egreso')),
+        total_ingresos=Sum('movimientos__monto', filter=Q(movimientos__tipo='ingreso', movimientos__aprobado=True)),
+        total_egresos=Sum('movimientos__monto', filter=Q(movimientos__tipo='egreso', movimientos__aprobado=True)),
     )
     resultados = []
     for caja in cajas:
@@ -28,17 +28,17 @@ def saldos_ministerios():
 
 def consolidar_flujo_caja(mes, anio):
     """Consolida el flujo de caja mensual: ingresos y egresos por categoria."""
-    ingresos = Ofrenda.objects.filter(fecha__year=anio, fecha__month=mes).aggregate(
+    ingresos = Ofrenda.objects.filter(fecha__year=anio, fecha__month=mes, aprobado=True).aggregate(
         total=Sum('monto')
     )['total'] or 0
 
     egresos_movimientos = MovimientoCaja.objects.filter(
-        fecha__year=anio, fecha__month=mes, tipo='egreso'
+        fecha__year=anio, fecha__month=mes, tipo='egreso', aprobado=True
     )
     total_egresos = egresos_movimientos.aggregate(total=Sum('monto'))['total'] or 0
 
     movimientos_ingreso = MovimientoCaja.objects.filter(
-        fecha__year=anio, fecha__month=mes, tipo='ingreso'
+        fecha__year=anio, fecha__month=mes, tipo='ingreso', aprobado=True
     )
     total_ingresos_caja = movimientos_ingreso.aggregate(total=Sum('monto'))['total'] or 0
 
@@ -69,7 +69,7 @@ def obtener_informe(anio, mes):
 
 def listar_boletas_egresos(fecha_inicio=None, fecha_fin=None):
     qs = MovimientoCaja.objects.filter(
-        imagen__isnull=False
+        imagen__isnull=False, aprobado=True
     ).exclude(imagen='').select_related('caja__ministry', 'registrado_por')
 
     if fecha_inicio:
@@ -82,7 +82,7 @@ def listar_boletas_egresos(fecha_inicio=None, fecha_fin=None):
 
 def listar_traspasos():
     return MovimientoCaja.objects.filter(
-        enviado_tesoreria=True
+        enviado_tesoreria=True, aprobado=True
     ).select_related('caja__ministry', 'registrado_por').order_by('-fecha')
 
 
@@ -113,7 +113,7 @@ def obtener_informe_mes_anterior(anio, mes):
 def ofrendas_por_categoria_mni(mes, anio):
     """Retorna total de ofrendas MNI agrupadas por categoria."""
     ofrendas = Ofrenda.objects.filter(
-        ministry__slug='mni', fecha__year=anio, fecha__month=mes
+        ministry__slug='mni', fecha__year=anio, fecha__month=mes, aprobado=True
     )
     total_general = ofrendas.filter(categoria='ofrenda_general').aggregate(t=Sum('monto'))['t'] or 0
     caja_alabastro = ofrendas.filter(categoria='caja_alabastro').aggregate(t=Sum('monto'))['t'] or 0

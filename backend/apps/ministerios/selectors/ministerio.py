@@ -37,7 +37,8 @@ def obtener_dashboard(ministry: Ministerio) -> dict:
 
     ofertas_mes = ministry.ofrendas.filter(
         fecha__month=date.today().month,
-        fecha__year=date.today().year
+        fecha__year=date.today().year,
+        aprobado=True
     ).aggregate(total=Sum('monto'))['total'] or 0
 
     return {

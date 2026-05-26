@@ -77,6 +77,7 @@ class MovimientoTesoreria(models.Model):
     TIPOS = [
         ('ingreso_diezmo', 'Diezmo'),
         ('ingreso_especial', 'Donacion Especial'),
+        ('ingreso_ofrenda', 'Ofrenda'),
         ('ingreso_ahorro', 'Ahorro'),
         ('ingreso_proyectos', 'Proyectos'),
         ('egreso_sosten_pastoral', 'Sosten Pastoral'),
@@ -86,6 +87,7 @@ class MovimientoTesoreria(models.Model):
     ]
 
     tipo = models.CharField(max_length=35, choices=TIPOS)
+    ministry = models.ForeignKey(Ministerio, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_tesoreria')
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     descripcion = models.TextField(blank=True)
     fecha = models.DateField()
@@ -102,6 +104,31 @@ class MovimientoTesoreria(models.Model):
 
     def __str__(self):
         return f'{self.get_tipo_display()} - {self.monto}'
+
+
+class HistorialLog(models.Model):
+    """Registro de auditoría de acciones sobre movimientos financieros."""
+    ACCIONES = [
+        ('creado', 'Creado'),
+        ('editado', 'Editado'),
+        ('eliminado', 'Eliminado'),
+    ]
+
+    entidad_tipo = models.CharField(max_length=20)  # 'ofrenda', 'movimiento_caja'
+    entidad_id = models.IntegerField()
+    accion = models.CharField(max_length=20, choices=ACCIONES)
+    resumen = models.CharField(max_length=300, blank=True, help_text='Resumen legible de la acción')
+    ministry = models.ForeignKey(Ministerio, on_delete=models.SET_NULL, null=True, blank=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Registro de auditoría'
+        verbose_name_plural = 'Registros de auditoría'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.get_accion_display()} {self.entidad_tipo}#{self.entidad_id} — {self.resumen}'
 
 
 class CuotaFija(models.Model):

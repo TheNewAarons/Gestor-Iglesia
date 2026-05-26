@@ -34,11 +34,14 @@ class InformeMensualSerializer(serializers.ModelSerializer):
 
 class MovimientoTesoreriaSerializer(serializers.ModelSerializer):
     registrado_por_nombre = serializers.SerializerMethodField()
+    ministry_nombre = serializers.SerializerMethodField()
+    ministry_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = MovimientoTesoreria
         fields = [
-            'id', 'tipo', 'monto', 'descripcion', 'fecha',
+            'id', 'tipo', 'ministry', 'ministry_nombre', 'ministry_slug',
+            'monto', 'descripcion', 'fecha',
             'imagen', 'registrado_por', 'registrado_por_nombre', 'created_at'
         ]
         read_only_fields = ['registrado_por', 'registrado_por_nombre', 'created_at']
@@ -46,6 +49,16 @@ class MovimientoTesoreriaSerializer(serializers.ModelSerializer):
     def get_registrado_por_nombre(self, obj):
         if obj.registrado_por:
             return obj.registrado_por.get_full_name() or obj.registrado_por.username
+        return None
+
+    def get_ministry_nombre(self, obj):
+        if obj.ministry:
+            return obj.ministry.nombre
+        return None
+
+    def get_ministry_slug(self, obj):
+        if obj.ministry:
+            return obj.ministry.slug
         return None
 
     def to_representation(self, instance):

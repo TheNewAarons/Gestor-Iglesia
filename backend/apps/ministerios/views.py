@@ -15,7 +15,7 @@ from datetime import date
 from .models import (
     Ministerio, Miembro, CajaMinisterio, MovimientoCaja,
     Cancion, ProgramaAlabanza, LeccionEXPLO, Permiso,
-    Evento, RecursoComunicacion, IdeaComunicacion
+    Evento, RecursoComunicacion, IdeaComunicacion, Nota, Ofrenda
 )
 from .serializers import (
     MinisterioSerializer, MiembroSerializer, CajaMinisterioSerializer,
@@ -23,7 +23,7 @@ from .serializers import (
     AsistenciaSerializer, EventoSerializer, CancionSerializer,
     ProgramaAlabanzaSerializer, LeccionEXPLOSerializer,
     RecursoComunicacionSerializer, IdeaComunicacionSerializer,
-    PlanificacionActividadSerializer,
+    PlanificacionActividadSerializer, NotaSerializer,
     UserSerializer, LoginSerializer, UsuarioCompletoSerializer,
     UsuarioCreateSerializer, UsuarioUpdateSerializer, PermisoSerializer
 )
@@ -228,17 +228,38 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         serializer.save(caja=caja, registrado_por=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'], parser_classes=[parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser])
     def inventario(self, request, slug=None):
         ministry = self.get_object()
         if request.method == 'GET':
             items = inventario_selectors.listar_inventario(ministry)
-            return Response(InventarioSerializer(items, many=True).data)
+            return Response(InventarioSerializer(items, many=True, context={'request': request}).data)
 
-        serializer = InventarioSerializer(data=request.data)
+        serializer = InventarioSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save(ministry=ministry)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], url_path='inventario/(?P<item_id>[0-9]+)', parser_classes=[parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser])
+    def inventario_detalle(self, request, slug=None, item_id=None):
+        ministry = self.get_object()
+        item_id = int(item_id)
+        try:
+            item = ministry.inventario.get(id=item_id)
+        except ministry.inventario.model.DoesNotExist:
+            return Response({'error': 'Item no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'GET':
+            return Response(InventarioSerializer(item, context={'request': request}).data)
+
+        if request.method == 'DELETE':
+            inventario_services.eliminar_item_inventario(item)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = InventarioSerializer(item, data=request.data, partial=(request.method == 'PATCH'), context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get', 'post'])
     def ofrendas(self, request, slug=None):
@@ -252,8 +273,38 @@ class MinisterioViewSet(viewsets.ModelViewSet):
 
         serializer = OfrendaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(ministry=ministry)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        ofrenda = finanzas_services.crear_ofrenda(ministry, request.user, **serializer.validated_data)
+        return Response(OfrendaSerializer(ofrenda).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], url_path='ofrendas/(?P<ofrenda_id>[0-9]+)')
+    def ofrendas_detalle(self, request, slug=None, ofrenda_id=None):
+        ministry = self.get_object()
+        ofrenda_id = int(ofrenda_id)
+        try:
+            ofrenda = ministry.ofrendas.get(id=ofrenda_id)
+        except Ofrenda.DoesNotExist:
+            return Response({'error': 'Ofrenda no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'GET':
+            return Response(OfrendaSerializer(ofrenda).data)
+
+        if request.method == 'DELETE':
+            from apps.tesoreria.models import HistorialLog
+            HistorialLog.objects.create(
+                entidad_tipo='ofrenda',
+                entidad_id=ofrenda.id,
+                accion='eliminado',
+                resumen=f'Ofrenda {ofrenda.monto} — {ofrenda.ministry.nombre}',
+                ministry=ofrenda.ministry,
+                usuario=request.user,
+            )
+            ofrenda.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = OfrendaSerializer(ofrenda, data=request.data, partial=(request.method == 'PATCH'))
+        serializer.is_valid(raise_exception=True)
+        finanzas_services.actualizar_ofrenda(ofrenda, **serializer.validated_data)
+        return Response(OfrendaSerializer(ofrenda).data)
 
     @action(detail=True, methods=['get', 'post'])
     def asistencia(self, request, slug=None):
@@ -350,6 +401,39 @@ class MinisterioViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(ministry=ministry, responsable=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'post'])
+    def notas(self, request, slug=None):
+        ministry = self.get_object()
+        if request.method == 'GET':
+            queryset = ministry.notas.select_related('evento', 'creado_por').all()
+            return Response(NotaSerializer(queryset, many=True).data)
+
+        serializer = NotaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(ministry=ministry, creado_por=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], url_path='notas/(?P<nota_id>[0-9]+)')
+    def notas_detalle(self, request, slug=None, nota_id=None):
+        ministry = self.get_object()
+        nota_id = int(nota_id)
+        try:
+            nota = ministry.notas.get(id=nota_id)
+        except Nota.DoesNotExist:
+            return Response({'error': 'Nota no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'GET':
+            return Response(NotaSerializer(nota).data)
+
+        if request.method == 'DELETE':
+            nota.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = NotaSerializer(nota, data=request.data, partial=(request.method == 'PATCH'))
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CancionViewSet(viewsets.ModelViewSet):

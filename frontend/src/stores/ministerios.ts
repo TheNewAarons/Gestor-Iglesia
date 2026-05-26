@@ -42,6 +42,7 @@ export interface MovimientoCaja {
   imagen: string | null;
   registrado_por_nombre: string;
   enviado_tesoreria: boolean;
+  aprobado: boolean;
 }
 
 export interface CajaMinisterio {
@@ -61,14 +62,18 @@ export interface Inventario {
   ubicacion: string;
   descripcion: string;
   estado: string;
+  imagen: string | null;
 }
 
 export interface Ofrenda {
   id: number;
   fecha: string;
   monto: number;
+  categoria: string;
   clase: string;
   envidada_tesoreria: boolean;
+  fecha_envio: string | null;
+  aprobado: boolean;
   observaciones: string;
 }
 
@@ -177,6 +182,19 @@ export interface PlanificacionActividad {
   estado: 'planificada' | 'en_proceso' | 'completada' | 'cancelada';
 }
 
+export interface Nota {
+  id: number;
+  ministry: number;
+  titulo: string;
+  contenido: string;
+  evento: number | null;
+  evento_titulo: string | null;
+  color: string;
+  creado_por: number | null;
+  creado_por_nombre: string | null;
+  created_at: string;
+}
+
 export interface Evento {
   id: number;
   titulo: string;
@@ -217,6 +235,7 @@ interface MinisteriosState {
   recursos: RecursoComunicacion[];
   ideas: IdeaComunicacion[];
   planificaciones: PlanificacionActividad[];
+  notas: Nota[];
   isLoading: boolean;
   error: string | null;
 }
@@ -241,6 +260,7 @@ class MinisteriosStore {
     recursos: [],
     ideas: [],
     planificaciones: [],
+    notas: [],
     isLoading: false,
     error: null,
   };
@@ -377,11 +397,42 @@ class MinisteriosStore {
     }
   }
 
-  async addInventarioItem(slug: string, data: Partial<Inventario>) {
+  async addInventarioItem(slug: string, data: Partial<Inventario> | FormData) {
     try {
-      const nuevo = await api.post<Inventario>(`/ministerios/${slug}/inventario/`, data);
+      let nuevo: Inventario;
+      if (data instanceof FormData) {
+        nuevo = await api.postForm<Inventario>(`/ministerios/${slug}/inventario/`, data);
+      } else {
+        nuevo = await api.post<Inventario>(`/ministerios/${slug}/inventario/`, data);
+      }
       this.setState({ inventario: [...this.state.inventario, nuevo] });
       return nuevo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateInventarioItem(slug: string, itemId: number, data: Partial<Inventario> | FormData) {
+    try {
+      let actualizado: Inventario;
+      if (data instanceof FormData) {
+        actualizado = await api.putForm<Inventario>(`/ministerios/${slug}/inventario/${itemId}/`, data);
+      } else {
+        actualizado = await api.put<Inventario>(`/ministerios/${slug}/inventario/${itemId}/`, data);
+      }
+      this.setState({
+        inventario: this.state.inventario.map(it => it.id === itemId ? actualizado : it)
+      });
+      return actualizado;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteInventarioItem(slug: string, itemId: number) {
+    try {
+      await api.delete(`/ministerios/${slug}/inventario/${itemId}/`);
+      this.setState({ inventario: this.state.inventario.filter(it => it.id !== itemId) });
     } catch (error) {
       throw error;
     }
@@ -401,6 +452,25 @@ class MinisteriosStore {
       const nueva = await api.post<Ofrenda>(`/ministerios/${slug}/ofrendas/`, data);
       this.setState({ ofrendas: [...this.state.ofrendas, nueva] });
       return nueva;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateOfrenda(slug: string, id: number, data: Partial<Ofrenda>) {
+    try {
+      const actualizada = await api.put<Ofrenda>(`/ministerios/${slug}/ofrendas/${id}/`, data);
+      this.setState({ ofrendas: this.state.ofrendas.map(o => o.id === id ? actualizada : o) });
+      return actualizada;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteOfrenda(slug: string, id: number) {
+    try {
+      await api.delete(`/ministerios/${slug}/ofrendas/${id}/`);
+      this.setState({ ofrendas: this.state.ofrendas.filter(o => o.id !== id) });
     } catch (error) {
       throw error;
     }
@@ -631,6 +701,44 @@ class MinisteriosStore {
     }
   }
 
+  async fetchNotas(slug: string) {
+    try {
+      const notas = await api.get<Nota[]>(`/ministerios/${slug}/notas/`);
+      this.setState({ notas });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addNota(slug: string, data: Partial<Nota>) {
+    try {
+      const nueva = await api.post<Nota>(`/ministerios/${slug}/notas/`, data);
+      this.setState({ notas: [nueva, ...this.state.notas] });
+      return nueva;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateNota(slug: string, id: number, data: Partial<Nota>) {
+    try {
+      const actualizada = await api.put<Nota>(`/ministerios/${slug}/notas/${id}/`, data);
+      this.setState({ notas: this.state.notas.map(n => n.id === id ? actualizada : n) });
+      return actualizada;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteNota(slug: string, id: number) {
+    try {
+      await api.delete(`/ministerios/${slug}/notas/${id}/`);
+      this.setState({ notas: this.state.notas.filter(n => n.id !== id) });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   clearSelected() {
     this.setState({
       selectedMinisterio: null,
@@ -650,6 +758,7 @@ class MinisteriosStore {
       recursos: [],
       ideas: [],
       planificaciones: [],
+      notas: [],
     });
   }
 }

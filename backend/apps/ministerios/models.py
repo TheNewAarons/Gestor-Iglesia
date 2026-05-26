@@ -219,8 +219,8 @@ class CajaMinisterio(models.Model):
         return f"Caja - {self.ministry.nombre}"
 
     def calcular_saldo(self):
-        ingresos = sum(m.monto for m in self.movimientos.filter(tipo='ingreso'))
-        egresos = sum(m.monto for m in self.movimientos.filter(tipo='egreso'))
+        ingresos = sum(m.monto for m in self.movimientos.filter(tipo='ingreso', aprobado=True))
+        egresos = sum(m.monto for m in self.movimientos.filter(tipo='egreso', aprobado=True))
         return ingresos - egresos
 
 
@@ -241,6 +241,7 @@ class MovimientoCaja(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
     )
     enviado_tesoreria = models.BooleanField(default=False)
+    aprobado = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -277,6 +278,7 @@ class Inventario(models.Model):
     ubicacion = models.CharField(max_length=100, blank=True)
     descripcion = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default='bueno')
+    imagen = models.ImageField(upload_to='inventario/fotos/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -306,8 +308,10 @@ class Ofrenda(models.Model):
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     categoria = models.CharField(max_length=30, choices=CATEGORIAS_MNI, blank=True, help_text='Categoría de ofrenda (MNI)')
     clase = models.CharField(max_length=30, blank=True, help_text='Para DNI - clase específica')
+    movimiento_tesoreria = models.ForeignKey('tesoreria.MovimientoTesoreria', on_delete=models.SET_NULL, null=True, blank=True, related_name='ofrenda_origen')
     envidada_tesoreria = models.BooleanField(default=False)
     fecha_envio = models.DateTimeField(null=True, blank=True)
+    aprobado = models.BooleanField(default=False)
     observaciones = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -532,3 +536,27 @@ class PlanificacionActividad(models.Model):
 
     def __str__(self):
         return f"{self.titulo} - {self.fecha_planificada}"
+
+
+class Nota(models.Model):
+    ministry = models.ForeignKey(Ministerio, on_delete=models.CASCADE, related_name='notas')
+    titulo = models.CharField(max_length=200)
+    contenido = models.TextField(blank=True)
+    evento = models.ForeignKey(
+        Evento, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='notas', help_text='Evento opcional al que se vincula la nota'
+    )
+    color = models.CharField(max_length=7, default='#fef3c7')
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Nota'
+        verbose_name_plural = 'Notas'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return self.titulo

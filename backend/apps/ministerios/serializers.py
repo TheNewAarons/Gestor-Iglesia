@@ -6,7 +6,7 @@ from .models import (
     Rol, Permiso, Ministerio, Miembro, CajaMinisterio,
     MovimientoCaja, Inventario, Ofrenda, Asistencia, Evento,
     Cancion, ProgramaAlabanza, LeccionEXPLO, RecursoComunicacion,
-    IdeaComunicacion, PlanificacionActividad
+    IdeaComunicacion, PlanificacionActividad, Nota
 )
 
 User = get_user_model()
@@ -155,9 +155,9 @@ class MovimientoCajaSerializer(serializers.ModelSerializer):
         model = MovimientoCaja
         fields = [
             'id', 'caja', 'tipo', 'monto', 'descripcion', 'fecha', 'imagen',
-            'registrado_por', 'registrado_por_nombre', 'enviado_tesoreria', 'created_at'
+            'registrado_por', 'registrado_por_nombre', 'enviado_tesoreria', 'aprobado', 'created_at'
         ]
-        read_only_fields = ['id', 'caja', 'registrado_por', 'fecha', 'created_at']
+        read_only_fields = ['id', 'caja', 'registrado_por', 'fecha', 'aprobado', 'created_at']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -192,21 +192,32 @@ class InventarioSerializer(serializers.ModelSerializer):
         model = Inventario
         fields = [
             'id', 'ministry', 'ministry_nombre', 'nombre', 'categoria', 'cantidad',
-            'ubicacion', 'descripcion', 'estado', 'created_at', 'updated_at'
+            'ubicacion', 'descripcion', 'estado', 'imagen', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'ministry', 'created_at', 'updated_at']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.imagen:
+            request = self.context.get('request')
+            if request:
+                data['imagen'] = request.build_absolute_uri(instance.imagen.url)
+        return data
 
 
 class OfrendaSerializer(serializers.ModelSerializer):
     ministry_nombre = serializers.CharField(source='ministry.nombre', read_only=True)
+    fecha_envio = serializers.DateTimeField(read_only=True, allow_null=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Ofrenda
         fields = [
-            'id', 'ministry', 'ministry_nombre', 'fecha', 'monto', 'clase',
-            'envidada_tesoreria', 'fecha_envio', 'observaciones', 'created_at', 'updated_at'
+            'id', 'ministry', 'ministry_nombre', 'fecha', 'monto', 'categoria', 'clase',
+            'envidada_tesoreria', 'fecha_envio', 'aprobado', 'observaciones', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'ministry', 'envidada_tesoreria', 'fecha_envio', 'aprobado', 'created_at', 'updated_at']
 
 
 class AsistenciaSerializer(serializers.ModelSerializer):
@@ -327,6 +338,19 @@ class PlanificacionActividadSerializer(serializers.ModelSerializer):
 
     def get_ministerios_relacionados_nombres(self, obj):
         return [m.nombre for m in obj.ministerios_relacionados.all()]
+
+
+class NotaSerializer(serializers.ModelSerializer):
+    evento_titulo = serializers.CharField(source='evento.titulo', read_only=True, default=None)
+    creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True, default=None)
+
+    class Meta:
+        model = Nota
+        fields = [
+            'id', 'ministry', 'titulo', 'contenido', 'evento', 'evento_titulo',
+            'color', 'creado_por', 'creado_por_nombre', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'ministry', 'creado_por', 'created_at', 'updated_at']
 
 
 class LoginSerializer(serializers.Serializer):

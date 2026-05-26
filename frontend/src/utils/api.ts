@@ -119,6 +119,22 @@ class ApiClient {
   }
 
   async postForm<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.requestForm<T>(endpoint, 'POST', formData);
+  }
+
+  async putForm<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.requestForm<T>(endpoint, 'PUT', formData);
+  }
+
+  async patchForm<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.requestForm<T>(endpoint, 'PATCH', formData);
+  }
+
+  async deleteForm<T>(endpoint: string, formData?: FormData): Promise<T> {
+    return this.requestForm<T>(endpoint, 'DELETE', formData);
+  }
+
+  private async requestForm<T>(endpoint: string, method: string, formData?: FormData): Promise<T> {
     const headers: HeadersInit = {};
 
     if (this.token) {
@@ -126,7 +142,7 @@ class ApiClient {
     }
 
     let response = await fetch(`${API_BASE}${endpoint}`, {
-      method: 'POST',
+      method,
       headers,
       body: formData,
       credentials: 'include',
@@ -139,7 +155,7 @@ class ApiClient {
           (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
         }
         response = await fetch(`${API_BASE}${endpoint}`, {
-          method: 'POST',
+          method,
           headers,
           body: formData,
           credentials: 'include',

@@ -16,6 +16,9 @@ export interface Props {
     <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="boletas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/></svg>Boletas</button>
     <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="traspasos"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Traspasos</button>
     <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="informe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Informe Mensual</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="movimientos"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>Movimientos</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="historial"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Historial</button>
+    <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="pendientes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Pendientes <span id="pendientes-count" class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full" style="display:none">0</span></button>
     <button class="mp-tab inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap" data-tab="configuracion"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuracion</button>
   </nav>
 
@@ -28,6 +31,9 @@ export interface Props {
   <div class="tab-content" style="display:none" id="tab-boletas"></div>
   <div class="tab-content" style="display:none" id="tab-traspasos"></div>
   <div class="tab-content" style="display:none" id="tab-informe"></div>
+  <div class="tab-content" style="display:none" id="tab-movimientos"></div>
+  <div class="tab-content" style="display:none" id="tab-historial"></div>
+  <div class="tab-content" style="display:none" id="tab-pendientes"></div>
   <div class="tab-content" style="display:none" id="tab-configuracion"></div>
 
   <div id="boleta-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display:none">
@@ -40,6 +46,7 @@ export interface Props {
 
 <script>
   import { tesoreriaStore } from '../../stores/tesoreria';
+  import { showError as toastError } from '../../utils/toast';
 
   const store = tesoreriaStore;
   let currentTab = 'dashboard';
@@ -88,6 +95,7 @@ export interface Props {
     document.querySelectorAll('.tab-content').forEach((el: any) => el.style.display = 'none');
     const targetTab = document.getElementById(`tab-${tabName}`);
     if (targetTab) targetTab.style.display = 'block';
+    if (tabName === 'pendientes') store.fetchPendientes();
     renderCurrentTab();
   }
 
@@ -99,6 +107,9 @@ export interface Props {
       case 'boletas': renderBoletas(state); break;
       case 'traspasos': renderTraspasos(state); break;
       case 'informe': renderInforme(state); break;
+      case 'movimientos': renderMovimientos(state); break;
+      case 'historial': renderHistorial(state); break;
+      case 'pendientes': renderPendientes(state); break;
       case 'configuracion': renderConfiguracion(state); break;
     }
   }
@@ -285,9 +296,13 @@ export interface Props {
         e.preventDefault();
         const form = e.target as HTMLFormElement;
         const fd = new FormData(form);
+        const ministry = fd.get('ministry_slug') as string;
+        const monto = fd.get('monto') as string;
+        if (!ministry) { toastError('Selecciona un ministerio'); return; }
+        if (!monto || parseFloat(monto) <= 0) { toastError('El monto debe ser mayor a 0'); return; }
         store.crearTraspaso({
-          ministry_slug: fd.get('ministry_slug') as string,
-          monto: fd.get('monto') as string,
+          ministry_slug: ministry,
+          monto: monto,
           descripcion: fd.get('descripcion') as string,
         });
       });
@@ -384,7 +399,260 @@ export interface Props {
       </div>`;
   }
 
-  // --- Configuración ---
+  // --- Movimientos ---
+  function renderMovimientos(state: any) {
+    const el = document.getElementById('tab-movimientos')!;
+    el.innerHTML = `
+      <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Filtrar por tipo</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="mov-tipo">
+            <option value="">Todos</option>
+            <option value="ingreso_diezmo">Diezmo</option>
+            <option value="ingreso_especial">Donación Especial</option>
+            <option value="ingreso_ofrenda">Ofrenda</option>
+            <option value="ingreso_ahorro">Ahorro</option>
+            <option value="ingreso_proyectos">Proyectos</option>
+            <option value="egreso_sosten_pastoral">Sosten Pastoral</option>
+            <option value="egreso_beneficios_pastorales">Beneficios Pastorales</option>
+            <option value="egreso_varios_iglesia">Gastos Varios Iglesia</option>
+            <option value="egreso_fondo_contingencia">Fondo de Contingencia</option>
+          </select>
+        </div>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-movs">Buscar</button>
+      </div>
+      <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Ministerio</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Descripción</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Registrado por</th></tr></thead>
+          <tbody id="movs-tbody">
+            ${state.movimientos.results && state.movimientos.results.length > 0
+              ? state.movimientos.results.map((m: any) => {
+                  var tipoLabel = { ingreso_diezmo:'Diezmo', ingreso_especial:'Donación Especial', ingreso_ofrenda:'Ofrenda', ingreso_ahorro:'Ahorro', ingreso_proyectos:'Proyectos', egreso_sosten_pastoral:'Sosten Pastoral', egreso_beneficios_pastorales:'Beneficios Pastorales', egreso_varios_iglesia:'Gastos Varios Iglesia', egreso_fondo_contingencia:'Fondo de Contingencia' };
+                  var isIngreso = m.tipo.startsWith('ingreso');
+                  return '<tr class="border-b border-gray-100">'
+                    + '<td class="px-4 py-2">' + new Date(m.fecha).toLocaleDateString('es-PY') + '</td>'
+                    + '<td>' + (m.tipo === 'ingreso_ofrenda'
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Ofrenda</span>'
+                        : isIngreso
+                          ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">' + (tipoLabel[m.tipo] || m.tipo) + '</span>'
+                          : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">' + (tipoLabel[m.tipo] || m.tipo) + '</span>') + '</td>'
+                    + '<td>' + (m.ministry_nombre
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="background:#e2e8f0;color:#475569">' + m.ministry_nombre + '</span>'
+                        : '<span class="text-gray-400">—</span>') + '</td>'
+                    + '<td class="font-medium ' + (isIngreso ? 'text-green-700' : 'text-red-600') + '">' + formatCurrency(m.monto) + '</td>'
+                    + '<td class="text-gray-600">' + (m.descripcion || '-') + '</td>'
+                    + '<td>' + (m.registrado_por_nombre || '-') + '</td>'
+                    + '</tr>';
+                }).join('')
+              : '<tr><td colspan="6" class="text-center py-4 text-gray-500">No hay movimientos registrados</td></tr>'}
+          </tbody>
+        </table>
+      </div>`;
+    setTimeout(() => {
+      document.getElementById('btn-buscar-movs')?.addEventListener('click', () => {
+        const tipo = (document.getElementById('mov-tipo') as HTMLSelectElement).value;
+        store.fetchMovimientos(tipo || undefined);
+      });
+    }, 0);
+  }
+
+  // --- Historial ---
+  function renderHistorial(state: any) {
+    const el = document.getElementById('tab-historial')!;
+    const ministries = state.saldos || [];
+    const minOptions = ministries.map((s: any) => `<option value="${s.ministry_slug}">${s.ministry_nombre}</option>`).join('');
+
+    el.innerHTML = `
+      <div class="flex gap-3 items-end flex-wrap mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Desde</label>
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-inicio" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Hasta</label>
+          <input type="date" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-fecha-fin" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Ministerio</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-ministry">
+            <option value="">Todos</option>
+            ${minOptions}
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Tipo</label>
+          <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white" id="hist-tipo">
+            <option value="">Todos</option>
+            <option value="ingreso">Ingresos</option>
+            <option value="egreso">Egresos</option>
+          </select>
+        </div>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors bg-primary text-white hover:bg-primary-600 shadow-sm px-3 py-1.5 text-xs rounded-md cursor-pointer" id="btn-buscar-historial">Buscar</button>
+      </div>
+      <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Ministerio</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Descripción</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fuente</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Registrado por</th></tr></thead>
+          <tbody>
+            ${state.historial && state.historial.length > 0
+              ? state.historial.map((h: any) => {
+                  var isAuditoria = h.fuente === 'auditoria';
+                  var accionBadge = '';
+                  if (h.accion === 'creado') accionBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Creado</span>';
+                  else if (h.accion === 'editado') accionBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Editado</span>';
+                  else if (h.accion === 'eliminado') accionBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Eliminado</span>';
+
+                  var tipoCell = isAuditoria
+                    ? accionBadge
+                    : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (h.tipo === 'ingreso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (h.tipo_label || h.tipo) + '</span>';
+
+                  var montoCell = isAuditoria
+                    ? '<span class="text-gray-400 text-xs">—</span>'
+                    : '<span class="font-medium ' + (h.tipo === 'ingreso' ? 'text-green-700' : 'text-red-600') + '">' + formatCurrency(h.monto) + '</span>';
+
+                  return '<tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" data-hist-id="' + h.id + '">'
+                    + '<td class="px-4 py-2 text-xs">' + new Date(h.fecha).toLocaleString('es-PY') + '</td>'
+                    + '<td>' + (h.ministry_nombre
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="background:' + (h.ministry_color || '#6b7280') + '20;color:' + (h.ministry_color || '#6b7280') + '">' + h.ministry_nombre + '</span>'
+                        : '<span class="text-gray-400">—</span>') + '</td>'
+                    + '<td>' + tipoCell + '</td>'
+                    + '<td>' + montoCell + '</td>'
+                    + '<td class="text-gray-600 max-w-[200px] truncate" title="' + (h.descripcion || '') + '">' + (h.descripcion || '-') + '</td>'
+                    + '<td>' + (isAuditoria
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">' + h.fuente_label + '</span>'
+                        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (h.fuente === 'tesoreria_central' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800') + '">' + h.fuente_label + '</span>') + '</td>'
+                    + '<td>' + (h.registrado_por_nombre || '-') + '</td>'
+                    + '</tr>';
+                }).join('')
+              : '<tr><td colspan="7" class="text-center py-8 text-gray-500">Selecciona filtros y haz clic en Buscar para ver el historial</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      <div id="hist-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display:none">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center px-5 py-4 border-b border-gray-100"><h3 class="text-base font-semibold text-gray-900">Detalle del Movimiento</h3><button id="hist-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button></div>
+          <div id="hist-modal-body" class="p-5"></div>
+        </div>
+      </div>`;
+    setTimeout(() => {
+      document.getElementById('btn-buscar-historial')?.addEventListener('click', () => {
+        const ini = (document.getElementById('hist-fecha-inicio') as HTMLInputElement).value;
+        const fin = (document.getElementById('hist-fecha-fin') as HTMLInputElement).value;
+        const ministry = (document.getElementById('hist-ministry') as HTMLSelectElement).value;
+        const tipo = (document.getElementById('hist-tipo') as HTMLSelectElement).value;
+        store.fetchHistorial({
+          fechaInicio: ini || undefined,
+          fechaFin: fin || undefined,
+          ministry: ministry || undefined,
+          tipo: tipo || undefined,
+        });
+      });
+      document.querySelectorAll('[data-hist-id]').forEach(row => {
+        row.addEventListener('click', () => {
+          const entryId = (row as HTMLElement).dataset.histId!;
+          const entry = store.getState().historial.find((h: any) => h.id === entryId);
+          if (entry) openHistorialModal(entry);
+        });
+      });
+      document.getElementById('hist-modal-close')?.addEventListener('click', () => {
+        document.getElementById('hist-modal')!.style.display = 'none';
+      });
+      document.getElementById('hist-modal')?.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).id === 'hist-modal') {
+          document.getElementById('hist-modal')!.style.display = 'none';
+        }
+      });
+    }, 0);
+  }
+
+  function openHistorialModal(entry: any) {
+    const body = document.getElementById('hist-modal-body')!;
+    var ingreso = entry.tipo === 'ingreso';
+    var isAuditoria = entry.fuente === 'auditoria';
+    var accionLabels = { creado: 'Creado', editado: 'Editado', eliminado: 'Eliminado' };
+    var accionColors = { creado: 'bg-blue-100 text-blue-800', editado: 'bg-amber-100 text-amber-800', eliminado: 'bg-red-100 text-red-800' };
+    body.innerHTML = `
+      <div class="space-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div><p class="text-xs text-gray-500 uppercase">Fecha</p><p class="font-medium">${new Date(entry.fecha).toLocaleString('es-PY')}</p></div>
+          ${isAuditoria
+            ? '<div><p class="text-xs text-gray-500 uppercase">Acción</p><p><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (accionColors[entry.accion] || 'bg-gray-100 text-gray-800') + '">' + (accionLabels[entry.accion] || entry.accion) + '</span></p></div>'
+            : '<div><p class="text-xs text-gray-500 uppercase">Monto</p><p class="font-bold text-lg ' + (ingreso ? 'text-green-700' : 'text-red-600') + '">' + formatCurrency(entry.monto) + '</p></div>'}
+        </div>
+        ${isAuditoria ? '<div><p class="text-xs text-gray-500 uppercase">Entidad</p><p class="text-gray-700">' + (entry.entidad_tipo === 'ofrenda' ? 'Ofrenda' : 'Movimiento Caja') + ' #' + entry.entidad_id + '</p></div>' : ''}
+        ${!isAuditoria ? '<div><p class="text-xs text-gray-500 uppercase">Tipo</p><p><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ' + (ingreso ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + (entry.tipo_label || entry.tipo) + '</span></p></div>' : ''}
+        ${entry.ministry_nombre ? '<div><p class="text-xs text-gray-500 uppercase">Ministerio</p><p><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="background:' + (entry.ministry_color || '#6b7280') + '20;color:' + (entry.ministry_color || '#6b7280') + '">' + entry.ministry_nombre + '</span></p></div>' : ''}
+        <div><p class="text-xs text-gray-500 uppercase">Descripción</p><p>${entry.descripcion || '—'}</p></div>
+        <div><p class="text-xs text-gray-500 uppercase">Fuente</p><p><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isAuditoria ? 'bg-slate-100 text-slate-700' : (entry.fuente === 'tesoreria_central' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800')}">${entry.fuente_label}</span></p></div>
+        <div><p class="text-xs text-gray-500 uppercase">Registrado por</p><p>${entry.registrado_por_nombre || '—'}</p></div>
+        ${entry.imagen_url ? '<div><p class="text-xs text-gray-500 uppercase">Comprobante</p><img src="' + entry.imagen_url + '" alt="Comprobante" class="max-w-full rounded-md mt-2 border border-gray-200" /></div>' : ''}
+      </div>`;
+    document.getElementById('hist-modal')!.style.display = 'flex';
+  }
+
+  // --- Pendientes ---
+  function renderPendientes(state: any) {
+    const el = document.getElementById('tab-pendientes')!;
+    const pendientes = state.pendientes || [];
+    var catLabels = { ofrenda_general: 'Ofrenda General', caja_alabastro: 'Caja de Alabastro', accion_gracias: 'Acción de Gracias', dip: 'DIP', oracion_ayuno: 'Oración y Ayuno', fem: 'FEM', otros: 'Otros' };
+    var claseLabels = { ninos: 'Niños (0-12)', jovenes: 'Jóvenes (13-17)', adultos_jovenes: 'Adultos Jóvenes (18-35)', adultos: 'Adultos (36-60)', adultos_mayores: 'Adultos Mayores (60+)' };
+    var countEl = document.getElementById('pendientes-count');
+    if (countEl) {
+      if (pendientes.length > 0) {
+        countEl.textContent = String(pendientes.length);
+        countEl.style.display = 'inline-flex';
+      } else {
+        countEl.style.display = 'none';
+      }
+    }
+
+    el.innerHTML = `
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-gray-900">Pendientes de aprobación (${pendientes.length})</h3>
+        <button class="inline-flex items-center justify-center gap-2 font-medium transition-colors text-gray-600 hover:bg-gray-100 px-3 py-1.5 text-xs rounded-md cursor-pointer border border-gray-300" id="btn-recargar-pendientes">Recargar</button>
+      </div>
+      ${pendientes.length === 0
+        ? '<div class="text-center py-12 text-gray-500 bg-white rounded-lg shadow-sm border border-gray-100"><svg class="w-12 h-12 mx-auto mb-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-sm font-medium text-gray-700">No hay movimientos pendientes</p><p class="text-xs text-gray-400 mt-1">Todos los movimientos han sido aprobados</p></div>'
+        : `<div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full text-sm">
+          <thead><tr class="border-b border-gray-200"><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Ministerio</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Origen</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Monto</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Detalle</th><th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Acción</th></tr></thead>
+          <tbody>
+            ${pendientes.map((p: any) => {
+              var isOfrenda = p.tipo === 'ofrenda';
+              var isIngreso = isOfrenda || (p.tipo_movimiento === 'ingreso');
+              var detalle = p.descripcion || '';
+              if (p.categoria) detalle = (catLabels[p.categoria] || p.categoria) + (detalle ? ' · ' + detalle : '');
+              if (p.clase) detalle = (claseLabels[p.clase] || p.clase) + (detalle ? ' · ' + detalle : '');
+              if (!detalle) detalle = '—';
+              return '<tr class="border-b border-gray-100">'
+                + '<td class="px-4 py-2">' + p.fecha.split('T')[0] + '</td>'
+                + '<td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">' + (p.ministry_nombre || '—') + '</span></td>'
+                + '<td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium '
+                + (isOfrenda ? 'bg-amber-100 text-amber-800' : (isIngreso ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'))
+                + '">' + (isOfrenda ? 'Ofrenda' : (isIngreso ? 'Caja · Ingreso' : 'Caja · Egreso')) + '</span></td>'
+                + '<td class="font-medium ' + (isIngreso ? 'text-green-700' : 'text-red-600') + '">' + formatCurrency(p.monto) + '</td>'
+                + '<td class="text-gray-500 text-xs max-w-[200px] truncate" title="' + detalle + '">' + detalle + '</td>'
+                + '<td><button data-aprobar="' + p.tipo + '_' + p.id + '" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md cursor-pointer transition-colors">Aprobar</button></td>'
+                + '</tr>';
+            }).join('')}
+          </tbody>
+        </table></div>`}`;
+    setTimeout(() => {
+      document.getElementById('btn-recargar-pendientes')?.addEventListener('click', () => {
+        store.fetchPendientes();
+      });
+      document.querySelectorAll('[data-aprobar]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const val = (btn as HTMLElement).dataset.aprobar!;
+          const sep = val.indexOf('_');
+          const tipo = val.substring(0, sep);
+          const id = parseInt(val.substring(sep + 1));
+          btn.setAttribute('disabled', 'true');
+          (btn as HTMLButtonElement).textContent = '...';
+          await store.aprobarPendiente(tipo, id);
+        });
+      });
+    }, 0);
+  }
+
   function renderConfiguracion(state: any) {
     const el = document.getElementById('tab-configuracion')!;
     const c = state.config;

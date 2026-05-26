@@ -45,7 +45,7 @@ def generar_informe(anio, mes, usuario):
         return cuotas.get(slug, {}).get(tipo, 0)
 
     # --- Movimientos de caja por ministry ---
-    movs_mes = MovimientoCaja.objects.filter(fecha__year=anio, fecha__month=mes)
+    movs_mes = MovimientoCaja.objects.filter(fecha__year=anio, fecha__month=mes, aprobado=True)
     ingresos_caja = {}
     egresos_caja = {}
     for m in movs_mes.select_related('caja__ministry'):
@@ -60,7 +60,7 @@ def generar_informe(anio, mes, usuario):
             egresos_caja[slug] += val
 
     # --- Ofrendas por ministry ---
-    ofrendas_mes = Ofrenda.objects.filter(fecha__year=anio, fecha__month=mes)
+    ofrendas_mes = Ofrenda.objects.filter(fecha__year=anio, fecha__month=mes, aprobado=True)
     ofrendas_ministry = {}
     for o in ofrendas_mes:
         slug = o.ministry.slug

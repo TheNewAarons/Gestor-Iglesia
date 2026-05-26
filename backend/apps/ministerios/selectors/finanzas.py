@@ -38,5 +38,6 @@ def total_ofrendas_mes(ministry: Ministerio, mes: int, anio: int):
     """Calcula el total de ofrendas de un mes"""
     return ministry.ofrendas.filter(
         fecha__month=mes,
-        fecha__year=anio
+        fecha__year=anio,
+        aprobado=True
     ).aggregate(total=Sum('monto'))['total'] or 0

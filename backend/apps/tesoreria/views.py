@@ -14,10 +14,12 @@ from .serializers import (
 )
 from .permissions import IsTesoreraOrAdmin
 from .selectors import flujo as flujo_selectors
+from .selectors import historial as historial_selectors
 from .services import informe as informe_services
 from .services import traspasos as traspasos_services
 from .services import exportar_excel as exportar_excel_services
-from apps.ministerios.serializers import MovimientoCajaSerializer
+from apps.ministerios.serializers import MovimientoCajaSerializer, OfrendaSerializer
+from apps.ministerios.models import MovimientoCaja, Ofrenda
 
 
 class TesoreriaViewSet(viewsets.GenericViewSet):
@@ -70,7 +72,6 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         boleta_id = request.query_params.get('id')
         if not boleta_id:
             return Response({'error': 'Se requiere parametro id'}, status=400)
-        from apps.ministerios.models import MovimientoCaja
         try:
             boleta = MovimientoCaja.objects.select_related(
                 'caja__ministry', 'registrado_por'
@@ -349,6 +350,125 @@ class TesoreriaViewSet(viewsets.GenericViewSet):
         informes = flujo_selectors.informes_mensuales()
         serializer = InformeMensualSerializer(informes, many=True)
         return Response(serializer.data)
+
+    # ---- Historial unificado ----
+    @action(detail=False, methods=['get'])
+    def historial(self, request):
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        ministry_slug = request.query_params.get('ministry')
+        tipo = request.query_params.get('tipo')
+
+        from datetime import datetime
+        if fecha_inicio:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        if fecha_fin:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+
+        resultados = historial_selectors.listar_historial(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            ministry_slug=ministry_slug,
+            tipo=tipo,
+        )
+
+        for r in resultados:
+            if r['imagen'] and not r['imagen_url']:
+                item = MovimientoCaja.objects.filter(id=int(r['id'].replace('caja_', ''))).first()
+                if item and item.imagen:
+                    r['imagen_url'] = request.build_absolute_uri(item.imagen.url)
+
+        return Response(resultados)
+
+    # ---- Pendientes de aprobación ----
+    @action(detail=False, methods=['get'], url_path='pendientes')
+    def pendientes(self, request):
+        """Lista todos los movimientos y ofrendas pendientes de aprobación"""
+        from django.db.models.functions import TruncDate
+        resultados = []
+
+        ofrendas = Ofrenda.objects.filter(
+            aprobado=False
+        ).select_related('ministry').order_by('-fecha')
+
+        for o in ofrendas:
+            resultados.append({
+                'tipo': 'ofrenda',
+                'id': o.id,
+                'fecha': o.fecha.isoformat(),
+                'ministry_nombre': o.ministry.nombre,
+                'ministry_slug': o.ministry.slug,
+                'monto': float(o.monto),
+                'descripcion': o.observaciones or '',
+                'categoria': o.categoria or '',
+                'clase': o.clase or '',
+            })
+
+        movimientos = MovimientoCaja.objects.filter(
+            aprobado=False
+        ).select_related('caja__ministry', 'registrado_por').order_by('-fecha')
+
+        for m in movimientos:
+            resultados.append({
+                'tipo': 'caja',
+                'id': m.id,
+                'fecha': m.fecha.isoformat() if hasattr(m.fecha, 'isoformat') else str(m.fecha),
+                'ministry_nombre': m.caja.ministry.nombre if m.caja and m.caja.ministry else None,
+                'ministry_slug': m.caja.ministry.slug if m.caja and m.caja.ministry else None,
+                'monto': float(m.monto),
+                'descripcion': m.descripcion or '',
+                'tipo_movimiento': m.tipo,
+            })
+
+        resultados.sort(key=lambda x: x['fecha'], reverse=True)
+        return Response(resultados)
+
+    @action(detail=False, methods=['post'], url_path='pendientes/aprobar')
+    def aprobar_pendiente(self, request):
+        """Aprueba un movimiento u ofrenda pendiente"""
+        tipo = request.data.get('tipo')
+        item_id = request.data.get('id')
+        if not tipo or not item_id:
+            return Response({'error': 'Se requiere tipo e id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if tipo == 'ofrenda':
+            try:
+                ofrenda = Ofrenda.objects.select_related('ministry').get(id=item_id, aprobado=False)
+            except Ofrenda.DoesNotExist:
+                return Response({'error': 'Ofrenda no encontrada o ya aprobada'}, status=status.HTTP_404_NOT_FOUND)
+            from apps.ministerios.services.finanzas import enviar_ofrenda_a_tesoreria
+            enviar_ofrenda_a_tesoreria(ofrenda, request.user)
+            return Response({'success': True, 'message': 'Ofrenda aprobada y enviada a tesorería'})
+
+        elif tipo == 'caja':
+            try:
+                movimiento = MovimientoCaja.objects.get(id=item_id, aprobado=False)
+            except MovimientoCaja.DoesNotExist:
+                return Response({'error': 'Movimiento no encontrado o ya aprobado'}, status=status.HTTP_404_NOT_FOUND)
+            movimiento.aprobado = True
+            movimiento.save()
+            return Response({'success': True, 'message': 'Movimiento aprobado'})
+
+        return Response({'error': 'Tipo inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ---- Ofrendas pendientes (deprecated, kept for compatibility) ----
+    @action(detail=False, methods=['get'], url_path='ofrendas-pendientes')
+    def ofrendas_pendientes(self, request):
+        qs = Ofrenda.objects.filter(
+            aprobado=False
+        ).select_related('ministry').order_by('-fecha')
+        return Response(OfrendaSerializer(qs, many=True).data)
+
+    @action(detail=False, methods=['post'], url_path='ofrendas-pendientes/(?P<ofrenda_id>[0-9]+)/aprobar')
+    def aprobar_ofrenda(self, request, ofrenda_id=None):
+        ofrenda_id = int(ofrenda_id)
+        try:
+            ofrenda = Ofrenda.objects.select_related('ministry').get(id=ofrenda_id, aprobado=False)
+        except Ofrenda.DoesNotExist:
+            return Response({'error': 'Ofrenda no encontrada o ya fue enviada'}, status=status.HTTP_404_NOT_FOUND)
+        from apps.ministerios.services.finanzas import enviar_ofrenda_a_tesoreria
+        ofrenda = enviar_ofrenda_a_tesoreria(ofrenda, request.user)
+        return Response(OfrendaSerializer(ofrenda).data)
 
     # ---- Movimientos de tesoreria ----
     @action(detail=False, methods=['get', 'post'])
