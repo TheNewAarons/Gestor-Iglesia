@@ -2,6 +2,7 @@ from django.db import transaction
 from django.db.models import Sum
 from ..models import ConfiguracionFinanzas, InformeMensual, MovimientoTesoreria, CuotaFija
 from ..selectors import flujo as flujo_selectors
+# pyrefly: ignore [missing-import]
 from apps.ministerios.models import MovimientoCaja, Ofrenda
 
 
