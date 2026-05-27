@@ -18,8 +18,7 @@
 | Finanzas | Tesorería central, flujo de caja, informes | Alta |
 | Calendario | Eventos compartidos entre ministerios | Alta |
 | Usuarios | Gestión de usuarios y permisos | Alta |
-
-> **Nota**: El módulo de Secretaría queda pendiente para una fase posterior.
+| Secretaría | Gestión de actas, solicitudes, visitas y comunicados | Alta |
 
 ---
 
@@ -878,7 +877,227 @@ Suma de: gastos iglesia + gastos otros ministerios + gastos DNI + gastos JNI + g
 
 ---
 
-## 11. Anexos
+## 11. Módulo de Secretaría
+
+### 11.1 Visión General
+
+El módulo de Secretaría centraliza la gestión documental, administrativa y de comunicación de la iglesia. Incluye gestión de actas, solicitudes/trámites, registro de visitas, comunicados internos e integración con WhatsApp.
+
+### 11.2 Actas de Reunión
+
+**Descripción**: Registro y gestión de actas de reuniones de junta directiva, concilio y comités.
+
+**Campos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `titulo` | String(200) | Título del acta |
+| `tipo` | Enum | `junta_directiva`, `concilio`, `comite`, `otra` |
+| `fecha_reunion` | Date | Fecha de la reunión |
+| `hora_reunion` | Time | Hora de la reunión (opcional) |
+| `lugar` | String(200) | Lugar de la reunión |
+| `presidida_por` | String(100) | Persona que presidió |
+| `asistentes` | JSON | Lista de asistentes |
+| `orden_del_dia` | JSON | Orden del día (temas a tratar) |
+| `acuerdos` | JSON | Acuerdos tomados |
+| `observaciones` | Texto | Observaciones adicionales |
+| `estado` | Enum | `borrador`, `aprobada`, `archivada` |
+| `creado_por` | FK User | Usuario que creó |
+| `aprobada_por` | FK User | Usuario que aprobó |
+| `aprobada_en` | DateTime | Fecha y hora de aprobación |
+
+**Requerimientos**:
+- R-R001: Crear actas con todos los campos
+- R-R002: Editar actas en estado borrador
+- R-R003: Cambiar acta a aprobada
+- R-R004: Archivar actas aprobadas
+- R-R005: Filtrar actas por estado y tipo
+- R-R006: Generar PDF del acta con firma digital
+- R-R007: Ver historial de actas archivadas
+
+### 11.3 Solicitudes y Trámites
+
+**Descripción**: Gestión de solicitudes administrativas (membresía, cartas, bautismo, matrimonio, transferencias, retiros).
+
+**Campos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `tipo` | Enum | Tipo de solicitud (membresía, carta recomendación, bautismo, matrimonio, etc.) |
+| `solicitante_nombre` | String(200) | Nombre del solicitante |
+| `solicitante_miembro` | FK Miembro | Miembro vinculado (opcional) |
+| `ministerio` | FK Ministerio | Ministerio relacionado (opcional) |
+| `descripcion` | Texto | Descripción de la solicitud |
+| `datos_adicionales` | JSON | Datos específicos según tipo |
+| `estado` | Enum | `pendiente`, `en_proceso`, `aprobada`, `rechazada` |
+| `prioridad` | Enum | `alta`, `media`, `baja` |
+| `fecha_solicitud` | Date | Fecha de solicitud |
+| `fecha_resolucion` | Date | Fecha de resolución |
+| `resolucion_notas` | Texto | Notas de la resolución |
+| `atendida_por` | FK User | Usuario que atendió |
+| `documento_generado` | File | Documento generado automáticamente |
+
+**Tipos de Solicitud**:
+- `membresia` - Solicitud de membresía
+- `carta_recomendacion` - Carta de recomendación
+- `carta_membresia` - Carta de membresía
+- `transferencia` - Transferencia de membresía
+- `bautismo` - Solicitud de bautismo
+- `matrimonio` - Solicitud de matrimonio
+- `retiro` - Retiro voluntario
+- `otra` - Otra solicitud
+
+**Requerimientos**:
+- R-R008: Crear solicitudes de diferentes tipos
+- R-R009: Registrar datos específicos según tipo
+- R-R010: Cambiar estado de solicitud
+- R-R011: Generar documentos automáticamente (cartas, certificados)
+- R-R012: Ver listado de solicitudes con filtros
+- R-R013: Asignar solicitud a usuario para atender
+- R-R014: Registrar resolución y notas
+- R-R015: Generar reporte de solicitudes por período
+
+### 11.4 Registro de Visitas
+
+**Descripción**: Registro y seguimiento de visitas a la iglesia.
+
+**Campos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `nombre` | String(200) | Nombre del visitante |
+| `telefono` | String(20) | Teléfono del visitante |
+| `email` | Email | Email del visitante |
+| `direccion` | Texto | Dirección del visitante |
+| `fecha_primera_visita` | Date | Fecha de primera visita |
+| `cantidad_visitas` | Integer | Cantidad total de visitas |
+| `ultima_visita` | Date | Fecha de última visita |
+| `ministerio_interes` | FK Ministerio | Ministerio de interés |
+| `seguimiento` | Enum | `sin_seguimiento`, `contactado`, `integrado`, `no_regreso` |
+| `responsable_seguimiento` | FK User | Usuario responsable del seguimiento |
+| `convertido_miembro` | Boolean | Si fue convertido en miembro |
+| `miembro_vinculado` | FK Miembro | Miembro vinculado (si aplica) |
+| `notas` | Texto | Notas adicionales |
+
+**Requerimientos**:
+- R-R016: Registrar visitante con datos personales
+- R-R017: Registrar múltiples visitas del mismo visitante
+- R-R018: Cambiar estado de seguimiento
+- R-R019: Asignar responsable de seguimiento
+- R-R020: Vincular visitante con miembro una vez integrado
+- R-R021: Ver historial completo del visitante
+- R-R022: Filtrar visitantes por estado de seguimiento
+- R-R023: Reportes de visitantes por período
+
+### 11.5 Historial de Estado de Miembros
+
+**Descripción**: Registro de eventos importantes en la vida de un miembro (ingresos, transferencias, bautismo, disciplina, fallecimiento, etc.).
+
+**Campos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `miembro` | FK Miembro | Miembro |
+| `evento` | Enum | Tipo de evento |
+| `fecha_evento` | Date | Fecha del evento |
+| `descripcion` | Texto | Descripción del evento |
+| `iglesia_origen` | String(200) | Iglesia de origen (transferencias) |
+| `iglesia_destino` | String(200) | Iglesia destino (transferencias) |
+| `documentado_por` | FK User | Usuario que documentó |
+| `documento_adjunto` | File | Documento de evidencia |
+
+**Tipos de Evento**:
+- `ingreso` - Ingreso como miembro
+- `transferencia_entrada` - Transferencia desde otra iglesia
+- `transferencia_salida` - Transferencia a otra iglesia
+- `bautismo` - Bautismo
+- `disciplina` - Proceso disciplinario
+- `restauracion` - Restauración
+- `retiro_voluntario` - Retiro voluntario
+- `fallecimiento` - Fallecimiento
+- `otra` - Otra anotación
+
+**Requerimientos**:
+- R-R024: Registrar eventos en historial de miembros
+- R-R025: Adjuntar documentos de evidencia
+- R-R026: Ver historial cronológico de un miembro
+- R-R027: Filtrar por tipo de evento
+- R-R028: Generar reporte de miembros por evento
+
+### 11.6 Comunicados Internos
+
+**Descripción**: Envío de comunicados a la iglesia con confirmación de lectura.
+
+**Campos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `titulo` | String(200) | Título del comunicado |
+| `contenido` | Texto | Contenido del comunicado |
+| `destinatarios` | Enum | `todos`, `lideres`, `ministerio`, `roles` |
+| `ministerios_destino` | M2M | Ministerios específicos (si aplica) |
+| `roles_destino` | JSON | Roles específicos (si aplica) |
+| `archivo_adjunto` | File | Archivo adjunto (opcional) |
+| `requiere_confirmacion` | Boolean | Si requiere confirmación de lectura |
+| `publicado` | Boolean | Si está publicado |
+| `fecha_publicacion` | DateTime | Fecha y hora de publicación |
+| `fecha_vencimiento` | Date | Fecha de vencimiento |
+| `creado_por` | FK User | Usuario que creó |
+
+**Requerimientos**:
+- R-R029: Crear comunicados con contenido estructurado
+- R-R030: Seleccionar destinatarios (todos, líderes, ministerios específicos, roles)
+- R-R031: Publicar comunicados
+- R-R032: Registrar lectura de comunicados
+- R-R033: Ver quién ha leído el comunicado
+- R-R034: Adjuntar archivos a comunicados
+- R-R035: Establecer fecha de vencimiento
+- R-R036: Generar reporte de comunicados
+
+### 11.7 Automatización WhatsApp
+
+**Descripción**: Envío automático de mensajes a grupos de WhatsApp en horarios configurables.
+
+**Configuración**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `grupo_jid` | String(100) | ID del grupo de WhatsApp |
+| `hora_envio` | Time | Hora de envío automático |
+| `activo` | Boolean | Si está activo |
+| `rotacion_index` | Integer | Índice para rotación de mensajes |
+
+**Mensajes**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `numero` | Integer | Número secuencial del mensaje |
+| `texto` | Texto | Texto del mensaje |
+| `imagen` | Image | Imagen adjunta (opcional) |
+| `activo` | Boolean | Si está activo |
+
+**Log de Envíos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `mensaje` | FK MensajeWhatsApp | Mensaje enviado |
+| `texto_enviado` | Texto | Texto que se envió |
+| `grupo_jid` | String | Grupo de destino |
+| `estado` | Enum | `exitoso`, `fallido` |
+| `error_detalle` | Texto | Detalle del error |
+| `enviado_en` | DateTime | Fecha y hora de envío |
+
+**Características**:
+- Envío automático en horario configurado
+- Rotación de mensajes (1, 2, 3... en secuencia)
+- Soporte de imágenes en mensajes
+- Log de todos los envíos
+- Rastreo de errores
+
+**Requerimientos**:
+- R-R037: Configurar grupo de WhatsApp
+- R-R038: Establecer hora de envío automático
+- R-R039: Crear mensajes con texto e imagen
+- R-R040: Activar/desactivar envíos automáticos
+- R-R041: Ver log de envíos con estado
+- R-R042: Registrar errores de envío
+- R-R043: Generar reporte de mensajes enviados
+
+---
+
+## 12. Anexos
 
 ### Glosario
 
@@ -919,6 +1138,7 @@ Suma de: gastos iglesia + gastos otros ministerios + gastos DNI + gastos JNI + g
 4. **Fase 4**: Finanzas (tesorería e informes)
 5. **Fase 5**: MNI (enfoques y programa)
 6. **Fase 6**: Comunicaciones
+7. **Fase 7**: Secretaría (actas, solicitudes, visitas, comunicados, WhatsApp) ✓ Implementada
 
 ### Base de datos
 
@@ -943,7 +1163,7 @@ Suma de: gastos iglesia + gastos otros ministerios + gastos DNI + gastos JNI + g
 
 ---
 
-## 13. Requerimientos No Funcionales
+## 13. Requerimientos No Funcionales (Generales)
 
 ### 13.1 Rendimiento
 
