@@ -6,10 +6,16 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.85', '100.99.228.113']
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'iglesia_db',
+        'USER': 'aarons',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
+BACKUP_DIR = BASE_DIR / 'backups'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4321',

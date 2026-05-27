@@ -38,6 +38,11 @@ def _pendientes_job():
     alertar_pendientes_vencidos()
 
 
+def _backup_job():
+    from apps.secretaria.backup import realizar_backup
+    realizar_backup()
+
+
 def start():
     global _started
     if _started:
@@ -79,5 +84,12 @@ def start():
         id='pendientes_alerta',
         replace_existing=True,
         misfire_grace_time=3600,
+    )
+    _scheduler.add_job(
+        _backup_job,
+        trigger=CronTrigger(hour=2, minute=0),
+        id='backup_diario',
+        replace_existing=True,
+        misfire_grace_time=7200,
     )
     _scheduler.start()
