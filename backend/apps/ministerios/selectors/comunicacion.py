@@ -13,11 +13,13 @@ def listar_recursos(filters: dict = None):
 
 
 def listar_ideas(filters: dict = None):
-    """Lista ideas de comunicación con filtros"""
+    """Lista ideas de comunicación con filtros."""
     queryset = IdeaComunicacion.objects.select_related('ministry')
     if filters:
         if ministry_slug := filters.get('ministerio'):
             queryset = queryset.filter(ministry__slug=ministry_slug)
         if completada := filters.get('completada'):
             queryset = queryset.filter(completada=completada.lower() == 'true')
+        if prioridad := filters.get('prioridad'):
+            queryset = queryset.filter(prioridad=prioridad)
     return queryset

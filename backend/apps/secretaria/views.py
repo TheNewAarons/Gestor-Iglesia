@@ -259,14 +259,25 @@ class HistorialEstadoMiembroViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = HistorialEstadoMiembro.objects.select_related(
             'miembro', 'documentado_por'
-        )
-        miembro_id = self.request.query_params.get('miembro')
-        if miembro_id:
+        ).order_by('-fecha_evento')
+        if miembro_id := self.request.query_params.get('miembro'):
             qs = qs.filter(miembro_id=miembro_id)
+        if tipo_evento := self.request.query_params.get('tipo_evento'):
+            qs = qs.filter(tipo_evento=tipo_evento)
         return qs
 
     def perform_create(self, serializer):
         serializer.save(documentado_por=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def exportar_pdf(self, request):
+        from apps.secretaria.services import documentos as documentos_svc
+        from django.http import HttpResponse
+        qs = self.get_queryset()
+        pdf = documentos_svc.reporte_historial_pdf(qs)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="historial_estado_miembros.pdf"'
+        return response
 
 
 class DirectorioViewSet(viewsets.GenericViewSet):

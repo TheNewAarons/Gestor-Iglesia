@@ -24,8 +24,14 @@ def listar_eventos(filters: dict = None):
     return queryset
 
 
-def listar_eventos_calendario(year: int, month: int, ministerio_slug: str = None):
-    """Eventos del mes para la vista de calendario, incluyendo multi-día"""
+def listar_eventos_calendario(
+    year: int,
+    month: int,
+    ministerio_slug: str = None,
+    ubicacion: str = None,
+    search: str = None,
+):
+    """Eventos del mes para la vista de calendario, incluyendo multi-día."""
     import calendar
     last_day = calendar.monthrange(year, month)[1]
     month_start = date(year, month, 1)
@@ -43,6 +49,12 @@ def listar_eventos_calendario(year: int, month: int, ministerio_slug: str = None
             Q(ministry__slug=ministerio_slug) |
             Q(ministerios_relacionados__slug=ministerio_slug)
         ).distinct()
+
+    if ubicacion:
+        queryset = queryset.filter(ubicacion__icontains=ubicacion)
+
+    if search:
+        queryset = queryset.filter(titulo__icontains=search)
 
     return queryset.order_by('fecha_inicio')
 

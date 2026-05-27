@@ -111,9 +111,16 @@ def actualizar_usuario(user: User, **kwargs) -> User:
 
 @transaction.atomic
 def desactivar_usuario(user: User) -> User:
-    """Desactiva un usuario (soft delete)"""
+    """Desactiva un usuario: soft delete + limpieza de ministerios + invalidar JWT."""
     user.is_active = False
+    user.ministerios_lidera.clear()
     user.save()
+    try:
+        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+        for token in OutstandingToken.objects.filter(user=user):
+            BlacklistedToken.objects.get_or_create(token=token)
+    except Exception:
+        pass
     return user
 
 

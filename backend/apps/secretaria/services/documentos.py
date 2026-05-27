@@ -368,3 +368,28 @@ def reporte_historial_miembro_pdf(historial_qs, miembro) -> bytes:
 
     doc.build(story)
     return buffer.getvalue()
+
+
+def reporte_historial_pdf(historial_qs) -> bytes:
+    buffer = BytesIO()
+    doc = _base_doc(buffer, 'Historial de Estado de Miembros')
+    styles = _styles()
+
+    story = [
+        Paragraph('IGLESIA DEL NAZARENO', styles['Titulo']),
+        Paragraph('Historial de Estado de Miembros', styles['Subtitulo']),
+        HRFlowable(width='100%', thickness=1, color=colors.HexColor('#1E3A5F')),
+        Spacer(1, 0.3 * cm),
+        Paragraph(f'Total de registros: <b>{historial_qs.count()}</b>', styles['Normal']),
+        Spacer(1, 0.2 * cm),
+    ]
+
+    for h in historial_qs.select_related('miembro', 'documentado_por'):
+        nombre = h.miembro.nombre_completo if h.miembro else '—'
+        story.append(Paragraph(f'<b>{nombre}</b> — {h.get_evento_display()} — {h.fecha_evento}', styles['Normal']))
+        if h.descripcion:
+            story.append(Paragraph(h.descripcion, styles['Normal']))
+        story.append(Spacer(1, 0.15 * cm))
+
+    doc.build(story)
+    return buffer.getvalue()

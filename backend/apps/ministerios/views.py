@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, permissions, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .throttles import LoginRateThrottle
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
 
@@ -61,6 +62,7 @@ User = get_user_model()
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -686,8 +688,10 @@ class CancionViewSet(viewsets.ModelViewSet):
     serializer_class = CancionSerializer
 
     def get_queryset(self):
-        categoria = self.request.query_params.get('categoria')
-        return alabanza_selectors.listar_canciones(categoria)
+        return alabanza_selectors.listar_canciones(
+            categoria=self.request.query_params.get('categoria'),
+            search=self.request.query_params.get('search'),
+        )
 
     @action(detail=False, methods=['post'])
     def generar_programa(self, request):
@@ -738,6 +742,7 @@ class IdeaComunicacionViewSet(viewsets.ModelViewSet):
         return comunicacion_selectors.listar_ideas({
             'ministerio': self.request.query_params.get('ministerio'),
             'completada': self.request.query_params.get('completada'),
+            'prioridad': self.request.query_params.get('prioridad'),
         })
 
 
@@ -788,7 +793,6 @@ class EventoViewSet(viewsets.ModelViewSet):
     def calendario(self, request):
         year = request.query_params.get('year')
         month = request.query_params.get('month')
-        ministerio = request.query_params.get('ministerio')
 
         if not year or not month:
             return Response(
@@ -797,7 +801,11 @@ class EventoViewSet(viewsets.ModelViewSet):
             )
 
         eventos = eventos_selectors.listar_eventos_calendario(
-            int(year), int(month), ministerio
+            int(year),
+            int(month),
+            ministerio_slug=request.query_params.get('ministerio'),
+            ubicacion=request.query_params.get('ubicacion'),
+            search=request.query_params.get('search'),
         )
         return Response(EventoSerializer(eventos, many=True).data)
 

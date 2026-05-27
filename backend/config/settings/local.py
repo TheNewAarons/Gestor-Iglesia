@@ -16,6 +16,7 @@ DATABASES = {
 }
 
 BACKUP_DIR = BASE_DIR / 'backups'
+BACKUP_RETENTION_DAYS = 30
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4321',

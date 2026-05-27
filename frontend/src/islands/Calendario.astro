@@ -36,13 +36,15 @@ const MESES = [
         </button>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <button id="btn-today" class="px-3 py-1.5 text-sm font-medium text-accent bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors">
           Hoy
         </button>
         <select id="filter-ministerio" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none">
           <option value="">Todos los ministerios</option>
         </select>
+        <input id="filter-ubicacion" type="text" placeholder="Ubicación..." class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none w-40">
+        <input id="filter-search" type="text" placeholder="Buscar evento..." class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none w-40">
       </div>
     </div>
 
@@ -156,15 +158,21 @@ const MESES = [
     const skeleton = document.getElementById('calendario-skeleton');
     const content = document.getElementById('calendario-content');
     const select = document.getElementById('filter-ministerio');
+    const ubicacionInput = document.getElementById('filter-ubicacion');
+    const searchInput = document.getElementById('filter-search');
 
     const ahora = new Date();
     year = ahora.getFullYear();
     month = ahora.getMonth() + 1;
     const ministerioSlug = select ? select.value : '';
+    const ubicacion = ubicacionInput ? ubicacionInput.value : '';
+    const search = searchInput ? searchInput.value : '';
 
     try {
       const params = new URLSearchParams({ year: year.toString(), month: month.toString() });
       if (ministerioSlug) params.append('ministerio', ministerioSlug);
+      if (ubicacion) params.append('ubicacion', ubicacion);
+      if (search) params.append('search', search);
       events = await api.get('/eventos/calendario/?' + params.toString());
     } catch (e) {
       events = [];
@@ -501,6 +509,12 @@ const MESES = [
       await loadCalendario();
     });
     document.getElementById('filter-ministerio').addEventListener('change', async function() {
+      await loadCalendario();
+    });
+    document.getElementById('filter-ubicacion').addEventListener('input', async function() {
+      await loadCalendario();
+    });
+    document.getElementById('filter-search').addEventListener('input', async function() {
       await loadCalendario();
     });
 

@@ -637,9 +637,15 @@ class MinisteriosStore {
     }
   }
 
-  async fetchCanciones() {
+  async fetchCanciones(search?: string, categoria?: string) {
     try {
-      const canciones = await api.get<Cancion[]>('/canciones/');
+      let url = '/canciones/';
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (categoria) params.append('categoria', categoria);
+      const queryString = params.toString();
+      if (queryString) url += '?' + queryString;
+      const canciones = await api.get<Cancion[]>(url);
       this.setState({ canciones });
     } catch (error) {
       console.error('Error fetching canciones:', error);
@@ -742,11 +748,12 @@ class MinisteriosStore {
     }
   }
 
-  async fetchIdeas(slug?: string) {
+  async fetchIdeas(slug?: string, prioridad?: string) {
     try {
       let url = '/ideas/';
       const params = new URLSearchParams();
       if (slug) params.append('ministerio', slug);
+      if (prioridad) params.append('prioridad', prioridad);
       const queryString = params.toString();
       if (queryString) url += '?' + queryString;
       const ideas = await api.get<IdeaComunicacion[]>(url);

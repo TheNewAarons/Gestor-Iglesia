@@ -1,12 +1,17 @@
+from django.db.models import Q
 from ..models import Cancion, ProgramaAlabanza, Ministerio
 
 
-def listar_canciones(categoria: str = None):
-    """Lista canciones del banco con filtro opcional por categoría"""
+def listar_canciones(categoria: str = None, search: str = None):
+    """Lista canciones del banco con filtros por categoría y búsqueda textual."""
     queryset = Cancion.objects.all()
     if categoria:
         queryset = queryset.filter(categoria=categoria)
-    return queryset
+    if search:
+        queryset = queryset.filter(
+            Q(titulo__icontains=search) | Q(artista__icontains=search)
+        )
+    return queryset.order_by('titulo')
 
 
 def obtener_cancion(pk: int):

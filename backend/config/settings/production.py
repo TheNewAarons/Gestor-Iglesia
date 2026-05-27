@@ -55,6 +55,9 @@ CACHES = {
     }
 }
 
+BACKUP_DIR = BASE_DIR / 'backups'
+BACKUP_RETENTION_DAYS = 365
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

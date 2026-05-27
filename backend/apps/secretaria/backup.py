@@ -52,7 +52,8 @@ def realizar_backup():
         size_kb = gz_file.stat().st_size // 1024
         logger.info('Backup creado: %s (%d KB)', gz_file.name, size_kb)
 
-        _limpiar_backups_viejos(backup_dir, dias=30)
+        dias = getattr(settings, 'BACKUP_RETENTION_DAYS', 365)
+        _limpiar_backups_viejos(backup_dir, dias=dias)
 
     except subprocess.TimeoutExpired:
         logger.error('Backup timeout después de 5 minutos.')
