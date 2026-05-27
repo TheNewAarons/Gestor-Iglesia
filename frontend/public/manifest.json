@@ -1,0 +1,21 @@
+{
+  "name": "Gestor Iglesia",
+  "short_name": "Iglesia",
+  "description": "Gestión centralizada para ministerios, finanzas y secretaría",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1E3A5F",
+  "theme_color": "#1E3A5F",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/logos/IDN Juan noe_B.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities"]
+}

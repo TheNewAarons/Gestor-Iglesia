@@ -208,7 +208,7 @@ class SecretariaStore {
 
   // ─── ACTAS ─────────────────────────────────────────────────────────────────
 
-  async fetchActas(params?: { estado?: string; tipo?: string }) {
+  async fetchActas(params?: { estado?: string; tipo?: string; search?: string; fecha_desde?: string; fecha_hasta?: string }) {
     this.setState({ isLoading: true, error: null });
     try {
       const query = new URLSearchParams(params as Record<string, string>).toString();
@@ -244,7 +244,7 @@ class SecretariaStore {
 
   // ─── SOLICITUDES ───────────────────────────────────────────────────────────
 
-  async fetchSolicitudes(params?: { estado?: string; tipo?: string }) {
+  async fetchSolicitudes(params?: { estado?: string; tipo?: string; search?: string; fecha_desde?: string; fecha_hasta?: string }) {
     this.setState({ isLoading: true, error: null });
     try {
       const query = new URLSearchParams(params as Record<string, string>).toString();
@@ -275,7 +275,7 @@ class SecretariaStore {
 
   // ─── VISITAS ───────────────────────────────────────────────────────────────
 
-  async fetchVisitas(params?: { activo?: string; seguimiento?: string }) {
+  async fetchVisitas(params?: { activo?: string; seguimiento?: string; search?: string; fecha_desde?: string; fecha_hasta?: string }) {
     this.setState({ isLoading: true, error: null });
     try {
       const query = new URLSearchParams(params as Record<string, string>).toString();
@@ -306,11 +306,12 @@ class SecretariaStore {
 
   // ─── COMUNICADOS ───────────────────────────────────────────────────────────
 
-  async fetchComunicados(publicado?: boolean) {
+  async fetchComunicados(params?: { publicado?: boolean | string; search?: string; fecha_desde?: string; fecha_hasta?: string }) {
     this.setState({ isLoading: true, error: null });
     try {
-      const query = publicado !== undefined ? `?publicado=${publicado}` : '';
-      const data = await api.get<{ results: ComunicadoInterno[] }>(`/secretaria/comunicados/${query}`);
+      const p = params ? { ...params } : {};
+      const query = new URLSearchParams(p as Record<string, string>).toString();
+      const data = await api.get<{ results: ComunicadoInterno[] }>(`/secretaria/comunicados/${query ? '?' + query : ''}`);
       this.setState({ comunicados: data.results ?? (data as any), isLoading: false });
     } catch (e: any) {
       this.setState({ isLoading: false, error: e.message });
@@ -331,6 +332,17 @@ class SecretariaStore {
 
   async marcarLeido(id: number) {
     return await api.post(`/secretaria/comunicados/${id}/marcar_leido/`, {});
+  }
+
+  async updateComunicado(id: number, data: Partial<ComunicadoInterno>) {
+    const updated = await api.patch<ComunicadoInterno>(`/secretaria/comunicados/${id}/`, data);
+    this.setState({ comunicados: this.state.comunicados.map((c) => (c.id === id ? updated : c)) });
+    return updated;
+  }
+
+  async deleteComunicado(id: number) {
+    await api.delete(`/secretaria/comunicados/${id}/`);
+    this.setState({ comunicados: this.state.comunicados.filter((c) => c.id !== id) });
   }
 
   // ─── HISTORIAL ─────────────────────────────────────────────────────────────

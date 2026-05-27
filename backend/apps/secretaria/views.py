@@ -40,14 +40,13 @@ class ActaReunionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsSecretariaOrAdmin]
 
     def get_queryset(self):
-        qs = actas_sel.listar_actas()
-        estado = self.request.query_params.get('estado')
-        tipo = self.request.query_params.get('tipo')
-        if estado:
-            qs = qs.filter(estado=estado)
-        if tipo:
-            qs = qs.filter(tipo=tipo)
-        return qs
+        return actas_sel.listar_actas(
+            estado=self.request.query_params.get('estado'),
+            tipo=self.request.query_params.get('tipo'),
+            search=self.request.query_params.get('search'),
+            fecha_desde=self.request.query_params.get('fecha_desde'),
+            fecha_hasta=self.request.query_params.get('fecha_hasta'),
+        )
 
     def perform_create(self, serializer):
         acta = actas_svc.crear_acta(self.request.user, **serializer.validated_data)
@@ -89,14 +88,13 @@ class SolicitudTramiteViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        qs = solicitudes_sel.listar_solicitudes()
-        estado = self.request.query_params.get('estado')
-        tipo = self.request.query_params.get('tipo')
-        if estado:
-            qs = qs.filter(estado=estado)
-        if tipo:
-            qs = qs.filter(tipo=tipo)
-        return qs
+        return solicitudes_sel.listar_solicitudes(
+            estado=self.request.query_params.get('estado'),
+            tipo=self.request.query_params.get('tipo'),
+            search=self.request.query_params.get('search'),
+            fecha_desde=self.request.query_params.get('fecha_desde'),
+            fecha_hasta=self.request.query_params.get('fecha_hasta'),
+        )
 
     def perform_create(self, serializer):
         solicitud = solicitudes_svc.crear_solicitud(
@@ -131,20 +129,31 @@ class SolicitudTramiteViewSet(viewsets.ModelViewSet):
         solicitud = solicitudes_svc.generar_documento_solicitud(solicitud)
         return Response(SolicitudTramiteSerializer(solicitud, context={'request': request}).data)
 
+    @action(detail=False, methods=['get'])
+    def exportar_pdf(self, request):
+        qs = self.get_queryset()
+        fecha_desde = request.query_params.get('fecha_desde')
+        fecha_hasta = request.query_params.get('fecha_hasta')
+        pdf_bytes = documentos_svc.reporte_solicitudes_pdf(qs, fecha_desde, fecha_hasta)
+        resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="reporte_solicitudes.pdf"'
+        return resp
+
 
 class VisitaIglesiaViewSet(viewsets.ModelViewSet):
     serializer_class = VisitaIglesiaSerializer
     permission_classes = [IsSecretariaOrAdmin]
 
     def get_queryset(self):
-        qs = visitas_sel.listar_visitas(activo=None)
-        activo = self.request.query_params.get('activo')
-        seguimiento = self.request.query_params.get('seguimiento')
-        if activo is not None:
-            qs = qs.filter(activo=activo.lower() == 'true')
-        if seguimiento:
-            qs = qs.filter(seguimiento=seguimiento)
-        return qs
+        activo_param = self.request.query_params.get('activo')
+        activo = activo_param.lower() == 'true' if activo_param else None
+        return visitas_sel.listar_visitas(
+            activo=activo if activo_param else True,
+            seguimiento=self.request.query_params.get('seguimiento'),
+            search=self.request.query_params.get('search'),
+            fecha_desde=self.request.query_params.get('fecha_desde'),
+            fecha_hasta=self.request.query_params.get('fecha_hasta'),
+        )
 
     def perform_create(self, serializer):
         visita = visitas_svc.registrar_visita(
@@ -189,6 +198,16 @@ class VisitaIglesiaViewSet(viewsets.ModelViewSet):
         visita = visitas_svc.vincular_a_miembro(visita, miembro)
         return Response(VisitaIglesiaSerializer(visita, context={'request': request}).data)
 
+    @action(detail=False, methods=['get'])
+    def exportar_pdf(self, request):
+        qs = self.get_queryset()
+        fecha_desde = request.query_params.get('fecha_desde')
+        fecha_hasta = request.query_params.get('fecha_hasta')
+        pdf_bytes = documentos_svc.reporte_visitas_pdf(qs, fecha_desde, fecha_hasta)
+        resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="reporte_visitas.pdf"'
+        return resp
+
 
 class ComunicadoInternoViewSet(viewsets.ModelViewSet):
     serializer_class = ComunicadoInternoSerializer
@@ -196,10 +215,13 @@ class ComunicadoInternoViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        publicado = self.request.query_params.get('publicado')
-        if publicado is not None:
-            return comunicados_sel.listar_comunicados(publicado=publicado.lower() == 'true')
-        return comunicados_sel.listar_comunicados()
+        publicado_param = self.request.query_params.get('publicado')
+        return comunicados_sel.listar_comunicados(
+            publicado=publicado_param.lower() == 'true' if publicado_param else None,
+            search=self.request.query_params.get('search'),
+            fecha_desde=self.request.query_params.get('fecha_desde'),
+            fecha_hasta=self.request.query_params.get('fecha_hasta'),
+        )
 
     def perform_create(self, serializer):
         ministerios_ids = self.request.data.getlist('ministerios_destino', [])

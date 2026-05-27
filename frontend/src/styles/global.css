@@ -34,3 +34,74 @@
     @apply animate-pulse bg-gray-200 rounded;
   }
 }
+
+/* Responsive tables — mobile card view (≤640px only, desktop unchanged) */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    overflow-x: visible;
+  }
+
+  .overflow-x-auto table,
+  .overflow-x-auto thead,
+  .overflow-x-auto tbody,
+  .overflow-x-auto th,
+  .overflow-x-auto td,
+  .overflow-x-auto tr {
+    display: block;
+  }
+
+  .overflow-x-auto thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .overflow-x-auto tbody tr {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 4px 0;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .overflow-x-auto tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.8rem;
+    min-height: 36px;
+    gap: 8px;
+  }
+
+  .overflow-x-auto tbody td:last-child {
+    border-bottom: none;
+  }
+
+  .overflow-x-auto tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    min-width: 70px;
+  }
+
+  .overflow-x-auto tbody td:empty::before {
+    display: none;
+  }
+
+  /* Ocultar columna acciones del label */
+  .overflow-x-auto tbody td:last-child::before {
+    display: none;
+  }
+  .overflow-x-auto tbody td:last-child {
+    justify-content: flex-end;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}

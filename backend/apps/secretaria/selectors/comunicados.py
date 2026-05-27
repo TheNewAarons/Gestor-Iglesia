@@ -1,12 +1,22 @@
+from django.db.models import Q
 from apps.secretaria.models import ComunicadoInterno, LecturaComunicado
 
 
-def listar_comunicados(publicado=None):
+def listar_comunicados(publicado=None, search=None, fecha_desde=None, fecha_hasta=None):
     qs = ComunicadoInterno.objects.select_related('creado_por').prefetch_related(
         'ministerios_destino', 'lecturas'
     )
     if publicado is not None:
         qs = qs.filter(publicado=publicado)
+    if search:
+        qs = qs.filter(
+            Q(titulo__icontains=search) |
+            Q(contenido__icontains=search)
+        )
+    if fecha_desde:
+        qs = qs.filter(created_at__gte=fecha_desde)
+    if fecha_hasta:
+        qs = qs.filter(created_at__lte=fecha_hasta)
     return qs
 
 

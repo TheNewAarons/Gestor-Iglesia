@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.85', '100.99.228.113']
 
 DATABASES = {
     'default': {
@@ -15,12 +15,20 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:4321',
     'http://localhost:4322',
     'http://localhost:3000',
+    'http://192.168.1.85:4321',
+    'http://100.99.228.113:4321',
+    'http://192.168.1.85:4322',
+    'http://100.99.228.113:4322',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4321',
     'http://localhost:4322',
     'http://localhost:3000',
+    'http://192.168.1.85:4321',
+    'http://100.99.228.113:4321',
+    'http://192.168.1.85:4322',
+    'http://100.99.228.113:4322',
 ]
 
 CSRF_COOKIE_HTTPONLY = False

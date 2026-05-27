@@ -66,6 +66,24 @@ class SolicitudTramiteSerializer(serializers.ModelSerializer):
     def get_ministerio_nombre(self, obj):
         return obj.ministerio.nombre if obj.ministerio else None
 
+    REQUIRED_FIELDS = {
+        'carta_recomendacion': ['iglesia_destino'],
+        'transferencia': ['iglesia_origen', 'iglesia_destino'],
+        'bautismo': ['fecha_bautismo'],
+        'matrimonio': ['nombre_conyuge', 'fecha_ceremonia'],
+    }
+
+    def validate(self, data):
+        tipo = data.get('tipo')
+        adicionales = data.get('datos_adicionales', {})
+        required = self.REQUIRED_FIELDS.get(tipo, [])
+        missing = [f for f in required if not adicionales.get(f)]
+        if missing:
+            raise serializers.ValidationError({
+                'datos_adicionales': f'Campos requeridos para {tipo}: {", ".join(missing)}'
+            })
+        return data
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.documento_generado:

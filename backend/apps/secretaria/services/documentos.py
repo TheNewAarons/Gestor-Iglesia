@@ -251,3 +251,120 @@ def exportar_directorio_pdf(miembros_qs) -> bytes:
 
     doc.build(story)
     return buffer.getvalue()
+
+
+def reporte_solicitudes_pdf(solicitudes_qs, fecha_desde=None, fecha_hasta=None) -> bytes:
+    buffer = BytesIO()
+    doc = _base_doc(buffer, 'Reporte de Solicitudes')
+    styles = _styles()
+
+    story = [
+        Paragraph('IGLESIA DEL NAZARENO', styles['Titulo']),
+        Paragraph('Reporte de Solicitudes y Trámites', styles['Subtitulo']),
+        HRFlowable(width='100%', thickness=1, color=colors.HexColor('#1E3A5F')),
+        Spacer(1, 0.3 * cm),
+    ]
+
+    if fecha_desde or fecha_hasta:
+        rango = []
+        if fecha_desde:
+            rango.append(f'Desde: {fecha_desde}')
+        if fecha_hasta:
+            rango.append(f'Hasta: {fecha_hasta}')
+        story.append(Paragraph(f'Período: {" | ".join(rango)}', styles['Normal']))
+        story.append(Spacer(1, 0.2 * cm))
+
+    story.append(Paragraph(f'Total de solicitudes: <b>{solicitudes_qs.count()}</b>', styles['Normal']))
+    story.append(Spacer(1, 0.3 * cm))
+
+    for s in solicitudes_qs.select_related('solicitante_miembro', 'ministerio', 'registrada_por', 'atendida_por'):
+        line = f'<b>{s.solicitante_nombre}</b> — {s.get_tipo_display()}'
+        story.append(Paragraph(line, styles['Normal']))
+        details = f'Estado: {s.get_estado_display()} | Prioridad: {s.prioridad} | Fecha: {s.fecha_solicitud}'
+        story.append(Paragraph(details, styles['Normal']))
+        if s.descripcion:
+            story.append(Paragraph(f'<i>{s.descripcion[:100]}{"..." if len(s.descripcion) > 100 else ""}</i>', styles['Normal']))
+        story.append(Spacer(1, 0.2 * cm))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def reporte_visitas_pdf(visitas_qs, fecha_desde=None, fecha_hasta=None) -> bytes:
+    buffer = BytesIO()
+    doc = _base_doc(buffer, 'Reporte de Visitantes')
+    styles = _styles()
+
+    story = [
+        Paragraph('IGLESIA DEL NAZARENO', styles['Titulo']),
+        Paragraph('Reporte de Visitantes', styles['Subtitulo']),
+        HRFlowable(width='100%', thickness=1, color=colors.HexColor('#1E3A5F')),
+        Spacer(1, 0.3 * cm),
+    ]
+
+    if fecha_desde or fecha_hasta:
+        rango = []
+        if fecha_desde:
+            rango.append(f'Desde: {fecha_desde}')
+        if fecha_hasta:
+            rango.append(f'Hasta: {fecha_hasta}')
+        story.append(Paragraph(f'Período: {" | ".join(rango)}', styles['Normal']))
+        story.append(Spacer(1, 0.2 * cm))
+
+    story.append(Paragraph(f'Total de visitantes: <b>{visitas_qs.count()}</b>', styles['Normal']))
+    story.append(Spacer(1, 0.3 * cm))
+
+    for v in visitas_qs.select_related('ministerio_interes', 'responsable_seguimiento', 'miembro_vinculado'):
+        line = f'<b>{v.nombre}</b>'
+        if v.telefono or v.email:
+            line += f' — {v.telefono or v.email}'
+        story.append(Paragraph(line, styles['Normal']))
+        details = f'1ª Visita: {v.fecha_primera_visita} | Seguimiento: {v.get_seguimiento_display()}'
+        if v.ministerio_interes:
+            details += f' | Ministerio: {v.ministerio_interes.nombre}'
+        story.append(Paragraph(details, styles['Normal']))
+        if v.notas:
+            story.append(Paragraph(f'<i>{v.notas[:100]}{"..." if len(v.notas) > 100 else ""}</i>', styles['Normal']))
+        story.append(Spacer(1, 0.2 * cm))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def reporte_historial_miembro_pdf(historial_qs, miembro) -> bytes:
+    buffer = BytesIO()
+    doc = _base_doc(buffer, f'Historial — {miembro.nombre_completo}')
+    styles = _styles()
+
+    story = [
+        Paragraph('IGLESIA DEL NAZARENO', styles['Titulo']),
+        Paragraph(f'Historial de Estado — {miembro.nombre_completo}', styles['Subtitulo']),
+        HRFlowable(width='100%', thickness=1, color=colors.HexColor('#1E3A5F')),
+        Spacer(1, 0.3 * cm),
+        Paragraph(f'<b>Miembro ID:</b> {miembro.id}', styles['Normal']),
+        Paragraph(f'<b>Ingreso:</b> {miembro.fecha_ingreso if hasattr(miembro, "fecha_ingreso") else "—"}', styles['Normal']),
+        Spacer(1, 0.3 * cm),
+    ]
+
+    if not historial_qs.exists():
+        story.append(Paragraph('Sin eventos registrados.', styles['Normal']))
+    else:
+        story.append(Paragraph(f'<b>Total de eventos: {historial_qs.count()}</b>', styles['Normal']))
+        story.append(Spacer(1, 0.2 * cm))
+        for h in historial_qs.select_related('documentado_por'):
+            story.append(Paragraph(f'<b>{h.get_evento_display()}</b> — {h.fecha_evento}', styles['Normal']))
+            if h.descripcion:
+                story.append(Paragraph(h.descripcion, styles['Normal']))
+            details = []
+            if h.iglesia_origen:
+                details.append(f'De: {h.iglesia_origen}')
+            if h.iglesia_destino:
+                details.append(f'A: {h.iglesia_destino}')
+            if details:
+                story.append(Paragraph(' | '.join(details), styles['Normal']))
+            if h.documentado_por:
+                story.append(Paragraph(f'<i>Documentado por: {h.documentado_por.get_full_name()}</i>', styles['Normal']))
+            story.append(Spacer(1, 0.2 * cm))
+
+    doc.build(story)
+    return buffer.getvalue()
